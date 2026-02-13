@@ -1,0 +1,71 @@
+{
+  "dataset_name": "cleaned_data",
+  "rows": 3,
+  "columns": 6,
+  "memory_usage_mb": 0.00018405914306640625,
+  "column_profiles": {
+    "user_id": {
+      "dtype": "float64",
+      "missing": 0,
+      "missing_pct": 0.0,
+      "unique": 3,
+      "unique_pct": 100.0,
+      "stats": {
+        "min": 1.0,
+        "max": 8.0,
+        "mean": 4.666666666666667,
+        "median": 5.0,
+        "std": 3.511884584284246
+      }
+    },
+    "email": {
+      "dtype": "str",
+      "missing": 1,
+      "missing_pct": 33.33333333333333,
+      "unique": 2,
+      "unique_pct": 66.66666666666666
+    },
+    "age": {
+      "dtype": "float64",
+      "missing": 0,
+      "missing_pct": 0.0,
+      "unique": 3,
+      "unique_pct": 100.0,
+      "stats": {
+        "min": 22.0,
+        "max": 40.0,
+        "mean": 29.0,
+        "median": 25.0,
+        "std": 9.643650760992955
+      }
+    },
+    "revenue": {
+      "dtype": "int64",
+      "missing": 0,
+      "missing_pct": 0.0,
+      "unique": 3,
+      "unique_pct": 100.0,
+      "stats": {
+        "min": 0.0,
+        "max": 3000.0,
+        "mean": 1333.3333333333333,
+        "median": 1000.0,
+        "std": 1527.5252316519466
+      }
+    },
+    "signup_date": {
+      "dtype": "str",
+      "missing": 0,
+      "missing_pct": 0.0,
+      "unique": 3,
+      "unique_pct": 100.0
+    },
+    "email_valid": {
+      "dtype": "bool",
+      "missing": 0,
+      "missing_pct": 0.0,
+      "unique": 2,
+      "unique_pct": 66.66666666666666
+    }
+  }
+}

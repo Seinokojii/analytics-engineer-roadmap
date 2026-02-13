@@ -1,0 +1,7 @@
+segment,customer_count,avg_ltv,avg_frequency,avg_recency_days
+Loyal Customers,1,45026.0,15.0,53.0
+Champions,1,42030.0,16.0,16.0
+At Risk,1,36841.0,15.0,25.0
+Others,3,34548.67,15.3,14.0
+New Customers,2,31785.0,13.5,5.0
+Hibernating,2,30777.5,12.0,97.0

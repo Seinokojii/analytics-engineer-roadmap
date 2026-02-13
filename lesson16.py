@@ -196,25 +196,29 @@ def classify_amount(x):
         return 'high'
 
 # ❌ С apply
-start = time.time()
-df_sample['tier_apply'] = df_sample['amount'].apply(classify_amount)
-t_apply = time.time() - start
-
-# ✅ С np.select (векторизация)
-start = time.time()
-conditions = [
-    df_sample['amount'] < 1000,
-    (df_sample['amount'] >= 1000) & (df_sample['amount'] < 3000),
-    df_sample['amount'] >= 3000
-]
-choices = ['low', 'medium', 'high']
-df_sample['tier_vectorized'] = np.select(conditions, choices)
-t_vectorized = time.time() - start
-
-print(f"❌ apply(): {t_apply:.4f} сек")
-print(f"✅ np.select(): {t_vectorized:.4f} сек")
-print(f"🚀 Ускорение: {t_apply/t_vectorized:.2f}x")
-
+try:
+    start = time.time()
+    df_sample['tier_apply'] = df_sample['amount'].apply(classify_amount)
+    t_apply = time.time() - start
+    
+    # ✅ С np.select (векторизация)
+    start = time.time()
+    conditions = [
+        df_sample['amount'] < 1000,
+        (df_sample['amount'] >= 1000) & (df_sample['amount'] < 3000),
+        df_sample['amount'] >= 3000
+    ]
+    choices = ['low', 'medium', 'high']
+    df_sample['tier_vectorized'] = np.select(conditions, choices, default='unknown')
+    t_vectorized = time.time() - start
+    
+    print(f"❌ apply(): {t_apply:.4f} сек")
+    print(f"✅ np.select(): {t_vectorized:.4f} сек")
+    print(f"🚀 Ускорение: {t_apply/t_vectorized:.2f}x")
+    
+except Exception as e:
+    print(f"⚠️ Ошибка в ЧАСТИ 5: {e}")
+    print("Пропускаем эту часть и продолжаем...")
 # ========================================
 # ЧАСТЬ 6: MULTI-INDEX
 # ========================================
