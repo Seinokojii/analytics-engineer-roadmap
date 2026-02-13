@@ -1,1 +1,0 @@
-from keras.optimizers import convert_to_legacy_optimizer as convert_to_legacy_optimizer
