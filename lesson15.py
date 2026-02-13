@@ -24,8 +24,8 @@ print("=" * 70)
 dirty_data = pd.DataFrame({
     'user_id': [1, 2, 3, None, 5, 5, 7, 8],  # Дубликат, пропуск
     'email': ['user1@test.com', 'invalid-email', 'user3@test.com',
-              'user4@test.com', '', 'user5@test.com', 
-              'user7@test.com', None],  # Невалидный, пустой, null
+        'user4@test.com', '', 'user5@test.com', 
+        'user7@test.com', None],  # Невалидный, пустой, null
     'age': [25, -5, 150, 30, 22, 22, 'тридцать', 40],  # Отрицательный, outlier, строка
     'revenue': [1000, 2000, None, 1500, '3000', 2500, 1800, 0],  # Null, строка, zero
     'signup_date': ['2024-01-01', '2024-02-30', '2024-03-15',  # Несуществующая дата
