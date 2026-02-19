@@ -1,0 +1,27 @@
+{
+  "dev": {
+    "dbt_project": "dbt_analytics",
+    "schedule": {
+      "full_refresh": "0 2 * * *",
+      "incremental": "0 * * * *"
+    },
+    "alerts": {
+      "email": "dev@company.com",
+      "slack": false
+    },
+    "retries": 1
+  },
+  "prod": {
+    "dbt_project": "dbt_analytics_prod",
+    "schedule": {
+      "full_refresh": "0 1 * * *",
+      "incremental": "*/30 * * * *"
+    },
+    "alerts": {
+      "email": "alerts@company.com",
+      "slack": true,
+      "pagerduty": true
+    },
+    "retries": 3
+  }
+}

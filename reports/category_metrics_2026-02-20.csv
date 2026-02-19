@@ -1,0 +1,6 @@
+category,products_count,total_units,total_revenue,total_profit
+Books,10,758.0,462437.0,338037.0
+Clothing,10,815.0,469339.0,280986.0
+Home,13,973.0,475808.0,204693.0
+Sports,10,770.0,394041.0,197577.0
+Electronics,7,490.0,248918.0,84606.0

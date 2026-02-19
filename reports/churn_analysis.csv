@@ -1,0 +1,4 @@
+plan,total_subscriptions,churned,active,churn_rate_pct
+basic,391,83.0,308.0,21.23
+enterprise,114,32.0,82.0,28.07
+pro,295,87.0,208.0,29.49

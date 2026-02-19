@@ -1,0 +1,67 @@
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                 SUBSCRIPTION ANALYTICS REPORT                        ║
+║                 Checkpoint Week 3 - Final Project                    ║
+║                 Дата: 2026-02-20                                ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+EXECUTIVE SUMMARY
+─────────────────────────────────────────────────────────────────────
+Анализируемый период: 2023-01-01 - 2023-03-04
+Всего пользователей: 500
+Всего подписок: 800
+
+KEY METRICS (SaaS)
+─────────────────────────────────────────────────────────────────────
+MRR (Monthly Recurring Revenue): $29,880
+Active Subscribers: 339
+ARPU (Avg Revenue Per User): $88.14
+
+CHURN ANALYSIS
+─────────────────────────────────────────────────────────────────────
+Basic Plan Churn: 21.23%
+Pro Plan Churn: 29.49%
+Enterprise Plan Churn: 28.07%
+
+CUSTOMER ACQUISITION
+─────────────────────────────────────────────────────────────────────
+Best Channel: paid (MRR: $14,970)
+Total Channels: 4
+
+DATA QUALITY
+─────────────────────────────────────────────────────────────────────
+Validation checks: 4 passed, 1 issues
+Memory optimized: ~58% reduction
+Referential integrity: Partial (some issues found)
+
+COHORT RETENTION
+─────────────────────────────────────────────────────────────────────
+Month 1 Retention: ~100%
+Month 3 Retention: 98.3%
+Month 6 Retention: nan%
+
+RECOMMENDATIONS
+─────────────────────────────────────────────────────────────────────
+1. Focus on reducing Basic plan churn (highest churn rate)
+2. Invest in paid channel (best performance)
+3. Improve retention in months 3-6 (critical drop period)
+4. Upsell Basic → Pro (better retention, higher LTV)
+
+TECHNICAL STACK
+─────────────────────────────────────────────────────────────────────
+Database: DuckDB (subscriptions.duckdb)
+Tables: users, subscriptions, events, user_metrics, churn_analysis, cohort_analysis
+Optimization: Memory reduced by ~58% via categorical dtypes
+Pipeline: Extract → Validate → Transform → Metrics → Report
+
+WEEK 3 SKILLS DEMONSTRATED
+─────────────────────────────────────────────────────────────────────
+✅ Day 15: Data Quality (5 validation checks)
+✅ Day 16: Advanced Pandas (memory optimization, vectorization)
+✅ Day 17-18: dbt concepts (staging, marts, transformations)
+✅ Day 19: Automation (pipeline function, monitoring)
+✅ Day 20: Full ETL project
+
+──────────────────────────────────────────────────────────────────────
+Analyst: Analytics Engineer Roadmap - Week 3 Checkpoint
+Generated: 2026-02-20 01:01:59

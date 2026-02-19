@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  - name: raw_data
+    description: "Сырые данные из operational database"
+    database: analytics
+    schema: main
+    
+    tables:
+      - name: raw_users
+        description: "Таблица пользователей"
+        freshness:
+          warn_after: {count: 12, period: hour}
+          error_after: {count: 24, period: hour}
+        loaded_at_field: created_at
+        
+        columns:
+          - name: user_id
+            description: "Primary key"
+            tests:
+              - unique
+              - not_null
+      
+      - name: raw_orders
+        description: "Таблица заказов"
+        freshness:
+          warn_after: {count: 6, period: hour}
+        loaded_at_field: created_at

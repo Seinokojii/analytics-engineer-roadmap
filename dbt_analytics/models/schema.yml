@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: stg_users
+    description: "Staging: Очищенные пользователи"
+    columns:
+      - name: user_id
+        description: "Уникальный ID пользователя"
+        tests:
+          - unique
+          - not_null
+      - name: email
+        description: "Email пользователя"
+        tests:
+          - not_null
+
+  - name: stg_orders
+    description: "Staging: Completed заказы"
+    columns:
+      - name: order_id
+        description: "Уникальный ID заказа"
+        tests:
+          - unique
+          - not_null
+      - name: amount
+        description: "Сумма заказа"
+        tests:
+          - not_null
+
+  - name: fct_orders
+    description: "Fact table: Заказы с деталями"
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_customers
+    description: "Dimension: Агрегация по клиентам"
+    columns:
+      - name: user_id
+        tests:
+          - unique
+          - not_null
