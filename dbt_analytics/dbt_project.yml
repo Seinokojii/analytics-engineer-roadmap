@@ -5,6 +5,7 @@ config-version: 2
 profile: 'analytics'
 
 model-paths: ["models"]
+macro-paths: ["macros"]
 seed-paths: ["data"]
 test-paths: ["tests"]
 

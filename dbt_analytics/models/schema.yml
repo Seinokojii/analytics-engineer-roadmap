@@ -2,43 +2,55 @@ version: 2
 
 models:
   - name: stg_users
-    description: "Staging: Очищенные пользователи"
     columns:
       - name: user_id
-        description: "Уникальный ID пользователя"
         tests:
           - unique
           - not_null
       - name: email
-        description: "Email пользователя"
         tests:
           - not_null
 
   - name: stg_orders
-    description: "Staging: Completed заказы"
     columns:
       - name: order_id
-        description: "Уникальный ID заказа"
         tests:
           - unique
           - not_null
+      - name: user_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_users')
+              field: user_id
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['completed']
       - name: amount
-        description: "Сумма заказа"
         tests:
           - not_null
 
-  - name: fct_orders
-    description: "Fact table: Заказы с деталями"
+  - name: fct_orders_enriched
     columns:
       - name: order_id
         tests:
           - unique
           - not_null
+      - name: revenue_tier
+        tests:
+          - accepted_values:
+              values: ['zero', 'low', 'medium', 'high', 'vip']
 
   - name: dim_customers
-    description: "Dimension: Агрегация по клиентам"
     columns:
       - name: user_id
         tests:
           - unique
+          - not_null
+      - name: total_orders
+        tests:
+          - not_null
+      - name: total_spent
+        tests:
           - not_null
