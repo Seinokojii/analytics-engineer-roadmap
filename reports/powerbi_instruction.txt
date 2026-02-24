@@ -1,0 +1,49 @@
+
+INSTRUKTSIYA: Pervyy dashboard v Power BI Desktop
+==================================================
+
+SHAG 1: Ustanovka
+  Skachat: https://powerbi.microsoft.com/ru-ru/desktop/
+  Ustanovit, otkryt Power BI Desktop
+
+SHAG 2: Zagruzka dannykh
+  Home → Get Data → Text/CSV
+  Vyberi: reports/fct_orders_powerbi.csv → Load
+  Eshche raz Get Data → vyberi: reports/dim_customers_powerbi.csv → Load
+  Eshche raz Get Data → vyberi: reports/dim_date_powerbi.csv → Load
+
+SHAG 3: Svyazi (Model View)
+  Klikni na ikonku "Model" sleva
+  Peretyashchi user_id iz fct_orders na user_id v dim_customers
+    → svyaz many-to-one (mnogo zakazov → odin klient)
+  Peretyashchi order_date iz fct_orders na date v dim_date
+    → svyaz many-to-one
+
+SHAG 4: DAX Mery
+  Vyberi tablitsu fct_orders_powerbi v Fields
+  New Measure → vvedi:
+    Total Revenue = SUM(fct_orders_powerbi[amount])
+  Eshche New Measure:
+    Total Orders = COUNTROWS(fct_orders_powerbi)
+  Eshche:
+    Avg Check = DIVIDE([Total Revenue], [Total Orders], 0)
+
+SHAG 5: Vizualizatsii
+  Vyberi "Card" vizualizatsiyu
+    → v Fields peretyashchi [Total Revenue]
+    → peretyashchi eshche odnu kartochku: [Total Orders]
+    → eshche odnu: [Avg Check]
+  Vyberi "Line Chart":
+    → Axis: month_num
+    → Values: [Total Revenue]
+  Vyberi "Pie Chart":
+    → Legend: revenue_tier
+    → Values: [Total Revenue]
+
+SHAG 6: Filtr po gorodu
+  Vyberi "Slicer":
+    → Field: dim_customers_powerbi[city]
+  Teper klikaya na gorod — vse grafiki filtruutsya!
+
+SHAG 7: Skhranit
+  File → Save As → dashboard_ecommerce.pbix

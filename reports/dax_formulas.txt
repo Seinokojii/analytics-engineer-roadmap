@@ -1,0 +1,75 @@
+
+============================================================
+DAX FORMULY DLYA POWER BI DASHBORDA
+============================================================
+
+--- OSNOVNYYE MERY (Measures) ---
+
+// Obshchaya vyruchka
+Total Revenue =
+SUM(fct_orders_powerbi[amount])
+
+// Kolichestvo zakazov
+Total Orders =
+COUNTROWS(fct_orders_powerbi)
+
+// Unikalnyye klienty
+Unique Customers =
+DISTINCTCOUNT(fct_orders_powerbi[user_id])
+
+// Sredniy chek
+Avg Order Value =
+DIVIDE(
+    SUM(fct_orders_powerbi[amount]),
+    COUNTROWS(fct_orders_powerbi),
+    0
+)
+
+--- FILTRY I CALCULATE ---
+
+// Vyruchka tolko VIP
+VIP Revenue =
+CALCULATE(
+    SUM(fct_orders_powerbi[amount]),
+    fct_orders_powerbi[revenue_tier] = "vip"
+)
+
+// Zakazov za tekushchiy mesyats
+Orders This Month =
+CALCULATE(
+    COUNTROWS(fct_orders_powerbi),
+    MONTH(fct_orders_powerbi[order_date]) = MONTH(TODAY())
+)
+
+--- VYCHISLYAYEMYYE KOLONKI (Calculated Columns) ---
+
+// Segment klienta
+Customer Segment =
+IF(
+    dim_customers_powerbi[total_spent] >= 30000, "VIP",
+    IF(
+        dim_customers_powerbi[total_spent] >= 10000, "Regular",
+        "New"
+    )
+)
+
+// Rang klienta po vyruchke
+Customer Rank =
+RANKX(
+    ALL(dim_customers_powerbi),
+    dim_customers_powerbi[total_spent],
+    ,
+    DESC
+)
+
+--- % OT ITOGA ---
+
+// Dolya vyruchki ot obshchego
+Revenue Share % =
+DIVIDE(
+    SUM(fct_orders_powerbi[amount]),
+    CALCULATE(SUM(fct_orders_powerbi[amount]), ALL(fct_orders_powerbi)),
+    0
+) * 100
+
+============================================================
