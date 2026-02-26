@@ -1,0 +1,13 @@
+name: 'ecommerce_project'
+version: '1.0.0'
+config-version: 2
+profile: 'ecommerce'
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths:  ["tests"]
+models:
+  ecommerce_project:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

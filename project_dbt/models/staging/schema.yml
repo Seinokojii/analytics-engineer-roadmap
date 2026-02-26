@@ -1,0 +1,44 @@
+version: 2
+
+sources:
+  - name: ecommerce_dw
+    tables:
+      - name: fct_orders
+
+models:
+  - name: stg_orders
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+      - name: total_amount
+        tests:
+          - not_null
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['completed', 'cancelled', 'refunded']
+
+  - name: fct_sales
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: value_segment
+        tests:
+          - accepted_values:
+              values: ['Low', 'Medium', 'High', 'VIP']
+
+  - name: monthly_summary
+    columns:
+      - name: month
+        tests:
+          - not_null
+      - name: gmv
+        tests:
+          - not_null

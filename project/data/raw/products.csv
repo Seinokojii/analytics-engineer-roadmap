@@ -1,0 +1,26 @@
+product_id,product_name,category,base_price,brand
+1,Laptop,Electronics,10816,Apple
+2,Smartphone,Electronics,38456,IKEA
+3,Tablet,Electronics,71030,Zara
+4,Smartwatch,Electronics,10977,Samsung
+5,Camera,Electronics,3316,Adidas
+6,T-Shirt,Clothing,8766,Nike
+7,Jeans,Clothing,14292,Sony
+8,Jacket,Clothing,2032,Samsung
+9,Dress,Clothing,12946,Zara
+10,Sneakers,Clothing,2750,Zara
+11,Sofa,Home,6174,Nike
+12,Lamp,Home,39071,Local
+13,Pillow,Home,36572,Samsung
+14,Curtains,Home,1150,LG
+15,Mirror,Home,12845,Adidas
+16,Dumbbells,Sports,14712,Local
+17,Yoga Mat,Sports,11338,LG
+18,Bicycle,Sports,7666,IKEA
+19,Tennis Racket,Sports,8828,Nike
+20,Skis,Sports,25173,Zara
+21,Fiction,Books,1912,H&M
+22,Non-Fiction,Books,1661,Apple
+23,Textbook,Books,1608,Zara
+24,Comics,Books,1758,LG
+25,Cookbook,Books,1363,Apple
