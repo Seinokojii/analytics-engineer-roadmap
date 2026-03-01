@@ -1,4 +1,4 @@
-﻿"""
+"""
 День 32: Analytic Patterns — LAG/LEAD для Cohort Analysis
 Retention Rate, time-between-events, first/last purchase
 """
@@ -54,8 +54,7 @@ for cid, reg_date in customer_reg.items():
     )
     for _ in range(n_orders):
         days_remaining = 365 - (reg_date - pd.Timestamp('2024-01-01')).days
-        if days_remaining <= 1:
-            continue
+if days_remaining <= 1:
         days_after = np.random.randint(0, days_remaining)
         order_date = reg_date + pd.Timedelta(days=int(days_after))
         if order_date <= pd.Timestamp('2024-12-31'):
