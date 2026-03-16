@@ -1,0 +1,36 @@
+version: 2
+exposures:
+  - name: sales_performance_dashboard
+    type: dashboard
+    maturity: high
+    url: https://app.powerbi.com/reports/sales-performance
+    description: Дашборд эффективности продаж.
+    depends_on:
+      - ref('fct_orders_enriched')
+      - ref('monthly_channel_pivot')
+      - ref('dim_date')
+    owner:
+      name: Analytics Team
+      email: analytics@company.com
+
+  - name: customer_retention_report
+    type: analysis
+    maturity: medium
+    description: Еженедельный отчёт по retention и churn.
+    depends_on:
+      - ref('fct_orders_enriched')
+      - ref('fct_orders_surrogate')
+    owner:
+      name: Growth Team
+      email: growth@company.com
+
+  - name: finance_monthly_close
+    type: ml
+    maturity: low
+    description: Данные для финансового закрытия месяца.
+    depends_on:
+      - ref('fct_orders_enriched')
+      - ref('monthly_channel_pivot')
+    owner:
+      name: Finance Team
+      email: finance@company.com

@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: fct_orders_enriched
+    description: "Обогащённые заказы с тирами и статусами"
+    columns:
+      - name: order_id
+        description: "Уникальный ID заказа"
+        tests:
+          - not_null
+          - unique
+
+      - name: total_amount
+        description: "Сумма заказа"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000
+
+      - name: revenue_tier
+        description: "Тир выручки: zero/low/medium/high/vip"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['zero', 'low', 'medium', 'high', 'vip']
+
+      - name: channel
+        description: "Канал продажи"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['web', 'mobile', 'email', 'unknown']
+
+  - name: fct_orders_surrogate
+    description: "Заказы с суррогатным ключом"
+    columns:
+      - name: order_sk
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_date
+    description: "Таблица дат 2023-2025"
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 700
+          max_value: 1200
+    columns:
+      - name: date_id
+        tests:
+          - not_null
+          - unique
