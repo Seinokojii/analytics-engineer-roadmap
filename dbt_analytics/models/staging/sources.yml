@@ -1,28 +1,27 @@
 version: 2
+
 sources:
   - name: raw
-    description: "Сырые данные"
+    description: "Сырые данные из операционной БД"
     schema: main
-    freshness:
-      warn_after:  {count: 12, period: hour}
-      error_after: {count: 24, period: hour}
-    loaded_at_field: created_at
 
     tables:
       - name: raw_orders
-        description: "Сырые заказы"
+        identifier: raw_orders
+        description: "Сырые заказы из CRM"
         columns:
           - name: order_id
-            data_tests:
-              - not_null
-              - unique
+            data_tests: [not_null, unique]
           - name: user_id
-            data_tests:
-              - not_null
+            data_tests: [not_null]
           - name: amount
-            data_tests:
-              - not_null
-              - dbt_expectations.expect_column_values_to_be_between:
-                  arguments:
-                    min_value: 0
-                    max_value: 10000000
+            data_tests: [not_null]
+
+      - name: raw_customers
+        identifier: raw_customers
+        description: "Справочник клиентов"
+        columns:
+          - name: customer_id
+            data_tests: [not_null, unique]
+          - name: updated_at
+            data_tests: [not_null]

@@ -1,0 +1,62 @@
+name: dbt CI + Data Contracts
+
+on:
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - 'dbt_analytics/**'
+      - 'contracts/**'
+      - '.github/workflows/**'
+
+jobs:
+  data-contracts:
+    name: Validate Data Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install deps
+        run: pip install pandas pyyaml --quiet
+      - name: Validate contracts
+        run: python -c "
+import yaml, sys
+import os
+contracts_dir = 'contracts'
+for f in os.listdir(contracts_dir):
+    if f.endswith('.yml'):
+        with open(os.path.join(contracts_dir, f)) as fp:
+            contract = yaml.safe_load(fp)
+        assert 'contract' in contract, f'Invalid contract: {f}'
+        assert 'schema' in contract['contract'], f'No schema in: {f}'
+        print(f'OK: {f}')
+"
+
+  dbt-ci:
+    name: dbt build + test
+    runs-on: ubuntu-latest
+    needs: data-contracts
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dbt
+        run: pip install dbt-duckdb --quiet
+      - name: dbt deps
+        working-directory: dbt_analytics
+        run: dbt deps
+      - name: dbt build
+        working-directory: dbt_analytics
+        run: dbt build --target ci
+      - name: dbt snapshot compile
+        working-directory: dbt_analytics
+        run: dbt compile --select snapshot:*
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-logs
+          path: dbt_analytics/logs/

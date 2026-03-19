@@ -1,25 +1,52 @@
 version: 2
+
 models:
   - name: fct_orders_enriched
     description: "Обогащённые заказы с тирами и статусами"
+
     columns:
       - name: order_id
+        data_type: integer
+        constraints:
+          - type: not_null
+          - type: unique
         data_tests:
           - not_null
           - unique
+
       - name: total_amount
+        data_type: double
+        constraints:
+          - type: not_null
         data_tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
-              arguments:
-                min_value: 0
-                max_value: 1000000
+              min_value: 0
+              max_value: 1000000
+
       - name: revenue_tier
+        data_type: varchar
+        constraints:
+          - type: not_null
         data_tests:
           - not_null
           - accepted_values:
-              arguments:
-                values: ['zero', 'low', 'medium', 'high', 'vip']
+              values: ['zero', 'low', 'medium', 'high', 'vip']
+
+      - name: order_date
+        data_type: date
+
+      - name: activity_status
+        data_type: varchar
+
+      - name: days_since_order
+        data_type: bigint
+
+      - name: unit_price_safe
+        data_type: double
+
+      - name: customer_id
+        data_type: bigint
 
   - name: fct_orders_surrogate
     description: "Заказы с суррогатным ключом"
@@ -33,9 +60,8 @@ models:
     description: "Таблица дат 2023-2025"
     data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 700
-            max_value: 1200
+          min_value: 700
+          max_value: 1200
     columns:
       - name: date_id
         data_tests:

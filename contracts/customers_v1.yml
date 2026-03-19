@@ -1,0 +1,33 @@
+# contracts/customers_v1.yml
+contract:
+  name: customers
+  version: "1.0.0"
+  owner: crm_team@company.com
+  consumers:
+    - team: analytics
+      contact: analytics@company.com
+
+  schema:
+    - name: customer_id
+      type: INTEGER
+      nullable: false
+      unique: true
+
+    - name: email
+      type: VARCHAR
+      nullable: false
+      pattern: "^[\\w.+-]+@[\\w-]+\\.[\\w.]+$"
+
+    - name: plan
+      type: VARCHAR
+      nullable: false
+      allowed_values: ["free", "basic", "premium", "enterprise"]
+
+    - name: status
+      type: VARCHAR
+      nullable: false
+      allowed_values: ["active", "inactive", "suspended"]
+
+    - name: updated_at
+      type: TIMESTAMP
+      nullable: false

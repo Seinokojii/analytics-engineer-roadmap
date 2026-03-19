@@ -1,0 +1,56 @@
+# contracts/orders_v1.yml
+# Data Contract — соглашение о структуре таблицы orders
+# Версия: 1.0.0
+# Owner: source_team@company.com
+# Consumers: analytics, data_science, finance
+
+contract:
+  name: orders
+  version: "1.0.0"
+  owner: source_team@company.com
+  consumers:
+    - team: analytics
+      contact: analytics@company.com
+    - team: data_science
+      contact: ds@company.com
+
+  # SLA на свежесть данных
+  freshness:
+    max_delay_hours: 24
+    warn_delay_hours: 12
+
+  # Схема данных
+  schema:
+    - name: order_id
+      type: INTEGER
+      nullable: false
+      unique: true
+      description: "Первичный ключ заказа"
+
+    - name: user_id
+      type: INTEGER
+      nullable: false
+      description: "ID пользователя из системы auth"
+
+    - name: amount
+      type: FLOAT
+      nullable: false
+      min_value: 0
+      max_value: 10000000
+      description: "Сумма заказа в рублях"
+
+    - name: status
+      type: VARCHAR
+      nullable: false
+      allowed_values: ["completed", "pending", "cancelled", "refunded"]
+      description: "Статус заказа"
+
+    - name: created_at
+      type: TIMESTAMP
+      nullable: false
+      description: "Дата и время создания заказа"
+
+  # Ожидаемые объёмы
+  volume:
+    min_rows_per_day: 10
+    max_rows_per_day: 1000000

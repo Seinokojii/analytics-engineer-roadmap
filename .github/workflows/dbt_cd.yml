@@ -1,0 +1,74 @@
+name: dbt CD (deploy to prod)
+
+# Запускается при push/merge в main
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dbt_analytics/**'
+
+jobs:
+  dbt-deploy:
+    name: dbt deploy prod
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Install dbt
+        run: pip install dbt-duckdb --quiet
+
+      - name: dbt deps
+        working-directory: dbt_analytics
+        run: dbt deps
+
+      # Full build в prod таргете
+      - name: dbt build (prod)
+        working-directory: dbt_analytics
+        run: |
+          dbt build --target prod --full-refresh
+        env:
+          DBT_ENV: prod
+
+      # Snapshots в проде
+      - name: dbt snapshot (prod)
+        working-directory: dbt_analytics
+        run: dbt snapshot --target prod
+        env:
+          DBT_ENV: prod
+
+      # Генерация и публикация документации
+      - name: dbt docs generate
+        working-directory: dbt_analytics
+        run: dbt docs generate --target prod
+
+      # Публикуем docs как GitHub Pages артефакт
+      - name: Upload docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-docs
+          path: dbt_analytics/target/
+          retention-days: 30
+
+      # Уведомление об успехе (опционально — Slack webhook)
+      - name: Notify success
+        if: success()
+        run: echo "✅ dbt prod deploy completed successfully"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ dbt prod deploy FAILED"
+          exit 1
