@@ -1,0 +1,9 @@
+# models/metrics/metricflow_time_spine.yml
+models:
+  - name: metricflow_time_spine
+    description: "Time spine required by [[MetricFlow]] for temporal metrics."
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        granularity: day

@@ -1,6 +1,5 @@
 -- tests/assert_positive_total_spent.sql
--- Проверка: total_spent не может быть отрицательным
-
+-- Proverka: amount ne mozhet byt otricatelnym
 SELECT *
-FROM {{ ref('dim_customers') }}
-WHERE total_spent < 0
+FROM {{ ref('fct_orders') }}
+WHERE amount < 0

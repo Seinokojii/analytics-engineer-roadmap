@@ -1,0 +1,64 @@
+# metrics/_metrics.yml
+# [[MetricFlow]] -- 8 biznes-metrik
+
+metrics:
+
+  - name: total_revenue
+    description: "SUM(amount) -- edinstvennoe opredelenie revenue"
+    type: simple
+    label: "Total Revenue"
+    type_params:
+      measure: revenue
+
+  - name: order_count
+    description: "COUNT_DISTINCT(order_id)"
+    type: simple
+    label: "Order Count"
+    type_params:
+      measure: order_count
+
+  - name: customer_count
+    description: "COUNT_DISTINCT(user_id) -- pokupavshie klienty"
+    type: simple
+    label: "Active Customers"
+    type_params:
+      measure: spending_customers
+
+  - name: average_order_value
+    description: "AOV = total_revenue / order_count"
+    type: ratio
+    label: "Average Order Value"
+    type_params:
+      numerator: total_revenue
+      denominator: order_count
+
+  - name: revenue_per_customer
+    description: "ARPU-proksi = total_revenue / customer_count"
+    type: ratio
+    label: "Revenue per Customer (ARPU proxy)"
+    type_params:
+      numerator: total_revenue
+      denominator: customer_count
+
+  - name: cumulative_revenue
+    description: "Narastayushchaya vyruchka (cumulative SUM)"
+    type: cumulative
+    label: "Cumulative Revenue"
+    type_params:
+      measure: revenue
+
+  - name: ltv_simple
+    description: "LTV = revenue_per_customer / 0.05 (churn=5%)"
+    type: derived
+    label: "LTV Simple"
+    type_params:
+      expr: revenue_per_customer / 0.05
+      metrics:
+        - name: revenue_per_customer
+
+  - name: total_customer_ltv
+    description: "Istoricheskiy LTV: SUM(total_spent) iz dim_customers"
+    type: simple
+    label: "Historical Customer LTV"
+    type_params:
+      measure: total_customer_spending

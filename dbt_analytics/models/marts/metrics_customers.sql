@@ -1,7 +1,9 @@
--- Использование макроса safe_divide
-SELECT 
-    user_id,
-    total_orders,
-    total_spent,
-    {{ safe_divide('total_spent', 'total_orders') }} AS avg_order_value
+-- models/marts/metrics_customers.sql
+{{ config(materialized="table") }}
+
+SELECT
+    customer_id,
+    email,
+    last_updated,
+    status
 FROM {{ ref('dim_customers') }}
