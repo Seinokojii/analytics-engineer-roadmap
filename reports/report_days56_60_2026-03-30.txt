@@ -1,0 +1,7 @@
+
+Days 56-60 Report
+==================
+RFM: Champions=25, At Risk=4
+Cohort retention month 3: 0.0%
+LTV top city: $9858.06 historical / $197161.20 predictive
+Generated: 2026-03-30

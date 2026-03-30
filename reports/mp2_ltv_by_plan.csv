@@ -1,0 +1,4 @@
+plan,subscribers,avg_mrr,avg_lifetime_months,avg_historical_ltv,predictive_ltv
+enterprise,75,200.0,16.71,3341.33,10000.0
+pro,182,50.0,12.2,609.89,1000.0
+basic,243,10.0,8.35,83.54,125.0

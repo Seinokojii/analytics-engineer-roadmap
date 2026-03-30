@@ -1,0 +1,22 @@
+version: 2
+sources:
+  - name: saas_raw
+    schema: main
+    tables:
+      - name: raw_saas_users
+        columns:
+          - name: user_id
+            data_tests:
+              - not_null
+              - unique
+      - name: raw_subscriptions
+        columns:
+          - name: subscription_id
+            data_tests:
+              - not_null
+              - unique
+      - name: raw_events
+        columns:
+          - name: event_id
+            data_tests:
+              - not_null

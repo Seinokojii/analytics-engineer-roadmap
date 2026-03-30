@@ -1,0 +1,55 @@
+version: 2
+models:
+  - name: dim_subscribers
+    description: "Subscribers dimension (SCD2 ready)"
+    columns:
+      - name: user_id
+        data_tests:
+          - not_null
+          - unique
+      - name: email
+        data_tests:
+          - not_null
+      - name: plan
+        data_tests:
+          - accepted_values:
+              values: [basic, pro, enterprise]
+      - name: mrr
+        data_tests:
+          - not_null
+
+  - name: fct_subscriptions
+    description: "Subscription facts: MRR, churn, LTV"
+    columns:
+      - name: subscription_id
+        data_tests:
+          - not_null
+          - unique
+      - name: user_id
+        data_tests:
+          - not_null
+      - name: mrr
+        data_tests:
+          - not_null
+      - name: plan
+        data_tests:
+          - accepted_values:
+              values: [basic, pro, enterprise]
+
+  - name: mart_cohort_retention
+    description: "Cohort retention by month"
+    columns:
+      - name: cohort_month
+        data_tests:
+          - not_null
+      - name: retention_pct
+        data_tests:
+          - not_null
+
+  - name: mart_ltv
+    description: "LTV by plan"
+    columns:
+      - name: plan
+        data_tests:
+          - not_null
+          - unique

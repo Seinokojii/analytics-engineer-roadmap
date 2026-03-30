@@ -1,0 +1,47 @@
+semantic_models:
+  - name: subscriptions
+    description: "SaaS subscriptions semantic model"
+    model: ref('fct_subscriptions')
+
+    entities:
+      - name: subscription
+        type: primary
+        expr: subscription_id
+      - name: subscriber
+        type: foreign
+        expr: user_id
+
+    dimensions:
+      - name: start_date
+        type: time
+        expr: start_date
+        type_params:
+          time_granularity: day
+      - name: plan
+        type: categorical
+        expr: plan
+      - name: status
+        type: categorical
+        expr: status
+
+    measures:
+      - name: mrr_sum
+        agg: sum
+        expr: mrr
+        agg_time_dimension: start_date
+        create_metric: false
+      - name: sub_count
+        agg: count_distinct
+        expr: subscription_id
+        agg_time_dimension: start_date
+        create_metric: false
+      - name: churned_count
+        agg: sum
+        expr: "CASE WHEN is_churned THEN 1 ELSE 0 END"
+        agg_time_dimension: start_date
+        create_metric: false
+      - name: ltv_sum
+        agg: sum
+        expr: realized_ltv
+        agg_time_dimension: start_date
+        create_metric: false

@@ -1,0 +1,31 @@
+{
+  "date": "2026-03-30",
+  "passed": 13,
+  "total": 24,
+  "results": {
+    "dbt run: no errors": true,
+    "dbt test: PASS >= 20": false,
+    "dbt test: no errors": true,
+    "dbt parse: clean": false,
+    "dev.duckdb exists": false,
+    "metrics/_semantic_models.yml": true,
+    "metrics/_metrics.yml": true,
+    "metrics/_saved_queries.yml": true,
+    "metrics/metricflow_time_spine.sql": true,
+    "metrics/metricflow_time_spine.yml": true,
+    "_metrics.yml: >= 8 metrics": true,
+    "contracts/ dir exists": true,
+    "CI workflow exists": true,
+    "CD workflow exists": true,
+    "snapshots in DB": false,
+    "metrics_api/main.py exists": true,
+    "GET /": false,
+    "GET /metrics/catalog": false,
+    "GET /metrics/summary": false,
+    "GET /metrics/by-city": false,
+    "GET /metrics/ltv-report": false,
+    "reports/rfm_segments.csv": false,
+    "reports/cohort_retention.csv": true,
+    "reports/ltv_by_city.csv": false
+  }
+}

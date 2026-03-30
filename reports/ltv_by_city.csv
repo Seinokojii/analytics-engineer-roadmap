@@ -1,0 +1,4 @@
+city,customers,avg_historical_ltv,avg_order_value,avg_orders,predictive_ltv
+MOSCOW,33,9858.06,2660.52,3.94,197161.21
+SPB,33,8721.39,2467.71,3.48,174427.88
+KAZAN,30,7837.47,2746.52,2.93,156749.33

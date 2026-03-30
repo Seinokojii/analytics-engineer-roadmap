@@ -1,0 +1,39 @@
+metrics:
+
+  - name: mrr
+    description: "Monthly Recurring Revenue: SUM(mrr)"
+    type: simple
+    label: "MRR"
+    type_params:
+      measure: mrr_sum
+
+  - name: subscription_count
+    description: "Unique subscriptions: COUNT_DISTINCT(subscription_id)"
+    type: simple
+    label: "Subscription Count"
+    type_params:
+      measure: sub_count
+
+  - name: churn_count
+    description: "Churned subscriptions"
+    type: simple
+    label: "Churned Subscriptions"
+    type_params:
+      measure: churned_count
+
+  # Intermediary metric needed for ratio avg_ltv
+  - name: total_ltv
+    description: "Total realized LTV: SUM(realized_ltv)"
+    type: simple
+    label: "Total LTV"
+    type_params:
+      measure: ltv_sum
+
+  # ratio: numerator/denominator must be other METRICS (not measures)
+  - name: avg_ltv
+    description: "Average LTV per subscription = total_ltv / subscription_count"
+    type: ratio
+    label: "Average LTV"
+    type_params:
+      numerator: total_ltv
+      denominator: subscription_count

@@ -1,0 +1,4 @@
+plan,total,churned,churn_pct
+basic,243,229.0,94.2
+enterprise,75,20.0,26.7
+pro,182,117.0,64.3

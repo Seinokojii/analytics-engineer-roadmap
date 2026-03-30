@@ -1,0 +1,70 @@
+# metrics/_semantic_models.yml
+# [[Semantic Layer]] -- opisanie tablic dlya [[MetricFlow]]
+
+semantic_models:
+
+  - name: orders
+    description: "Zakazy -- osnova dlya revenue/AOV/order_count"
+    model: ref('fct_orders')
+
+    entities:
+      - name: order
+        type: primary
+        expr: order_id
+      - name: customer
+        type: foreign
+        expr: user_id
+
+    dimensions:
+      - name: order_date
+        type: time
+        expr: order_date
+        type_params:
+          time_granularity: day
+      - name: city
+        type: categorical
+        expr: city
+
+    measures:
+      - name: revenue
+        agg: sum
+        expr: amount
+        description: "Vyruchka (SUM amount)"
+        create_metric: false
+      - name: order_count
+        agg: count_distinct
+        expr: order_id
+        create_metric: false
+      - name: spending_customers
+        agg: count_distinct
+        expr: user_id
+        create_metric: false
+
+  - name: customers
+    description: "Klienty -- osnova dlya customer_count/LTV"
+    model: ref('dim_customers')
+
+    entities:
+      - name: customer
+        type: primary
+        expr: user_id
+
+    dimensions:
+      - name: registration_date
+        type: time
+        expr: registration_date
+        type_params:
+          time_granularity: day
+      - name: city
+        type: categorical
+        expr: city
+
+    measures:
+      - name: customer_count
+        agg: count_distinct
+        expr: user_id
+        create_metric: false
+      - name: total_customer_spending
+        agg: sum
+        expr: total_spent
+        create_metric: false

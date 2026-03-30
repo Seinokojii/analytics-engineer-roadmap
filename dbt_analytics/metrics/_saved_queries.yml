@@ -1,0 +1,41 @@
+# metrics/_saved_queries.yml
+# Gotovye zaprosy dlya [[Power BI]] i [[FastAPI]]
+
+saved_queries:
+
+  - name: executive_kpi_daily
+    description: "Ezhednevnye KPI dlya Executive Dashboard"
+    query_params:
+      metrics:
+        - total_revenue
+        - order_count
+        - customer_count
+        - average_order_value
+      group_by:
+        - TimeDimension('order__order_date', 'day')
+    exports:
+      - name: executive_kpi_daily
+        config:
+          export_as: table
+          schema: semantic_exports
+          alias: executive_kpi_daily
+
+  - name: revenue_by_city
+    description: "Revenue + AOV po gorodam"
+    query_params:
+      metrics:
+        - total_revenue
+        - order_count
+        - average_order_value
+      group_by:
+        - Dimension('order__city')
+
+  - name: ltv_report
+    description: "LTV: predskazatelnyy vs istoricheskiy"
+    query_params:
+      metrics:
+        - ltv_simple
+        - total_customer_ltv
+        - revenue_per_customer
+      group_by:
+        - Dimension('customer__city')
