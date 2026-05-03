@@ -1,0 +1,18 @@
+# snowflake_setup/profiles_snowflake.yml
+# Dobav v ~/.dbt/profiles.yml:
+#
+# analytics:
+#   outputs:
+#     snowflake:
+#       type:      snowflake
+#       account:   YOUR_ACCOUNT
+#       user:      YOUR_USERNAME
+#       password:  YOUR_PASSWORD
+#       role:      analyst_role
+#       database:  analytics_db
+#       warehouse: analytics_wh
+#       schema:    marts
+#       threads:   4
+#
+# pip install dbt-snowflake
+# dbt debug --target snowflake

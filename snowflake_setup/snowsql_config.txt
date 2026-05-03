@@ -1,0 +1,14 @@
+# snowflake_setup/snowsql_config.txt
+# ~/.snowsql/config
+
+[connections.analytics]
+accountname   = YOUR_ACCOUNT_IDENTIFIER
+username      = YOUR_USERNAME
+password      = YOUR_PASSWORD
+dbname        = analytics_db
+schemaname    = raw
+warehousename = analytics_wh
+rolename      = analyst_role
+
+# snowsql -c analytics
+# snowsql -c analytics -f snowflake_setup/06_stage_copy_into.sql
