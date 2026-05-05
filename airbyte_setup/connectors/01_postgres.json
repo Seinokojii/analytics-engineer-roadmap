@@ -1,0 +1,29 @@
+{
+  "connector": "PostgreSQL Source",
+  "version": "latest",
+  "config": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "your_database",
+    "username": "your_user",
+    "password": "YOUR_PASSWORD",
+    "schemas": ["public"],
+    "replication_method": {
+      "method": "CDC",
+      "replication_slot": "airbyte_slot",
+      "publication": "airbyte_publication"
+    }
+  },
+  "streams": [
+    {
+      "name": "orders",
+      "sync_mode": "incremental",
+      "cursor_field": ["updated_at"]
+    },
+    {
+      "name": "users",
+      "sync_mode": "full_refresh"
+    }
+  ],
+  "notes": "CDC replication: PostgreSQL -> Airbyte -> Snowflake raw"
+}

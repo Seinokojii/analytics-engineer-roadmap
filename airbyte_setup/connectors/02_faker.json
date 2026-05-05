@@ -1,0 +1,15 @@
+{
+  "connector": "Faker (Sample Data)",
+  "version": "latest",
+  "config": {
+    "count": 1000,
+    "seed": 42,
+    "always_updated": false
+  },
+  "streams": [
+    {"name": "users",    "sync_mode": "full_refresh"},
+    {"name": "products", "sync_mode": "full_refresh"},
+    {"name": "orders",   "sync_mode": "incremental", "cursor_field": ["updated_at"]}
+  ],
+  "notes": "Faker: generirует testovye dannye bez realnogo istochnika. Idealen dlya razrabotki i testirovaniya."
+}

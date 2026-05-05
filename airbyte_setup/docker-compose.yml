@@ -1,0 +1,7 @@
+# airbyte_setup/docker-compose.yml
+# Day 79: Airbyte Self-Hosted
+#
+# Ustanovka:
+#   git clone https://github.com/airbytehq/airbyte.git --depth 1
+#   cd airbyte && ./run-ab-platform.sh
+# UI: http://localhost:8000

@@ -1,0 +1,15 @@
+{
+  "connector": "GitHub API",
+  "config": {
+    "repositories": ["your-org/analytics-engineer-roadmap"],
+    "credentials": {
+      "option_title": "PAT Credentials",
+      "personal_access_token": "YOUR_GITHUB_PAT"
+    }
+  },
+  "streams": [
+    {"name": "commits",       "sync_mode": "incremental"},
+    {"name": "pull_requests", "sync_mode": "incremental"},
+    {"name": "issues",        "sync_mode": "incremental"}
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "connector": "Snowflake Destination",
+  "config": {
+    "host":      "YOUR_ACCOUNT.snowflakecomputing.com",
+    "role":      "analyst_role",
+    "warehouse": "analytics_wh",
+    "database":  "analytics_db",
+    "schema":    "raw",
+    "username":  "YOUR_USERNAME",
+    "password":  "YOUR_PASSWORD"
+  },
+  "normalization": "basic"
+}

@@ -1,0 +1,32 @@
+# profiles_snowflake_template.yml
+# Dobav etot blok v ~/.dbt/profiles.yml
+
+analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "dev.duckdb"
+      threads: 4
+    snowflake_dev:
+      type: snowflake
+      account:   YOUR_ACCOUNT_IDENTIFIER
+      user:      YOUR_USERNAME
+      password:  YOUR_PASSWORD
+      role:      analyst_role
+      database:  analytics_db
+      warehouse: analytics_wh
+      schema:    staging
+      threads:   4
+      client_session_keep_alive: false
+    snowflake_prod:
+      type: snowflake
+      account:   YOUR_ACCOUNT_IDENTIFIER
+      user:      YOUR_SERVICE_ACCOUNT_USER
+      password:  YOUR_PASSWORD
+      role:      analyst_role
+      database:  analytics_db
+      warehouse: analytics_wh
+      schema:    marts
+      threads:   8
+      client_session_keep_alive: false

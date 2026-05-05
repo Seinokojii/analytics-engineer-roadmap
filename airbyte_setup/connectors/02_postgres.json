@@ -1,0 +1,14 @@
+{
+  "connector": "PostgreSQL Source",
+  "config": {
+    "host": "localhost", "port": 5432,
+    "database": "your_database",
+    "username": "your_user", "password": "YOUR_PASSWORD",
+    "schemas": ["public"],
+    "replication_method": {"method": "CDC"}
+  },
+  "streams": [
+    {"name": "orders", "sync_mode": "incremental", "cursor_field": ["updated_at"]},
+    {"name": "users",  "sync_mode": "full_refresh"}
+  ]
+}

@@ -1,0 +1,11 @@
+version: 2
+sources:
+  - name: airbyte_raw
+    description: "Dannye zagruzhennye Airbyte v Snowflake raw schema"
+    database: analytics_db
+    schema: raw
+    tables:
+      - name: _airbyte_raw_orders
+      - name: _airbyte_raw_users
+      - name: _airbyte_raw_commits
+      - name: _airbyte_raw_pull_requests

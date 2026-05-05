@@ -1,0 +1,10 @@
+{
+  "connector": "Faker (Sample Data)",
+  "config": {"count": 1000, "seed": 42, "always_updated": false},
+  "streams": [
+    {"name": "users",    "sync_mode": "full_refresh"},
+    {"name": "products", "sync_mode": "full_refresh"},
+    {"name": "orders",   "sync_mode": "incremental", "cursor_field": ["updated_at"]}
+  ],
+  "notes": "Start here — no credentials needed"
+}

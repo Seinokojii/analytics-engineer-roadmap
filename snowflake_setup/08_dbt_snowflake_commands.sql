@@ -1,0 +1,12 @@
+-- snowflake_setup/08_dbt_snowflake_commands.sql
+-- pip install dbt-snowflake
+-- dbt debug --target snowflake_dev
+-- dbt run --target snowflake_dev
+-- dbt run --select fct_orders_incremental --target snowflake_dev
+-- dbt run --select fct_orders_incremental --full-refresh --target snowflake_dev
+-- dbt test --target snowflake_dev
+
+-- Proverit clustering v Snowflake:
+-- SELECT SYSTEM$CLUSTERING_INFORMATION(
+--     'analytics_db.marts.dim_customers_clustered', '(city)'
+-- );

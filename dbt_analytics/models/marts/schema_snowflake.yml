@@ -1,0 +1,15 @@
+version: 2
+models:
+  - name: fct_orders_incremental
+    description: "Incremental fct_orders s merge strategy"
+    columns:
+      - name: order_id
+        data_tests: [not_null, unique]
+      - name: amount
+        data_tests: [not_null]
+
+  - name: dim_customers_clustered
+    description: "dim_customers s Clustering Key po city"
+    columns:
+      - name: user_id
+        data_tests: [not_null, unique]
