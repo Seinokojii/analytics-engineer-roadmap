@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: gh_raw
+    description: "GitHub Events, zagruzhennye Airbyte v raw schema"
+    schema: raw
+    loaded_at_field: _airbyte_extracted_at
+    freshness:
+      warn_after: {count: 26, period: hour}
+      error_after: {count: 48, period: hour}
+    tables:
+      - name: airbyte_raw_gh_events
+        description: "Syrye sobytiya: _airbyte_data JSON + meta kolonki"

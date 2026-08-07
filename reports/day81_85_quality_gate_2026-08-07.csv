@@ -1,0 +1,7 @@
+check,passed,detail
+raw_not_empty,True,rows=227
+raw_freshness_26h,True,age=0.00h
+stg_event_id_unique,True,dupes=0
+mart_covers_all_partitions,True,"days=3, expected>=3"
+mart_no_orphan_repos,True,orphans=0
+dbt_build_green,True,rc=0

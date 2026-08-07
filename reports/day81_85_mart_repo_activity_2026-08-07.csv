@@ -1,0 +1,6 @@
+repo_name,events,contributors,active_days,pushes,pull_requests,first_event_date,last_event_date,events_per_day
+airbytehq/airbyte,53,6,3,26.0,8.0,2026-08-04,2026-08-06,17.67
+dbt-labs/dbt-core,46,6,3,21.0,16.0,2026-08-04,2026-08-06,15.33
+duckdb/duckdb,43,6,3,21.0,4.0,2026-08-04,2026-08-06,14.33
+dagster-io/dagster,43,6,3,22.0,9.0,2026-08-04,2026-08-06,14.33
+snowflakedb/snowflake-connector-python,42,6,3,24.0,8.0,2026-08-04,2026-08-06,14.0

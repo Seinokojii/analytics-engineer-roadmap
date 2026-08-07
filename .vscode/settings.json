@@ -1,11 +1,33 @@
 {
     "chat.agentSkillsLocations": {
-        ".github/skills": true,
         ".agents/skills": true,
+        ".github/skills": true,
         ".claude/skills": true,
-        "~/.copilot/skills": true,
         "~/.agents/skills": true,
-        "~/.claude/skills": true,
-        "~/.vscode/extensions/synapsevscode.synapse-1.22.0/copilot/skills": true
+        "~/.copilot/skills": true,
+        "~/.claude/skills": true
+    },
+
+    // Vsegda .venv - v nem dagster, dagster-dbt, dbt-snowflake.
+    // V venv312 dagster net, zapusk ottuda upadet.
+    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+    "python.terminal.activateEnvironment": true,
+
+    // Istoriya Dagster ranov i backfill perezhivaet restart servera.
+    // Bez etoy peremennoy dagster dev kazhdyy raz sozdaet .tmp_dagster_home_*
+    // i vsya istoriya propadaet.
+    "terminal.integrated.env.windows": {
+        "DAGSTER_HOME": "${workspaceFolder}\\dagster_home"
+    },
+
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.tmp_dagster_home_*": true
+    },
+
+    "[python]": {
+        "editor.rulers": [
+            88
+        ]
     }
 }

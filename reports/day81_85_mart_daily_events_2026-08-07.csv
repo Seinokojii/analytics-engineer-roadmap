@@ -1,0 +1,4 @@
+event_date,events,active_actors,active_repos,pushes,pull_requests,stars,avg_payload_size
+2026-08-04,80,6,5,33.0,18.0,9.0,3810.0
+2026-08-05,70,6,5,37.0,14.0,8.0,3956.4
+2026-08-06,77,6,5,44.0,13.0,7.0,4402.7
