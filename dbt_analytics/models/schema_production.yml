@@ -1,8 +1,26 @@
 version: 2
 
+# Day 86-88: Testing + Monitoring
+# Tri urovnya proverok na odnih i teh zhe modelyah:
+#   1. dbt core tests   - unique / not_null / accepted_values / relationships
+#   2. dbt-expectations - diapazony, formaty, sravnenie kolonok
+#   3. elementary       - anomalii vo vremeni (dobavlyayutsya v STEP 5)
+
 models:
   - name: stg_gh_events
     description: "Normalizovannye GitHub Events iz Airbyte raw"
+    config:
+      elementary:
+        timestamp_column: "created_at"
+    tests:
+      - elementary.volume_anomalies:
+          time_bucket:
+            period: day
+            count: 1
+      # Pustaya tablitsa - eto zelyonyy dbt run i slomannyy dashboard.
+      # Rovno tot sluchay, kotoryy not_null ne lovit.
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1
     columns:
       - name: event_id
         description: "Unikalnyy ID sobytiya v GitHub"
@@ -14,24 +32,79 @@ models:
               values: ['PushEvent', 'PullRequestEvent', 'IssuesEvent',
                        'WatchEvent', 'ForkEvent']
       - name: actor_login
-        tests: [not_null]
+        tests:
+          - not_null
+          # stg_gh_events delaet LOWER(actor_login).
+          # Test fiksiruet eto kak kontrakt, a ne kak sluchaynost.
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[^A-Z]*$"
       - name: repo_name
         tests: [not_null]
+      - name: payload_size
+        tests:
+          - not_null
+          - elementary.column_anomalies:
+              column_anomalies: [null_count, average]
+          # V staging uzhe est WHERE payload_size > 0.
+          # Verhnyaya granitsa lovit musor ot istochnika.
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 100000
       - name: event_date
         tests: [not_null]
 
   - name: mart_daily_events
     description: "Inkrementalnyy mart: aktivnost po dnyam"
+    config:
+      elementary:
+        timestamp_column: "event_date"
+    tests:
+      # Rezkoe padenie chisla strok v dne - slomannyy ingest.
+      - elementary.volume_anomalies:
+          time_bucket:
+            period: day
+            count: 1
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1
+      # Aktivnyh avtorov ne mozhet byt bolshe, chem sobytiy.
+      # Klassicheskiy simptom slomannogo JOIN - fan-out.
+      - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
+          column_A: events
+          column_B: active_actors
+          or_equal: true
     columns:
       - name: event_date
         tests: [unique, not_null]
       - name: events
+        tests:
+          - not_null
+          - elementary.column_anomalies:
+              column_anomalies: [null_count, average, max]
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+      - name: active_actors
+        tests: [not_null]
+      - name: active_repos
         tests: [not_null]
 
   - name: mart_repo_activity
     description: "Aktivnost po repozitoriyam"
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1
+      - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
+          column_A: events
+          column_B: contributors
+          or_equal: true
     columns:
       - name: repo_name
         tests: [unique, not_null]
       - name: contributors
-        tests: [not_null]
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+      - name: events_per_day
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0

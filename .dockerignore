@@ -1,0 +1,15 @@
+.venv/
+venv312/
+__pycache__/
+*.pyc
+*.duckdb
+.git/
+.pytest_cache/
+dagster_home/
+dbt_analytics/target/
+dbt_analytics/dbt_packages/
+dbt_analytics/logs/
+production_pipeline/compute_logs/
+reports/
+notes/
+*.bak

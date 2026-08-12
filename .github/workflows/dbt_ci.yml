@@ -1,0 +1,117 @@
+name: dbt CI (Days 86-88)
+
+# Zapuskaetsya na kazhdyy PR. Zadacha: PR ne dolzhen merzhitsya,
+# esli modeli ne kompiliruyutsya ili testy ne zelyonye.
+
+on:
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - 'dbt_analytics/**'
+      - 'production_pipeline/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+env:
+  DBT_PROFILES_DIR: ${{ github.workspace }}/.github/ci_profiles
+
+jobs:
+  # -----------------------------------------------------------------
+  # Job 1 - deshyovyy: lovit slomannyy Jinja i opechatki v ref()
+  # bez edinogo zaprosa k dannym.
+  # -----------------------------------------------------------------
+  parse:
+    name: dbt parse + compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dbt
+        run: pip install "dbt-core~=1.11.0" "dbt-duckdb~=1.8.0" --quiet
+      - name: dbt deps
+        working-directory: dbt_analytics
+        run: dbt deps
+      - name: dbt parse
+        working-directory: dbt_analytics
+        run: dbt parse --target ci
+      - name: dbt compile
+        working-directory: dbt_analytics
+        run: dbt compile --target ci --select tag:production_pipeline
+
+  # -----------------------------------------------------------------
+  # Job 2 - nastoyashchiy build na chistoy BD.
+  # *.duckdb v .gitignore, poetomu raw sobiraetsya iz CSV tem zhe
+  # kodom, chto i v Dagster - ingest_core.sync_partition.
+  # -----------------------------------------------------------------
+  build-and-test:
+    name: dbt build + test (DuckDB)
+    runs-on: ubuntu-latest
+    needs: parse
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install deps
+        run: |
+          pip install "dbt-core~=1.11.0" "dbt-duckdb~=1.8.0" --quiet
+          pip install duckdb pandas --quiet
+      - name: Seed raw from CSV
+        run: python .github/scripts/ci_seed_raw.py
+      - name: dbt deps
+        working-directory: dbt_analytics
+        run: dbt deps
+      # Elementary hranit istoriyu progonov v svoih tablitsah, i ee
+      # anomaly-testy chitayut ih. Na chistoy BD etih tablits net,
+      # i build padaet:
+      #   Catalog Error: Schema with name main_elementary does not exist
+      # Poetomu snachala stroim sluzhebnye modeli - tot zhe poryadok,
+      # chto i v lesson86_88.py (STEP 4 do STEP 6).
+      - name: Build Elementary models
+        working-directory: dbt_analytics
+        run: dbt run --target ci --select elementary
+      - name: dbt build
+        working-directory: dbt_analytics
+        run: dbt build --target ci --select tag:production_pipeline
+      - name: dbt source freshness
+        working-directory: dbt_analytics
+        continue-on-error: true
+        run: dbt source freshness --target ci
+      - name: Upload dbt artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-target
+          path: |
+            dbt_analytics/target/
+            dbt_analytics/logs/
+          retention-days: 7
+
+  # -----------------------------------------------------------------
+  # Job 3 - Snowflake. Vklyuchit, kogda budet akkaunt i Secrets.
+  # -----------------------------------------------------------------
+  # dbt-snowflake:
+  #   name: dbt build + test (Snowflake)
+  #   runs-on: ubuntu-latest
+  #   needs: parse
+  #   env:
+  #     SNOWFLAKE_ACCOUNT:   ${{ secrets.SNOWFLAKE_ACCOUNT }}
+  #     SNOWFLAKE_USER:      ${{ secrets.SNOWFLAKE_USER }}
+  #     SNOWFLAKE_PASSWORD:  ${{ secrets.SNOWFLAKE_PASSWORD }}
+  #     SNOWFLAKE_ROLE:      ${{ secrets.SNOWFLAKE_ROLE }}
+  #     SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+  #     SNOWFLAKE_DATABASE:  ${{ secrets.SNOWFLAKE_DATABASE }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.12'
+  #     - run: pip install "dbt-core~=1.11.0" "dbt-snowflake~=1.11.0" --quiet
+  #     - working-directory: dbt_analytics
+  #       run: dbt deps
+  #     - working-directory: dbt_analytics
+  #       run: dbt build --target prod --select tag:production_pipeline
