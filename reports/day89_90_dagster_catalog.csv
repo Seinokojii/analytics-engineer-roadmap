@@ -1,0 +1,76 @@
+type,name,description
+asset,raw/airbyte_raw_gh_events,Airbyte sync GitHub Events -> raw schema (1 partitsiya = 1 den)
+asset,fct_orders_daily,dbt model fct_orders_daily
+asset,snap_customers,dbt snapshot snap_customers
+asset,monthly_channel_pivot,dbt model monthly_channel_pivot
+asset,elementary/monitors_runs,This is a view on `data_monitoring_metrics` that is used to determine when a specific anomaly detection test w
+asset,elementary/alerts_dbt_models,"A view that is used by the Elementary CLI to generate models alerts, including all the fields the alert will i"
+asset,elementary/dbt_exposures,"Metadata about exposures in the project, including configuration and properties from the dbt graph. Each row c"
+asset,elementary/elementary_test_results,"Run results of all dbt tests, with fields and metadata needed to produce the Elementary report UI. Each row is"
+asset,elementary/metrics_anomaly_score,This is a view on `data_monitoring_metrics` that runs the same query the anomaly detection tests run to calcul
+asset,stg_saas_users,dbt model stg_saas_users
+asset,elementary/dbt_invocations,Attributes associated with each dbt invocation. Inserted at the end of each invocation.
+asset,metricflow_time_spine,Time spine required by [[MetricFlow]] for temporal metrics.
+asset,raw_subscriptions,dbt seed raw_subscriptions
+asset,elementary/dbt_source_freshness_results,dbt model dbt_source_freshness_results
+asset,elementary/dbt_sources,"Metadata about sources in the project, including configuration and properties from the dbt graph. Each row con"
+asset,fct_orders,dbt model fct_orders
+asset,raw_orders,dbt seed raw_orders
+asset,elementary/snapshot_run_results,"Run results of dbt snapshots, enriched with snapshots metadata. Each row is the result of a single snapshot. T"
+asset,monthly_revenue_pivot,dbt model monthly_revenue_pivot
+asset,elementary/alerts_dbt_source_freshness,dbt model alerts_dbt_source_freshness
+asset,mart_cohort_retention,Cohort retention by month
+asset,dim_customers_clustered,dim_customers s Clustering Key po city
+asset,stg_gh_events,"Typed GitHub event stream. Flattens the Airbyte raw JSON payload into columns, drops rows with no event id or "
+asset,elementary/alerts_schema_changes,A view that is used by the Elementary CLI to generate alerts on schema changes detected using elementary tests
+asset,elementary/schema_columns_snapshot,Stores the schema details for tables that are monitored with elementary schema changes test. In order to compa
+asset,stg_events,dbt model stg_events
+asset,stg_subscriptions,dbt model stg_subscriptions
+asset,raw_users,dbt seed raw_users
+asset,elementary/test_result_rows,dbt model test_result_rows
+asset,elementary/anomaly_threshold_sensitivity,This is a view on `metrics_anomaly_score` that calculates if values of metrics from latest runs would have bee
+asset,elementary/dbt_run_results,"Run results of dbt invocations, inserted at the end of each invocation. Each row is the invocation result of a"
+asset,dim_customers_history,dbt model dim_customers_history
+asset,elementary/seed_run_results,dbt model seed_run_results
+asset,raw_saas_users,dbt seed raw_saas_users
+asset,fct_orders_weekly,dbt model fct_orders_weekly
+asset,elementary/dbt_groups,dbt model dbt_groups
+asset,mart_rfm_segments,dbt model mart_rfm_segments
+asset,mart_daily_events,"Daily activity roll-up, one row per calendar day. Incremental with a delete+insert strategy keyed on event_dat"
+asset,elementary/dbt_metrics,"Metadata about metrics in the project, including configuration and properties from the dbt graph. Each row con"
+asset,raw_events,dbt seed raw_events
+asset,stg_users,dbt model stg_users
+asset,fct_orders_incremental,Incremental fct_orders s merge strategy
+asset,elementary/alerts_anomaly_detection,A view that is used by the Elementary CLI to generate alerts on data anomalies detected using the elementary a
+asset,mart_ltv,LTV by plan
+asset,fct_orders_star,dbt model fct_orders_star
+asset,elementary/job_run_results,"Run results of dbt invocations, enriched with jobs metadata. Each row is the result of a single job. This is a"
+asset,elementary/dbt_snapshots,"Metadata about snapshots in the project, including configuration and properties from the dbt graph. Each row c"
+asset,mart_repo_activity,"Per-repository activity over the full loaded history. Full-refresh table: the aggregate spans all days, so the"
+asset,stg_airbyte_orders,dbt model stg_airbyte_orders
+asset,dim_customers,dbt model dim_customers
+asset,elementary/dbt_models,"Metadata about models in the project, including configuration and properties from the dbt graph. Each row cont"
+asset,fct_orders_append,dbt model fct_orders_append
+asset,dim_date,Таблица дат 2023-2025
+asset,dim_subscribers,Subscribers dimension (SCD2 ready)
+asset,snap_subscribers,dbt snapshot snap_subscribers
+asset,fct_subscriptions,"Subscription facts: MRR, churn, LTV"
+asset,elementary/alerts_dbt_tests,"A view that is used by the Elementary CLI to generate dbt tests alerts, including all the fields the alert wil"
+asset,elementary/dbt_artifacts_hashes,dbt model dbt_artifacts_hashes
+asset,snap_orders_status,dbt snapshot snap_orders_status
+asset,elementary/dbt_seeds,dbt model dbt_seeds
+asset,fct_orders_surrogate,Заказы с суррогатным ключом
+asset,stg_orders_v2,dbt model stg_orders_v2
+asset,elementary/model_run_results,"Run results of dbt models, enriched with models metadata. Each row is the result of a single model. This is a "
+asset,stg_airbyte_github_commits,dbt model stg_airbyte_github_commits
+asset,metrics_customers,dbt model metrics_customers
+asset,elementary/dbt_tests,"Metadata about tests in the project, including configuration and properties from the dbt graph. Each row conta"
+asset,elementary/metadata,dbt model metadata
+asset,fct_orders_enriched,Обогащённые заказы с тирами и статусами
+asset,elementary/dbt_columns,dbt model dbt_columns
+asset,stg_orders,dbt model stg_orders
+asset,elementary/data_monitoring_metrics,"Elementary anomaly detection tests monitor metrics such as volume, freshness and data quality metrics. This in"
+asset_check,raw/airbyte_raw_gh_events:check_raw_not_empty,
+asset_check,raw/airbyte_raw_gh_events:check_raw_freshness,
+job,production_pipeline_job,Airbyte sync -> dbt build -> quality checks
+schedule,production_pipeline_daily,cron: 0 5 * * *

@@ -1,14 +1,21 @@
 version: 2
 
-# Day 86-88: Testing + Monitoring
-# Tri urovnya proverok na odnih i teh zhe modelyah:
-#   1. dbt core tests   - unique / not_null / accepted_values / relationships
+# Days 89-90: Documentation.
+# Etot fayl - poslednyaya instantsiya dlya production-modeley.
+# Soderzhit vse testy Day 86-88 PLUS opisanie kazhdoy kolonki.
+#
+# Tri urovnya proverok:
+#   1. dbt core        - unique / not_null / accepted_values
 #   2. dbt-expectations - diapazony, formaty, sravnenie kolonok
-#   3. elementary       - anomalii vo vremeni (dobavlyayutsya v STEP 5)
+#   3. elementary       - anomalii vo vremeni
 
 models:
   - name: stg_gh_events
-    description: "Normalizovannye GitHub Events iz Airbyte raw"
+    description: >
+      Typed GitHub event stream. Flattens the Airbyte raw JSON payload into
+      columns, drops rows with no event id or non-positive payload size, and
+      de-duplicates by event id keeping the latest extraction. One row per
+      GitHub event. Materialized as a view: the cost is in the marts, not here.
     config:
       elementary:
         timestamp_column: "created_at"
@@ -17,65 +24,84 @@ models:
           time_bucket:
             period: day
             count: 1
-      # Pustaya tablitsa - eto zelyonyy dbt run i slomannyy dashboard.
-      # Rovno tot sluchay, kotoryy not_null ne lovit.
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 1
     columns:
       - name: event_id
-        description: "Unikalnyy ID sobytiya v GitHub"
+        description: >
+          GitHub's own event identifier. Primary key of this model. Airbyte can
+          deliver the same event twice, so the model de-duplicates on this
+          column before the uniqueness test runs.
         tests: [unique, not_null]
       - name: event_type
+        description: >
+          Kind of GitHub activity. Constrained to the five types this pipeline
+          supports; anything else means the upstream schema changed and the
+          accepted_values test is expected to catch it.
         tests:
           - not_null
           - accepted_values:
               values: ['PushEvent', 'PullRequestEvent', 'IssuesEvent',
                        'WatchEvent', 'ForkEvent']
       - name: actor_login
+        description: >
+          GitHub username that triggered the event, lower-cased so that counts
+          of distinct actors are not split by letter case.
         tests:
           - not_null
-          # stg_gh_events delaet LOWER(actor_login).
-          # Test fiksiruet eto kak kontrakt, a ne kak sluchaynost.
           - dbt_expectations.expect_column_values_to_match_regex:
               regex: "^[^A-Z]*$"
       - name: repo_name
+        description: "Repository the event belongs to, in owner/name form."
         tests: [not_null]
+      - name: created_at
+        description: >
+          Event timestamp reported by GitHub. Used by Elementary as the time
+          axis for anomaly detection.
       - name: payload_size
+        description: >
+          Size of the event payload in bytes. Rows with a non-positive size are
+          filtered out upstream; the upper bound guards against source garbage.
         tests:
           - not_null
-          - elementary.column_anomalies:
-              column_anomalies: [null_count, average]
-          # V staging uzhe est WHERE payload_size > 0.
-          # Verhnyaya granitsa lovit musor ot istochnika.
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 1
               max_value: 100000
       - name: event_date
+        description: >
+          Partition date assigned by the ingest layer. This is the grain the
+          Dagster daily partition and the incremental mart are keyed on.
         tests: [not_null]
+      - name: airbyte_extracted_at
+        description: >
+          Extraction timestamp written by the loader. Drives source freshness
+          and decides which duplicate wins.
 
   - name: mart_daily_events
-    description: "Inkrementalnyy mart: aktivnost po dnyam"
+    description: >
+      Daily activity roll-up, one row per calendar day. Incremental with a
+      delete+insert strategy keyed on event_date, so re-running a day is
+      idempotent - the standard workaround for engines without MERGE.
     config:
       elementary:
         timestamp_column: "event_date"
     tests:
-      # Rezkoe padenie chisla strok v dne - slomannyy ingest.
       - elementary.volume_anomalies:
           time_bucket:
             period: day
             count: 1
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 1
-      # Aktivnyh avtorov ne mozhet byt bolshe, chem sobytiy.
-      # Klassicheskiy simptom slomannogo JOIN - fan-out.
       - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
           column_A: events
           column_B: active_actors
           or_equal: true
     columns:
       - name: event_date
+        description: "Calendar day. Grain and unique key of this model."
         tests: [unique, not_null]
       - name: events
+        description: "Total events on that day."
         tests:
           - not_null
           - elementary.column_anomalies:
@@ -83,12 +109,29 @@ models:
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 1
       - name: active_actors
-        tests: [not_null]
+        description: >
+          Distinct users active that day. Can never exceed the event count -
+          a pair test enforces it, because a breach means a fan-out join.
+        tests:
+          - not_null
+          - elementary.column_anomalies:
+              column_anomalies: [null_count, average]
       - name: active_repos
+        description: "Distinct repositories touched that day."
         tests: [not_null]
+      - name: pushes
+        description: "Events of type PushEvent."
+      - name: pull_requests
+        description: "Events of type PullRequestEvent."
+      - name: stars
+        description: "Events of type WatchEvent - GitHub reports a star as a watch."
+      - name: avg_payload_size
+        description: "Mean payload size in bytes for that day, rounded to 0.1."
 
   - name: mart_repo_activity
-    description: "Aktivnost po repozitoriyam"
+    description: >
+      Per-repository activity over the full loaded history. Full-refresh table:
+      the aggregate spans all days, so there is no correct incremental window.
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 1
@@ -98,13 +141,32 @@ models:
           or_equal: true
     columns:
       - name: repo_name
+        description: "Repository in owner/name form. Grain of this model."
         tests: [unique, not_null]
+      - name: events
+        description: "Total events recorded for the repository."
       - name: contributors
+        description: "Distinct actors seen in the repository."
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 1
+      - name: active_days
+        description: "Number of distinct days with at least one event."
+      - name: pushes
+        description: "Events of type PushEvent."
+      - name: pull_requests
+        description: "Events of type PullRequestEvent."
+      - name: first_event_date
+        description: "Earliest event date currently loaded for the repository."
+      - name: last_event_date
+        description: >
+          Latest event date currently loaded. Compare against today to spot a
+          repository that went quiet.
       - name: events_per_day
+        description: >
+          Events divided by active days. Intensity while active - not an
+          average over the calendar, which is why a quiet repo does not dilute it.
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 0

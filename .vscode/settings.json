@@ -5,13 +5,23 @@
         ".claude/skills": true,
         "~/.agents/skills": true,
         "~/.copilot/skills": true,
-        "~/.claude/skills": true
+        "~/.claude/skills": true,
+        "~/.vscode/extensions/synapsevscode.synapse-1.25.0/copilot/skills": true
     },
 
     // Vsegda .venv - v nem dagster, dagster-dbt, dbt-snowflake.
     // V venv312 dagster net, zapusk ottuda upadet.
     "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
     "python.terminal.activateEnvironment": true,
+
+    // Pylance ne ispolnyaet sys.path.insert(), poetomu ne vidit modulyu
+    // production_pipeline/definitions.py i pishet reportMissingImports.
+    // Kod pri etom rabotaet. Zdes daem analizatoru te zhe puti, chto i runtime.
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}\\production_pipeline",
+        "${workspaceFolder}\\dagster_dbt_pipeline",
+        "${workspaceFolder}\\dagster_pipeline"
+    ],
 
     // Istoriya Dagster ranov i backfill perezhivaet restart servera.
     // Bez etoy peremennoy dagster dev kazhdyy raz sozdaet .tmp_dagster_home_*
