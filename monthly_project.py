@@ -1,5 +1,5 @@
 ﻿"""
-Mesyachnyy proekt: E-Commerce Mini ETL + DW
+Месячный проект: E-Commerce Mini ETL + DW
 Novyy dataset в†’ ETL в†’ Star Schema в†’ dbt в†’ Dashboard
 """
 
@@ -33,7 +33,7 @@ Path('project/reports').mkdir(parents=True, exist_ok=True)
 
 
 # ========================================
-# SHAG 1: GENERATSIYA NOVOGO DATASETA
+# ШАГ 1: ГЕНЕРАЦИЯ НОВОГО ДАТАСЕТА
 # ========================================
 
 print("\n" + "=" * 70)
@@ -81,7 +81,7 @@ for cat, items in categories.items():
 
 products_df = pd.DataFrame(products_list)
 
-# Klienty
+# Клиенты
 cities = ['Moscow', 'SPB', 'Kazan', 'Ekb', 'NSK',
           'Krasnodar', 'Rostov', 'Ufa', 'Perm', 'Volgograd']
 customers_df = pd.DataFrame({
@@ -95,7 +95,7 @@ customers_df = pd.DataFrame({
     'registered_at': pd.date_range('2022-01-01', periods=N_CUSTOMERS, freq='12h')
 })
 
-# Zakazy s problemami kachestva (namerenno)
+# Заказы с проблемами качества (намеренно)
 order_dates = [
     datetime(2024, 1, 1) + timedelta(hours=np.random.randint(0, 8760))
     for _ in range(N_ORDERS)
@@ -122,26 +122,26 @@ orders_df = pd.DataFrame({
     )
 })
 
-# Dobavlyaem 100 dublikatov
+# Добавляем 100 дубликатов
 dupes = orders_df.sample(100, random_state=42)
 orders_df = pd.concat([orders_df, dupes], ignore_index=True)
 
-# Sokhranit raw
+# Сохранить raw
 products_df.to_csv('project/data/raw/products.csv',   index=False, encoding='utf-8')
 customers_df.to_csv('project/data/raw/customers.csv', index=False, encoding='utf-8')
 orders_df.to_csv('project/data/raw/orders.csv',       index=False, encoding='utf-8')
 
-logger.info(f"Raw dannyye sozdany:")
-logger.info(f"  products:  {len(products_df)} tovarov ({len(categories)} kategoriy)")
-logger.info(f"  customers: {len(customers_df)} klientov ({len(cities)} gorodov)")
-logger.info(f"  orders:    {len(orders_df)} zakazov (s {orders_df.duplicated('order_id').sum()} dublikami)")
-print(f"Products:  {len(products_df)} strok")
-print(f"Customers: {len(customers_df)} strok")
-print(f"Orders:    {len(orders_df)} strok ({orders_df.duplicated('order_id').sum()} dublikatov)")
+logger.info(f"Raw данные созданы:")
+logger.info(f"  products:  {len(products_df)} товаров ({len(categories)} категорий)")
+logger.info(f"  customers: {len(customers_df)} клиентов ({len(cities)} городов)")
+logger.info(f"  orders:    {len(orders_df)} заказов (с {orders_df.duplicated('order_id').sum()} дубликами)")
+print(f"Products:  {len(products_df)} строк")
+print(f"Customers: {len(customers_df)} строк")
+print(f"Orders:    {len(orders_df)} строк ({orders_df.duplicated('order_id').sum()} дубликатов)")
 
 
 # ========================================
-# SHAG 2: EXTRACT + TRANSFORM (OOP)
+# ШАГ 2: EXTRACT + TRANSFORM (OOP)
 # ========================================
 
 print("\n" + "=" * 70)
@@ -152,7 +152,7 @@ print("=" * 70)
 products_raw  = pd.read_csv('project/data/raw/products.csv')
 customers_raw = pd.read_csv('project/data/raw/customers.csv')
 orders_raw    = pd.read_csv('project/data/raw/orders.csv')
-logger.info("Extract: vse 3 CSV zagruzheny")
+logger.info("Extract: все 3 CSV загружены")
 
 # TRANSFORM вЂ” orders
 orders_clean = (orders_raw
@@ -201,9 +201,9 @@ customers_clean = (customers_raw
     )
 )
 
-logger.info(f"Transform: {len(orders_raw)} -> {len(orders_enriched)} strok zakazov")
-print(f"Zakazov posle ochistki:  {len(orders_enriched)} (bylo {len(orders_raw)})")
-print(f"Udaleno dublikatov:      {len(orders_raw) - len(orders_enriched)}")
+logger.info(f"Transform: {len(orders_raw)} -> {len(orders_enriched)} строк заказов")
+print(f"Заказов после очистки:  {len(orders_enriched)} (было {len(orders_raw)})")
+print(f"Удалено дубликатов:      {len(orders_raw) - len(orders_enriched)}")
 
 
 # ========================================
@@ -270,7 +270,7 @@ con.execute("""
     FROM orders_enriched
 """)
 
-# fct_orders (tsentral'naya tablitsa faktov)
+# fct_orders (центральная таблица фактов)
 con.execute("""
     CREATE OR REPLACE TABLE fct_orders AS
     SELECT
@@ -293,7 +293,7 @@ con.execute("""
     WHERE o.status IN ('completed', 'cancelled', 'refunded')
 """)
 
-print("Star Schema sozdana v project/ecommerce_dw.duckdb:")
+print("Star Schema создана в project/ecommerce_dw.duckdb:")
 for table in ['dim_products', 'dim_customers', 'dim_date',
               'dim_channels', 'fct_orders']:
     n = con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
@@ -345,7 +345,7 @@ print(f"""
 """)
 
 # Top kategorii
-print("Top kategorii po GMV:")
+print("Топ категорий по GMV:")
 top_cat = con.execute("""
     SELECT
         p.category,
@@ -361,7 +361,7 @@ top_cat = con.execute("""
 print(top_cat.to_string(index=False))
 
 # Top goroda
-print("\nTop gorodov po GMV:")
+print("\nТоп городов по GMV:")
 top_cities = con.execute("""
     SELECT
         c.city,
@@ -449,15 +449,15 @@ for i, (title, value, color) in enumerate(kpi_items):
             fontsize=9, color='gray', transform=ax.transAxes)
     ax.axis('off')
 
-# Grafik 1: Trend vyruchki
+# График 1: Тренд выручки
 ax1 = fig.add_subplot(gs[1, :2])
 ax1.plot(monthly_rev['month'], monthly_rev['revenue'],
          marker='o', color='#2ecc71', linewidth=2.5, markersize=6)
 ax1.fill_between(monthly_rev['month'], monthly_rev['revenue'],
                  alpha=0.12, color='#2ecc71')
-ax1.set_title('GMV po mesyatsam', fontweight='bold')
+ax1.set_title('GMV по месяцам', fontweight='bold')
 ax1.set_xlabel('Mesyats')
-ax1.set_ylabel('Vyruchka (rub)')
+ax1.set_ylabel('Выручка (руб)')
 ax1.set_xticks(range(1, 13))
 ax1.grid(True, alpha=0.3)
 
@@ -474,23 +474,23 @@ ax2.pie(tier_plot['revenue'].values,
         colors=tier_colors[:len(tier_plot)],
         startangle=90,
         textprops={'fontsize': 9})
-ax2.set_title('Dolya GMV po tier', fontweight='bold')
+ax2.set_title('Доля GMV по tier', fontweight='bold')
 
 # Grafik 3: Top kategorii
 ax3 = fig.add_subplot(gs[2, 0])
 ax3.barh(top_cat['category'], top_cat['gmv'],
          color='steelblue', alpha=0.8)
-ax3.set_title('GMV po kategoriyam', fontweight='bold')
+ax3.set_title('GMV по категориям', fontweight='bold')
 ax3.set_xlabel('GMV (rub)')
 ax3.invert_yaxis()
 ax3.grid(axis='x', alpha=0.3)
 
-# Grafik 4: Kanaly prodazh
+# График 4: Каналы продаж
 ax4 = fig.add_subplot(gs[2, 1])
 ax4.bar(channel_stats['channel'], channel_stats['revenue'],
         color=['#3498db', '#2ecc71', '#e67e22', '#95a5a6'],
         alpha=0.85)
-ax4.set_title('GMV po kanalam', fontweight='bold')
+ax4.set_title('GMV по каналам', fontweight='bold')
 ax4.set_xlabel('Kanal')
 ax4.set_ylabel('GMV (rub)')
 ax4.grid(axis='y', alpha=0.3)
@@ -499,7 +499,7 @@ ax4.grid(axis='y', alpha=0.3)
 ax5 = fig.add_subplot(gs[2, 2])
 ax5.barh(city_stats['city'], city_stats['revenue'],
          color='coral', alpha=0.8)
-ax5.set_title('Top gorodov po GMV', fontweight='bold')
+ax5.set_title('Топ городов по GMV', fontweight='bold')
 ax5.set_xlabel('GMV (rub)')
 ax5.invert_yaxis()
 ax5.grid(axis='x', alpha=0.3)
@@ -507,9 +507,9 @@ ax5.grid(axis='x', alpha=0.3)
 plt.savefig('project/reports/main_dashboard.png',
             dpi=150, bbox_inches='tight')
 plt.close()
-print("Dashboard sokhranyon: project/reports/main_dashboard.png")
+print("Dashboard сохранён: project/reports/main_dashboard.png")
 
-# Heatmap: kategoriya x mesyats
+# Heatmap: категория x месяц
 fig2, ax6 = plt.subplots(figsize=(14, 6))
 pivot = cat_month.pivot(
     index='category', columns='month', values='revenue'
@@ -517,7 +517,7 @@ pivot = cat_month.pivot(
 sns.heatmap(pivot, annot=True, fmt='.0f', cmap='YlOrRd',
             ax=ax6, linewidths=0.5,
             cbar_kws={'label': 'GMV (rub)'})
-ax6.set_title('GMV: Kategoriya x Mesyats (Heatmap)',
+ax6.set_title('GMV: Категория x Месяц (Heatmap)',
               fontsize=13, fontweight='bold')
 ax6.set_xlabel('Mesyats')
 ax6.set_ylabel('Kategoriya')
@@ -525,7 +525,7 @@ plt.tight_layout()
 plt.savefig('project/reports/heatmap_category_month.png',
             dpi=150, bbox_inches='tight')
 plt.close()
-print("Heatmap sokhranyon: project/reports/heatmap_category_month.png")
+print("Heatmap сохранён: project/reports/heatmap_category_month.png")
 
 
 # ========================================
@@ -722,11 +722,11 @@ with open(dbt_path / 'tests' / 'test_no_orphan_customers.sql',
           'w', encoding=enc) as f:
     f.write(test_no_orphans)
 
-print("dbt proekt sozdan v project_dbt/:")
+print("dbt проект создан в project_dbt/:")
 print("  models/staging/stg_orders.sql")
 print("  models/marts/fct_sales.sql")
 print("  models/marts/monthly_summary.sql")
-print("  models/staging/schema.yml  (5+ testov)")
+print("  models/staging/schema.yml  (5+ тестов)")
 print("  tests/test_positive_gmv.sql")
 print("  tests/test_no_orphan_customers.sql")
 
@@ -741,20 +741,20 @@ print("=" * 70)
 
 readme = """# E-Commerce Mini ETL + DW
 
-Mesyachnyy proekt: polnyy ETL pipeline dlya e-commerce analitiki.
+Месячный проект: полный ETL pipeline для e-commerce аналитики.
 
 ## Stack
 - Python (pandas, numpy, duckdb)
 - dbt-duckdb
 - matplotlib, seaborn
 
-## Arkhitektura
+## Архитектура
 ```
 CSV (raw) в†’ ETL (Python OOP) в†’ DuckDB (Star Schema) в†’ dbt в†’ Dashboard
 ```
 
 ## Star Schema
-- fct_orders (tsentral'naya tablitsa)
+- fct_orders (центральная таблица)
 - dim_products, dim_customers, dim_date, dim_channels
 
 ## KPI
@@ -763,7 +763,7 @@ CSV (raw) в†’ ETL (Python OOP) в†’ DuckDB (Star Schema) в†’ dbt �
 - AOV (Average Order Value)
 - Conversion Rate
 
-## Zapusk
+## Запуск
 ```bash
 python monthly_project.py
 cd project_dbt
@@ -772,18 +772,18 @@ dbt test
 ```
 
 ## Rezultaty
-- 5000 zakazov, 500 klientov, 100 tovarov
+- 5000 заказов, 500 клиентов, 100 товаров
 - 5 kategoriy tovarov
-- dbt modeli + 7 testov kachestva
+- dbt модели + 7 тестов качества
 - Dashboard s 6 grafikami
 """
 with open('project/README.md', 'w', encoding=enc) as f:
     f.write(readme)
-print("README.md sozdan: project/README.md")
+print("README.md создан: project/README.md")
 
 
 # ========================================
-# ITOGOVYY OTCHET
+# ИТОГОВЫЙ ОТЧЁТ
 # ========================================
 
 print("\n" + "=" * 70)
@@ -791,9 +791,9 @@ print("МЕСЯЧНЫЙ ПРОЕКТ ЗАВЕРШЁН!")
 print("=" * 70)
 print(f"""
 Dannyye:
-  products:  {len(products_df)} tovarov, {len(categories)} kategoriy
-  customers: {len(customers_df)} klientov, {len(cities)} gorodov
-  orders:    {len(orders_enriched)} zakazov (posle ochistki)
+  products:  {len(products_df)} товаров, {len(categories)} категорий
+  customers: {len(customers_df)} клиентов, {len(cities)} городов
+  orders:    {len(orders_enriched)} заказов (после очистки)
 
 Star Schema: project/ecommerce_dw.duckdb
   dim_products, dim_customers, dim_date, dim_channels

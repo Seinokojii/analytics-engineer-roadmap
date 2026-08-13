@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 checkpoint_week8.py - Week 8 Checkpoint (Days 46-60)
-Zapusk: python checkpoint_week8.py
-Proveryaet: dbt pipeline, Semantic Layer, FastAPI, reports
+Запуск: python checkpoint_week8.py
+Проверяет: dbt pipeline, Semantic Layer, FastAPI, reports
 """
 
 import subprocess

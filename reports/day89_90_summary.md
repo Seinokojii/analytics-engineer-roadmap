@@ -1,26 +1,26 @@
 # Days 89-90 - Documentation + GitHub
 
-Sgenerirovano: 2026-08-13T12:20:49
+Сгенерировано: 2026-08-13T13:25:25
 
-## Pokrytie dokumentatsiey
+## Покрытие документацией
 
-| Model | Kolonok v yml | S opisaniem |
+| Модель | Колонок в yml | С описанием |
 |---|---|---|
 | `stg_gh_events` | 8 | 8 |
 | `mart_daily_events` | 8 | 8 |
 | `mart_repo_activity` | 9 | 9 |
 
-Itogo kolonok s opisaniem: **25 iz 25**
+Итого колонок с описанием: **25 iz 25**
 
-## Artefakty
+## Артефакты
 
 - `dbt build`: `PASS=35 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=35`
 - Dagster catalog: 75 zapisey
-- `README.md` - Mermaid-diagramma, quick start, CI, Snowflake
-- `docs/DEMO_SCRIPT.md` - stsenariy video s taymingami
+- `README.md` — Mermaid-диаграмма, quick start, CI, Snowflake
+- `docs/DEMO_SCRIPT.md` — сценарий видео с таймингами
 - `dbt_analytics/target/index.html` - dbt docs
 
-## Chto ostalos
+## Что осталось
 
-- Zapisat video po stsenariyu
-- Docker: obraz ne sobiralsya, Docker ne ustanovlen
+- Записать видео по сценарию
+- Docker: образ не собирался, Docker не установлен

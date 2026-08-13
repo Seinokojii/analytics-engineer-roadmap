@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 monthly_project2.py - Monthly Project 2: Retention & Cohort + dbt Pipeline
-Zapusk: python monthly_project2.py
+Запуск: python monthly_project2.py
 
 FIX v2:
   - _metrics_saas.yml: ltv_sum is a measure, not a metric.
@@ -514,14 +514,14 @@ def create_tests():
     tests_dir.mkdir(exist_ok=True)
 
     write_utf8(tests_dir / "assert_no_negative_mrr.sql", """\
--- MRR ne mozhet byt otricatelnym
+-- MRR не может быть отрицательным
 SELECT subscription_id, mrr
 FROM {{ ref('fct_subscriptions') }}
 WHERE mrr < 0
 """)
 
     write_utf8(tests_dir / "assert_churn_rate_valid.sql", """\
--- Churn rate po planu ne mozhet prevyshat 100%
+-- Churn rate по плану не может превышать 100%
 SELECT plan,
     churned * 1.0 / NULLIF(total, 0) AS churn_rate
 FROM (

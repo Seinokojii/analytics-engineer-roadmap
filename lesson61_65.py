@@ -5,9 +5,9 @@ Software-Defined Assets + DuckDB + Schedules + Sensors
 
 Zapusk:
   pip install dagster dagster-webserver duckdb polars pandas
-  python lesson61_65.py        # sozdaet strukturu proekta
+  python lesson61_65.py        # создаёт структуру проекта
   cd dagster_pipeline
-  dagster dev                  # zapuskaet UI na localhost:3000
+  dagster dev                  # запускает UI на localhost:3000
 """
 
 import subprocess
@@ -55,12 +55,12 @@ ASSETS_PY = (
     "    return duckdb.connect(str(DB_PATH), read_only=read_only)\n"
     "\n"
     "\n"
-    "# ── Day 61: Pervyy @asset s metadata ─────────────────\n"
+    "# ── Day 61: Первый @asset с metadata ─────────────────\n"
     "\n"
     "@asset(\n"
     "    group_name='ingestion',\n"
     "    kinds={'python', 'csv'},\n"
-    "    description='Generiruet i zagruzhaet raw_orders CSV',\n"
+    "    description='Генерирует и загружает raw_orders CSV',\n"
     ")\n"
     "def raw_orders(context: AssetExecutionContext) -> Output:\n"
     "    n = 1000\n"
@@ -98,7 +98,7 @@ ASSETS_PY = (
     "@asset(\n"
     "    group_name='ingestion',\n"
     "    kinds={'python', 'csv'},\n"
-    "    description='Generiruet raw_users CSV',\n"
+    "    description='Генерирует raw_users CSV',\n"
     ")\n"
     "def raw_users(context: AssetExecutionContext) -> Output:\n"
     "    channels = ['organic', 'paid', 'referral', 'social']\n"
@@ -134,7 +134,7 @@ ASSETS_PY = (
     "    deps=['raw_orders'],\n"
     "    group_name='staging',\n"
     "    kinds={'duckdb'},\n"
-    "    description='Ochishchaet raw_orders: tolko completed, amount > 0',\n"
+    "    description='Очищает raw_orders: только completed, amount > 0',\n"
     ")\n"
     "def stg_orders(context: AssetExecutionContext) -> Output:\n"
     "    con = get_con()\n"
@@ -170,7 +170,7 @@ ASSETS_PY = (
     "    deps=['raw_users'],\n"
     "    group_name='staging',\n"
     "    kinds={'duckdb'},\n"
-    "    description='Ochishchaet raw_users: LOWER email, UPPER city',\n"
+    "    description='Очищает raw_users: LOWER email, UPPER city',\n"
     ")\n"
     "def stg_users(context: AssetExecutionContext) -> Output:\n"
     "    con = get_con()\n"
@@ -244,7 +244,7 @@ ASSETS_PY = (
     "        'dim_customers': AssetOut(\n"
     "            group_name='marts',\n"
     "            kinds={'duckdb'},\n"
-    "            description='Dimension: klienty s aggregatami',\n"
+    "            description='Dimension: клиенты с агрегатами',\n"
     "        ),\n"
     "        'dim_dates': AssetOut(\n"
     "            group_name='marts',\n"
@@ -330,7 +330,7 @@ SCHEDULES_SENSORS_PY = (
     "\n"
     "# ── Jobs ─────────────────────────────────────────────\n"
     "\n"
-    "# Zapuskaet ves pipeline: raw -> stg -> fct -> dims\n"
+    "# Запускает весь pipeline: raw -> stg -> fct -> dims\n"
     "full_pipeline_job = define_asset_job(\n"
     "    name='full_pipeline_job',\n"
     "    selection=[\n"
@@ -341,7 +341,7 @@ SCHEDULES_SENSORS_PY = (
     "    ],\n"
     ")\n"
     "\n"
-    "# Tolko ingestion\n"
+    "# Только ingestion\n"
     "ingestion_job = define_asset_job(\n"
     "    name='ingestion_job',\n"
     "    selection=['raw_orders', 'raw_users'],\n"
@@ -349,31 +349,31 @@ SCHEDULES_SENSORS_PY = (
     "\n"
     "# ── Schedules ────────────────────────────────────────\n"
     "\n"
-    "# Kazhdoe utro v 6:00 UTC\n"
+    "# Каждое утро в 6:00 UTC\n"
     "daily_analytics_schedule = ScheduleDefinition(\n"
     "    name='daily_analytics_schedule',\n"
     "    job=full_pipeline_job,\n"
     "    cron_schedule='0 6 * * *',\n"
-    "    description='Ezhednevnyy ETL pipeline v 6:00 UTC',\n"
+    "    description='Ежедневный ETL pipeline в 6:00 UTC',\n"
     ")\n"
     "\n"
-    "# Kazhdyy ponedelnik\n"
+    "# Каждый понедельник\n"
     "weekly_refresh_schedule = ScheduleDefinition(\n"
     "    name='weekly_refresh_schedule',\n"
     "    job=full_pipeline_job,\n"
     "    cron_schedule='0 4 * * 1',\n"
-    "    description='Ezhenedelnyy polnyy refresh po ponedelnikam v 4:00 UTC',\n"
+    "    description='Еженедельный полный refresh по понедельникам в 4:00 UTC',\n"
     ")\n"
     "\n"
     "# ── Sensor ───────────────────────────────────────────\n"
     "\n"
     "@sensor(\n"
     "    job=ingestion_job,\n"
-    "    description='Zapuskaet ingestion kogda v inbox/ poyavlyaetsya novyy CSV',\n"
+    "    description='Запускает ingestion когда в inbox/ появляется новый CSV',\n"
     "    minimum_interval_seconds=30,\n"
     ")\n"
     "def new_csv_sensor(context: SensorEvaluationContext):\n"
-    "    # Chitaem kursor (poslednyy obrabotannyy fayl)\n"
+    "    # Читаем курсор (последний обработанный файл)\n"
     "    cursor = context.cursor or ''\n"
     "\n"
     "    new_files = sorted(\n"
@@ -397,7 +397,7 @@ SCHEDULES_SENSORS_PY = (
     "            tags={'source_file': csv_file.name},\n"
     "        )\n"
     "\n"
-    "    # Obnovlyaem cursor\n"
+    "    # Обновляем cursor\n"
     "    context.update_cursor(new_files[-1].name)\n"
 )
 
@@ -405,7 +405,7 @@ SCHEDULES_SENSORS_PY = (
 
 ASSET_CHECKS_PY = (
     "# dagster_pipeline/asset_checks.py\n"
-    "# Quality checks dlya assets -- analog dbt test\n"
+    "# Quality checks для assets -- аналог dbt test\n"
     "# [[Dagster]] [[Data Quality]]\n"
     "\n"
     "import duckdb\n"
@@ -419,7 +419,7 @@ ASSET_CHECKS_PY = (
     "    return duckdb.connect(str(DB_PATH), read_only=True)\n"
     "\n"
     "\n"
-    "@asset_check(asset='fct_orders', description='Net zakazov s otricatelnym sumoy')\n"
+    "@asset_check(asset='fct_orders', description='Нет заказов с отрицательной суммой')\n"
     "def check_no_negative_amount():\n"
     "    con = get_con()\n"
     "    bad = con.execute('SELECT COUNT(*) FROM fct_orders WHERE amount < 0').fetchone()[0]\n"
@@ -431,7 +431,7 @@ ASSET_CHECKS_PY = (
     "    )\n"
     "\n"
     "\n"
-    "@asset_check(asset='fct_orders', description='Vse order_id unikalnye')\n"
+    "@asset_check(asset='fct_orders', description='Все order_id уникальные')\n"
     "def check_unique_order_ids():\n"
     "    con = get_con()\n"
     "    total = con.execute('SELECT COUNT(*) FROM fct_orders').fetchone()[0]\n"
@@ -455,8 +455,8 @@ ASSET_CHECKS_PY = (
 
 DEFINITIONS_PY = (
     "# dagster_pipeline/definitions.py\n"
-    "# Glavnyy entry point dlya Dagster\n"
-    "# 'dagster dev' chitaet etot fayl\n"
+    "# Главный entry point для Dagster\n"
+    "# 'dagster dev' читает этот файл\n"
     "\n"
     "from dagster import Definitions\n"
     "from assets import (\n"
@@ -560,19 +560,19 @@ def main():
         print("  WARNING: Fix errors above")
     print("=" * 55)
     print("""
-Sleduyushchie shagi:
+Следующие шаги:
   cd dagster_pipeline
   dagster dev
 
 Otkroy v brauzere:
   http://localhost:3000           <- Asset catalog
-  http://localhost:3000/assets    <- Vse assets s lineage
-  http://localhost:3000/schedules <- Raspisaniya
+  http://localhost:3000/assets    <- Все assets с lineage
+  http://localhost:3000/schedules <- Расписания
 
-Zapusk vse assets cherez UI:
+Запуск всех assets через UI:
   Assets -> Materialize All
 
-Proverit sensor:
+Проверить sensor:
   Sensors -> new_csv_sensor -> Evaluate
 
 Git:

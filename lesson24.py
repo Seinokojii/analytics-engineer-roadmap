@@ -1,6 +1,6 @@
 """
-Den 24: BI osnovy vizualizatsii
-matplotlib + seaborn + podgotovka dannykh dlya Power BI
+День 24: BI основы визуализации
+matplotlib + seaborn + подготовка данных для Power BI
 """
 
 import pandas as pd
@@ -12,32 +12,32 @@ import seaborn as sns
 from pathlib import Path
 
 print("=" * 70)
-print(" " * 15 + "DEN 24: BI OSNOVY VIZUALIZATSII")
+print(" " * 15 + "ДЕНЬ 24: BI ОСНОВЫ ВИЗУАЛИЗАЦИИ")
 print("=" * 70)
 
 
 # ========================================
-# CHAST 1: PODGOTOVKA DANNYKH IZ DBT
+# ЧАСТЬ 1: ПОДГОТОВКА ДАННЫХ ИЗ DBT
 # ========================================
 
 print("\n" + "=" * 70)
-print("1  CHAST 1: Zagruzka dannykh iz dbt/DuckDB")
+print("1  ЧАСТЬ 1: Загрузка данных из dbt/DuckDB")
 print("=" * 70)
 
-# Podklyuchayemsya k nashey dbt baze
+# Подключаемся к нашей dbt базе
 dbt_db_path = Path('dbt_analytics') / 'analytics.duckdb'
 
 if dbt_db_path.exists():
     con = duckdb.connect(str(dbt_db_path), read_only=True)
-    print(f"Podklyuchilis k: {dbt_db_path}")
+    print(f"Подключились к: {dbt_db_path}")
 
     tables = con.execute("SHOW TABLES").df()
-    print(f"Tablitsy v baze:")
+    print(f"Таблицы в базе:")
     for t in tables['name'].tolist():
         n = con.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
         print(f"  {t}: {n} strok")
 
-    # Zagruzka modeley
+    # Загрузка моделей
     fct_orders = con.execute("SELECT * FROM fct_orders_enriched").df()
     dim_customers = con.execute("SELECT * FROM dim_customers").df()
     con.close()
@@ -45,7 +45,7 @@ if dbt_db_path.exists():
     print(f"dim_customers: {len(dim_customers)} strok")
 
 else:
-    print("dbt baza ne naydena, sozdayom demo-dannyye")
+    print("dbt база не найдена, создаём demo-данные")
     np.random.seed(42)
     N = 500
     fct_orders = pd.DataFrame({
@@ -67,15 +67,15 @@ else:
         'total_orders': np.random.randint(1, 20, 100),
         'total_spent':  np.random.randint(500, 50000, 100)
     })
-    print("Demo-dannyye sozdany")
+    print("Demo-данные созданы")
 
 
 # ========================================
-# CHAST 2: KPI DASHBOARD
+# ЧАСТЬ 2: KPI DASHBOARD
 # ========================================
 
 print("\n" + "=" * 70)
-print("2  CHAST 2: KPI - klyuchevyye metriki")
+print("2  ЧАСТЬ 2: KPI — ключевые метрики")
 print("=" * 70)
 
 total_revenue    = fct_orders['amount'].sum()
@@ -85,19 +85,19 @@ avg_order        = fct_orders['amount'].mean()
 
 print(f"""
 KPI DASHBOARD:
-  Obshchaya vyruchka:       {total_revenue:>12,.0f} rub
-  Vsego zakazov:            {total_orders:>12,}
-  Unikalnych klientov:      {unique_customers:>12,}
-  Sredniy chek:             {avg_order:>12,.0f} rub
+  Общая выручка:       {total_revenue:>12,.0f} rub
+  Всего заказов:            {total_orders:>12,}
+  Уникальных клиентов:      {unique_customers:>12,}
+  Средний чек:             {avg_order:>12,.0f} rub
 """)
 
 
 # ========================================
-# CHAST 3: VIZUALIZATSIYA — 4 GRAFIKA
+# ЧАСТЬ 3: ВИЗУАЛИЗАЦИЯ — 4 ГРАФИКА
 # ========================================
 
 print("\n" + "=" * 70)
-print("3  CHAST 3: Vizualizatsiya — 4 grafika")
+print("3  ЧАСТЬ 3: Визуализация — 4 графика")
 print("=" * 70)
 
 Path('reports').mkdir(exist_ok=True)
@@ -105,14 +105,14 @@ Path('reports').mkdir(exist_ok=True)
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 fig.suptitle('E-Commerce Analytics Dashboard', fontsize=16, fontweight='bold')
 
-# --- GRAFIK 1: Vyruchka po mesyatsam ---
+# --- ГРАФИК 1: Выручка по месяцам ---
 ax1 = axes[0, 0]
 monthly = fct_orders.groupby('order_month')['amount'].sum().reset_index()
 monthly.columns = ['month', 'revenue']
 ax1.bar(monthly['month'], monthly['revenue'], color='steelblue', alpha=0.8)
-ax1.set_title('Vyruchka po mesyatsam')
-ax1.set_xlabel('Mesyats')
-ax1.set_ylabel('Vyruchka (rub)')
+ax1.set_title('Выручка по месяцам')
+ax1.set_xlabel('Месяц')
+ax1.set_ylabel('Выручка (руб)')
 ax1.set_xticks(range(1, 13))
 for bar, val in zip(ax1.patches, monthly['revenue']):
     ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1000,
@@ -124,17 +124,17 @@ tier_counts = fct_orders['revenue_tier'].value_counts()
 colors = ['#2ecc71', '#3498db', '#e67e22', '#9b59b6', '#e74c3c']
 ax2.pie(tier_counts.values, labels=tier_counts.index,
         autopct='%1.1f%%', colors=colors[:len(tier_counts)], startangle=90)
-ax2.set_title('Raspredeleniye po revenue tier')
+ax2.set_title('Распределение по revenue tier')
 
-# --- GRAFIK 3: Top-10 klientov ---
+# --- ГРАФИК 3: Топ-10 клиентов ---
 ax3 = axes[1, 0]
 top10 = dim_customers.nlargest(10, 'total_spent')[['user_name', 'total_spent']]
 ax3.barh(top10['user_name'], top10['total_spent'], color='coral', alpha=0.8)
-ax3.set_title('Top-10 klientov po vyruchke')
+ax3.set_title('Топ-10 клиентов по выручке')
 ax3.set_xlabel('Total spent (rub)')
 ax3.invert_yaxis()
 
-# --- GRAFIK 4: Boxplot summy zakaza po tier ---
+# --- ГРАФИК 4: Boxplot суммы заказа по tier ---
 ax4 = axes[1, 1]
 tiers_order = ['low', 'medium', 'high', 'vip']
 tiers_data = [fct_orders[fct_orders['revenue_tier'] == t]['amount'].values
@@ -143,29 +143,29 @@ tiers_labels = [t for t in tiers_order
                 if t in fct_orders['revenue_tier'].values]
 ax4.boxplot(tiers_data, labels=tiers_labels, patch_artist=True,
             boxprops=dict(facecolor='lightblue', alpha=0.7))
-ax4.set_title('Summa zakaza po tier (boxplot)')
+ax4.set_title('Сумма заказа по tier (boxplot)')
 ax4.set_xlabel('Revenue Tier')
 ax4.set_ylabel('Amount (rub)')
 
 plt.tight_layout()
 plt.savefig('reports/dashboard.png', dpi=150, bbox_inches='tight')
 plt.close()
-print("Grafik sokhranyon: reports/dashboard.png")
+print("График сохранён: reports/dashboard.png")
 
 
 # ========================================
-# CHAST 4: EKSPORT DLYA POWER BI
+# ЧАСТЬ 4: ЭКСПОРТ ДЛЯ POWER BI
 # ========================================
 
 print("\n" + "=" * 70)
-print("4  CHAST 4: Eksport dannykh dlya Power BI")
+print("4  ЧАСТЬ 4: Экспорт данных для Power BI")
 print("=" * 70)
 
-# Power BI chitayet CSV i Excel
+# Power BI читает CSV и Excel
 fct_orders.to_csv('reports/fct_orders_for_powerbi.csv', index=False, encoding='utf-8')
 dim_customers.to_csv('reports/dim_customers_for_powerbi.csv', index=False, encoding='utf-8')
 
-# Summary dlya dashborda
+# Summary для дашборда
 summary = fct_orders.groupby('order_month').agg(
     orders=('order_id', 'count'),
     revenue=('amount', 'sum'),
@@ -176,29 +176,29 @@ summary['revenue'] = summary['revenue'].round(0)
 summary['avg_check'] = summary['avg_check'].round(0)
 summary.to_csv('reports/monthly_summary_for_powerbi.csv', index=False, encoding='utf-8')
 
-print("Fayly dlya Power BI soxraneny v reports/:")
+print("Файлы для Power BI сохранены в reports/:")
 print("  fct_orders_for_powerbi.csv")
 print("  dim_customers_for_powerbi.csv")
 print("  monthly_summary_for_powerbi.csv")
 
 print("""
-INSTRUKTSIYA PODKLYUCHENIYA K POWER BI:
+ИНСТРУКЦИЯ ПОДКЛЮЧЕНИЯ К POWER BI:
 1. Skachy Power BI Desktop: https://powerbi.microsoft.com/desktop
-2. Otkroy Power BI Desktop
+2. Открой Power BI Desktop
 3. Get Data → Text/CSV
 4. Vyberi fct_orders_for_powerbi.csv
 5. Load → OK
-6. Povtori dlya dim_customers_for_powerbi.csv
-7. Model View: sozdai svyaz user_id → user_id
+6. Повтори для dim_customers_for_powerbi.csv
+7. Model View: создай связь user_id → user_id
 """)
 
 
 # ========================================
-# CHAST 5: SEABORN — KRASIVYYE GRAFIKI
+# ЧАСТЬ 5: SEABORN — КРАСИВЫЕ ГРАФИКИ
 # ========================================
 
 print("\n" + "=" * 70)
-print("5  CHAST 5: Seaborn — prodvinutaya vizualizatsiya")
+print("5  ЧАСТЬ 5: Seaborn — продвинутая визуализация")
 print("=" * 70)
 
 fig2, axes2 = plt.subplots(1, 2, figsize=(14, 5))
@@ -208,16 +208,16 @@ fig2.suptitle('Advanced Analytics', fontsize=14, fontweight='bold')
 ax5 = axes2[0]
 pivot = fct_orders.groupby(['order_quarter', 'revenue_tier'])['amount'].sum().unstack(fill_value=0)
 sns.heatmap(pivot, annot=True, fmt='.0f', cmap='Blues', ax=ax5)
-ax5.set_title('Vyruchka: Kvartal x Tier')
+ax5.set_title('Выручка: Квартал x Tier')
 ax5.set_xlabel('Revenue Tier')
 ax5.set_ylabel('Kvartal')
 
-# Distribution: raspredeleniye summy zakaza
+# Distribution: распределение суммы заказа
 ax6 = axes2[1]
 sns.histplot(fct_orders['amount'], bins=30, kde=True, ax=ax6, color='steelblue')
-ax6.set_title('Raspredeleniye summy zakaza')
+ax6.set_title('Распределение суммы заказа')
 ax6.set_xlabel('Amount (rub)')
-ax6.set_ylabel('Kolichestvo zakazov')
+ax6.set_ylabel('Количество заказов')
 ax6.axvline(fct_orders['amount'].mean(), color='red', linestyle='--',
             label=f"Mean: {fct_orders['amount'].mean():.0f}")
 ax6.axvline(fct_orders['amount'].median(), color='orange', linestyle='--',
@@ -227,7 +227,7 @@ ax6.legend()
 plt.tight_layout()
 plt.savefig('reports/advanced_analytics.png', dpi=150, bbox_inches='tight')
 plt.close()
-print("Grafik sokhranyon: reports/advanced_analytics.png")
+print("График сохранён: reports/advanced_analytics.png")
 
 
 # ========================================
@@ -235,18 +235,18 @@ print("Grafik sokhranyon: reports/advanced_analytics.png")
 # ========================================
 
 print("\n" + "=" * 70)
-print("DEN 24 ZAVERSHEN!")
+print("ДЕНЬ 24 ЗАВЕРШЁН!")
 print("=" * 70)
 print(f"""
-Ty sozdal:
-1. KPI metrik iz dbt/DuckDB (revenue, orders, customers, avg_check)
-2. Dashboard iz 4 grafikov → reports/dashboard.png
-3. CSV eksport dlya Power BI (3 fajla v reports/)
+Ты создал:
+1. KPI метрик из dbt/DuckDB (revenue, orders, customers, avg_check)
+2. Dashboard из 4 графиков → reports/dashboard.png
+3. CSV экспорт для Power BI (3 файла в reports/)
 4. Seaborn heatmap + distribution → reports/advanced_analytics.png
 
-SLEDUYUSHCHIY SHAG:
+СЛЕДУЮЩИЙ ШАГ:
 python lesson24_bi_basics.py
-Otkroy reports/dashboard.png — eto tvoy pervyy dashboard!
+Открой reports/dashboard.png — это твой первый dashboard!
 
-Sleduyushchiy den: Den 25 — Power BI zagruzka dannykh
+Следующий день: День 25 — Power BI загрузка данных
 """)

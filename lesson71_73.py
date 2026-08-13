@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 lesson71_73.py - Days 71-73: Snowflake Architecture
-Zapusk: python lesson71_73.py
+Запуск: python lesson71_73.py
 
-Chto delaet:
-  1. Generiruet vse SQL skripty dlya Snowflake setup
-  2. Sozdaet strukturu papok dlya Snowflake proekta
-  3. Delaet lokalnuyu simulyatsiyu v DuckDB (esli Snowflake net)
+Что делает:
+  1. Генерирует все SQL скрипты для Snowflake setup
+  2. Создаёт структуру папок для Snowflake проекта
+  3. Делает локальную симуляцию в DuckDB (если Snowflake нет)
 
 Snowflake Trial: https://signup.snowflake.com
 """
@@ -30,28 +30,28 @@ def write_utf8(path: Path, content: str) -> None:
 
 SETUP_SQL = """\
 -- snowflake_setup/01_setup_database.sql
--- Day 71: Sozdanie osnovnoy struktury v Snowflake
--- Zapusk: v Snowflake Worksheet ili SnowSQL
+-- Day 71: Создание основной структуры в Snowflake
+-- Запуск: в Snowflake Worksheet или SnowSQL
 
--- 1. Ispolzuy ACCOUNTADMIN dlya nachalnoy nastroyki
+-- 1. Используй ACCOUNTADMIN для начальной настройки
 USE ROLE ACCOUNTADMIN;
 
--- 2. Virtualnyy sklad (compute)
+-- 2. Виртуальный склад (compute)
 CREATE WAREHOUSE IF NOT EXISTS analytics_wh
     WAREHOUSE_SIZE    = 'XSMALL'
-    AUTO_SUSPEND      = 60          -- vyklyuchaetsya cherez 60 sek prostoyi
-    AUTO_RESUME       = TRUE        -- vklyuchaetsya avtomaticheski pri zaprose
-    INITIALLY_SUSPENDED = TRUE;     -- starta vyklyuchennym (ekonomiya)
+    AUTO_SUSPEND      = 60          -- выключается через 60 сек простоя
+    AUTO_RESUME       = TRUE        -- включается автоматически при запросе
+    INITIALLY_SUSPENDED = TRUE;     -- стартует выключенным (экономия)
 
--- 3. Baza dannykh
+-- 3. База данных
 CREATE DATABASE IF NOT EXISTS analytics_db;
 
 -- 4. Skhemy (bronza / serebrо / zoloto)
-CREATE SCHEMA IF NOT EXISTS analytics_db.raw;      -- Bronze: syrye dannye
-CREATE SCHEMA IF NOT EXISTS analytics_db.staging;  -- Silver: ochistka
+CREATE SCHEMA IF NOT EXISTS analytics_db.raw;      -- Bronze: сырые данные
+CREATE SCHEMA IF NOT EXISTS analytics_db.staging;  -- Silver: очистка
 CREATE SCHEMA IF NOT EXISTS analytics_db.marts;    -- Gold: biznes-modeli
 
--- 5. Podklyuchaem sklad
+-- 5. Подключаем склад
 USE WAREHOUSE analytics_wh;
 USE DATABASE analytics_db;
 """
@@ -61,19 +61,19 @@ USE DATABASE analytics_db;
 RBAC_SQL = """\
 -- snowflake_setup/02_roles_rbac.sql
 -- Day 71: Roles i RBAC
--- Ierarkhiya: ACCOUNTADMIN -> SYSADMIN -> analyst_role -> readonly_role
+-- Иерархия: ACCOUNTADMIN -> SYSADMIN -> analyst_role -> readonly_role
 
 USE ROLE ACCOUNTADMIN;
 
--- Sozdaem roli
+-- Создаём роли
 CREATE ROLE IF NOT EXISTS analyst_role;
 CREATE ROLE IF NOT EXISTS readonly_role;
 
--- Ierarkhiya: analyst_role -> SYSADMIN -> ACCOUNTADMIN
+-- Иерархия: analyst_role -> SYSADMIN -> ACCOUNTADMIN
 GRANT ROLE analyst_role  TO ROLE SYSADMIN;
 GRANT ROLE readonly_role TO ROLE analyst_role;
 
--- analyst_role: mozhet delat VSE v analytics_db
+-- analyst_role: может делать ВСЁ в analytics_db
 GRANT USAGE  ON WAREHOUSE analytics_wh          TO ROLE analyst_role;
 GRANT USAGE  ON DATABASE analytics_db           TO ROLE analyst_role;
 GRANT USAGE  ON ALL SCHEMAS IN DATABASE analytics_db TO ROLE analyst_role;
@@ -89,14 +89,14 @@ GRANT USAGE  ON DATABASE analytics_db           TO ROLE readonly_role;
 GRANT USAGE  ON ALL SCHEMAS IN DATABASE analytics_db TO ROLE readonly_role;
 GRANT SELECT ON ALL TABLES IN DATABASE analytics_db  TO ROLE readonly_role;
 
--- Future grants (dlya novykh tablic)
+-- Future grants (для новых таблиц)
 GRANT SELECT ON FUTURE TABLES IN DATABASE analytics_db TO ROLE readonly_role;
 GRANT SELECT ON FUTURE TABLES IN DATABASE analytics_db TO ROLE analyst_role;
 
--- Naznachaem rol polzovatelyu (zameni YOUR_USERNAME)
+-- Назначаем роль пользователю (замени YOUR_USERNAME)
 -- GRANT ROLE analyst_role TO USER YOUR_USERNAME;
 
--- Proverka
+-- Проверка
 SHOW ROLES;
 SHOW GRANTS TO ROLE analyst_role;
 """
@@ -105,7 +105,7 @@ SHOW GRANTS TO ROLE analyst_role;
 
 DDL_SQL = """\
 -- snowflake_setup/03_create_tables.sql
--- Day 71: DDL - sozdanie tablic v raw / staging / marts
+-- Day 71: DDL — создание таблиц в raw / staging / marts
 
 USE ROLE analyst_role;
 USE WAREHOUSE analytics_wh;
@@ -176,24 +176,24 @@ CREATE TABLE IF NOT EXISTS marts.dim_customers (
 
 QUERIES_SQL = """\
 -- snowflake_setup/04_first_queries.sql
--- Day 71: 10 osnovnykh SQL zaprosov k Snowflake
--- Analogichny nashim DuckDB zaprosam
+-- Day 71: 10 основных SQL запросов к Snowflake
+-- Аналогичны нашим DuckDB запросам
 
 USE ROLE analyst_role;
 USE WAREHOUSE analytics_wh;
 USE DATABASE analytics_db;
 
--- 1. Proverit strukturu bazy
+-- 1. Проверить структуру базы
 SHOW SCHEMAS IN DATABASE analytics_db;
 
--- 2. Skolko strok v tablitsakh
+-- 2. Сколько строк в таблицах
 SELECT 'raw.orders'       AS tbl, COUNT(*) AS rows FROM raw.orders
 UNION ALL
 SELECT 'raw.users',              COUNT(*) FROM raw.users
 UNION ALL
 SELECT 'marts.fct_orders',       COUNT(*) FROM marts.fct_orders;
 
--- 3. Revenue za poslednie 30 dney
+-- 3. Revenue за последние 30 дней
 SELECT
     DATE_TRUNC('month', order_date) AS month,
     SUM(amount)                     AS revenue,
@@ -203,7 +203,7 @@ WHERE order_date >= DATEADD('day', -30, CURRENT_DATE())
 GROUP BY 1
 ORDER BY 1 DESC;
 
--- 4. Top-5 gorodov po revenue
+-- 4. Топ-5 городов по revenue
 SELECT
     city,
     ROUND(SUM(amount), 2)     AS total_revenue,
@@ -214,7 +214,7 @@ GROUP BY city
 ORDER BY total_revenue DESC
 LIMIT 5;
 
--- 5. AOV (Average Order Value) po kanalam
+-- 5. AOV (Average Order Value) по каналам
 SELECT
     channel,
     ROUND(AVG(amount), 2)     AS avg_order_value,
@@ -275,7 +275,7 @@ WHERE month_num <= 3
 GROUP BY cohort_month, month_num
 ORDER BY cohort_month, month_num;
 
--- 10. Snowflake-specific: QUERY_HISTORY (metadannye)
+-- 10. Snowflake-specific: QUERY_HISTORY (метаданные)
 SELECT query_text, execution_time, bytes_scanned
 FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY(
     DATE_RANGE_START => DATEADD('hour', -1, CURRENT_TIMESTAMP())
@@ -289,29 +289,29 @@ LIMIT 10;
 MICROPARTITION_SQL = """\
 -- snowflake_setup/05_micropartitioning.sql
 -- Day 71: Micro-partitioning i Clustering Keys
--- Kak Snowflake khranit dannye (analogiya: Parquet row groups)
+-- Как Snowflake хранит данные (аналогия: Parquet row groups)
 
 USE ROLE analyst_role;
 USE WAREHOUSE analytics_wh;
 USE DATABASE analytics_db;
 
--- Bez klasterizatsii: Snowflake sam vybyraet mikropartitsii
--- Kazhday mikropartitsiya = 16-512 MB szhatkh dannykh
+-- Без кластеризации: Snowflake сам выбирает микропартиции
+-- Каждая микропартиция = 16-512 MB сжатых данных
 
--- Posmotrm statistiku mikropartitsiy
+-- Посмотрим статистику микропартиций
 SELECT SYSTEM$CLUSTERING_INFORMATION(
     'marts.fct_orders',
     '(order_date)'
 );
 
--- Tablitsa s Clustering Key (dlya bolshikh tablic, >1TB)
--- Snowflake avtomaticheski pereklasteriziruet v fone
+-- Таблица с Clustering Key (для больших таблиц, >1TB)
+-- Snowflake автоматически перекластеризует в фоне
 CREATE TABLE IF NOT EXISTS marts.fct_orders_clustered
-CLUSTER BY (order_date, city)  -- Clustering key: chastyy filtr
+CLUSTER BY (order_date, city)  -- Clustering key: частый фильтр
 AS SELECT * FROM marts.fct_orders;
 
--- Proverit effektivnost skanirovanniya
--- (posle zagruzki dannykh)
+-- Проверить эффективность сканирования
+-- (после загрузки данных)
 SELECT
     COUNT(*)                          AS total_rows,
     SYSTEM$CLUSTERING_DEPTH(
@@ -325,7 +325,7 @@ FROM marts.fct_orders_clustered;
 
 def run_duckdb_simulation():
     print("\n" + "=" * 55)
-    print("  DuckDB Simulation (bez Snowflake)")
+    print("  DuckDB Simulation (без Snowflake)")
     print("=" * 55)
 
     db_path = SNOWFLAKE_DIR / "snowflake_simulation.duckdb"

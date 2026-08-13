@@ -38,7 +38,7 @@ def run_cmd(cmd: str, cwd: Path = PROJECT_ROOT) -> bool:
 DBT_ASSETS_PY = (
     "# dagster_dbt_pipeline/dbt_assets.py\n"
     "# Day 66-67: load_assets_from_dbt_project\n"
-    "# Vse dbt modeli -> Dagster assets avtomaticheski\n"
+    "# Все dbt модели -> Dagster assets автоматически\n"
     "# [[Dagster]] [[dbt]] [[DuckDB]]\n"
     "\n"
     "from pathlib import Path\n"
@@ -104,7 +104,7 @@ PARTITIONED_ASSETS_PY = (
     "    partitions_def=daily_partitions,\n"
     "    group_name='partitioned',\n"
     "    kinds={'duckdb'},\n"
-    "    description='Inkrementalnyy asset: zakazy za odnu datu (1 partitsiya = 1 den)',\n"
+    "    description='Инкрементальный asset: заказы за одну дату (1 партиция = 1 день)',\n"
     "    backfill_policy=BackfillPolicy.multi_run(max_partitions_per_run=1),\n"
     ")\n"
     "def daily_orders(context: AssetExecutionContext) -> Output:\n"
@@ -162,7 +162,7 @@ PARTITIONED_ASSETS_PY = (
     "    partitions_def=daily_partitions,\n"
     "    group_name='partitioned',\n"
     "    kinds={'duckdb'},\n"
-    "    description='Daily revenue summary po kazdoy partitsii',\n"
+    "    description='Daily revenue summary по каждой партиции',\n"
     ")\n"
     "def daily_revenue_summary(context: AssetExecutionContext) -> Output:\n"
     "    partition_date = context.partition_key\n"
@@ -230,7 +230,7 @@ OBSERVABILITY_PY = (
     "\n"
     "@asset_check(\n"
     "    asset='daily_orders',\n"
-    "    description='Partitsiya soderzhit dannye (ne pustaya)',\n"
+    "    description='Партиция содержит данные (не пустая)',\n"
     ")\n"
     "def check_partition_not_empty():\n"
     "    if not DB_PATH_PARTITIONED.exists():\n"
@@ -258,7 +258,7 @@ OBSERVABILITY_PY = (
     "\n"
     "@asset_check(\n"
     "    asset='daily_orders',\n"
-    "    description='Amount vsegda polozhitelnyy',\n"
+    "    description='Amount всегда положительный',\n"
     ")\n"
     "def check_positive_amount():\n"
     "    if not DB_PATH_PARTITIONED.exists():\n"
@@ -282,7 +282,7 @@ OBSERVABILITY_PY = (
     "\n"
     "# ── Alert Simulation (Day 70) ─────────────────────────\n"
     "# V production: Slack webhook / email\n"
-    "# Zdes: logiruyem v fayl kak simulyatsiyu\n"
+    "# Здесь: логируем в файл как симуляцию\n"
     "\n"
     "ALERTS_LOG = Path(__file__).parent / 'alerts.log'\n"
     "\n"
@@ -295,7 +295,7 @@ OBSERVABILITY_PY = (
     "    print(f'ALERT: {entry.strip()}')\n"
     "\n"
     "\n"
-    "# Sensor dlya monitoringa failov\n"
+    "# Sensor для мониторинга файлов\n"
     "daily_job = define_asset_job(\n"
     "    name='daily_partitioned_job',\n"
     "    selection=['daily_orders', 'daily_revenue_summary'],\n"
@@ -306,7 +306,7 @@ OBSERVABILITY_PY = (
 
 DEFINITIONS_PY = (
     "# dagster_dbt_pipeline/definitions.py\n"
-    "# Entry point dlya dagster dev\n"
+    "# Entry point для dagster dev\n"
     "# [[Dagster]] [[dbt]] + Partitions + Observability\n"
     "\n"
     "from dagster import Definitions, ScheduleDefinition\n"
@@ -319,20 +319,20 @@ DEFINITIONS_PY = (
     "    daily_job,\n"
     ")\n"
     "\n"
-    "# Resource: kak zapuskat dbt CLI\n"
+    "# Resource: как запускать dbt CLI\n"
     "dbt_resource = DbtCliResource(project_dir=dbt_project)\n"
     "\n"
-    "# Schedule: kazhdoe utro v 6:00\n"
+    "# Schedule: каждое утро в 6:00\n"
     "dbt_schedule = ScheduleDefinition(\n"
     "    name='daily_dbt_schedule',\n"
     "    job_name='__ASSET_JOB',\n"
     "    cron_schedule='0 6 * * *',\n"
-    "    description='Ezhednevnyy dbt run v 6:00 UTC',\n"
+    "    description='Ежедневный dbt run в 6:00 UTC',\n"
     ")\n"
     "\n"
     "defs = Definitions(\n"
     "    assets=[\n"
-    "        analytics_dbt_assets,   # vse dbt modeli\n"
+    "        analytics_dbt_assets,   # все dbt модели\n"
     "        daily_orders,           # partitioned asset\n"
     "        daily_revenue_summary,  # downstream ot daily_orders\n"
     "    ],\n"
@@ -398,20 +398,20 @@ def main():
     print("  ALL DONE!" if all_ok else "  WARNING: fix errors above")
     print("=" * 60)
     print("""
-Sleduyushchie shagi:
+Следующие шаги:
 
   cd dagster_dbt_pipeline
   dagster dev
 
-Chto uvidish v UI (localhost:3000):
+Что увидишь в UI (localhost:3000):
   Catalog -> dbt assets (stg_orders, fct_orders, dim_customers...)
-  Catalog -> partitioned/daily_orders (s partitsiyami po dnyam)
-  Lineage -> polnyy graf: raw -> dbt staging -> dbt marts
+  Catalog -> partitioned/daily_orders (с партициями по дням)
+  Lineage -> полный граф: raw -> dbt staging -> dbt marts
 
 Materialization dbt modelei:
   Catalog -> analytics_dbt_assets -> Materialize
 
-Backfill partitsiy (30 dney):
+Backfill партиций (30 дней):
   Jobs -> daily_partitioned_job -> Launch backfill
   -> Vyberi diapazon 2024-01-01 to 2024-01-30
 

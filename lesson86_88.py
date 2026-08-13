@@ -2,25 +2,25 @@
 """
 lesson86_88.py - Days 86-88: Testing + Monitoring
 
-Zapusk:
+Запуск:
     python lesson86_88.py
 
-Prodolzhaet pipeline dney 81-85 (production_pipeline + dbt_analytics).
-Nichego ne udalyaet: pered pravkoy kazhdogo fayla delaetsya .bak.
+Продолжает pipeline дней 81-85 (production_pipeline + dbt_analytics).
+Ничего не удаляет: перед правкой каждого файла делается .bak.
 
-Chto delaet:
+Что делает:
   1. Backup dbt_project.yml / packages.yml / schema_production.yml
-  2. dbt-expectations: rasshirennye testy na production-modelyah
-  3. Elementary 0.25.1: ustanovka + duckdb-shim dlya adapter.dispatch
-  4. dbt deps + build elementary-modeley (sluzhebnaya shema)
+  2. dbt-expectations: расширенные тесты на production-моделях
+  3. Elementary 0.25.1: установка + duckdb-shim для adapter.dispatch
+  4. dbt deps + build elementary-моделей (служебная схема)
   5. Elementary anomaly monitors na mart_daily_events / stg_gh_events
-  6. dbt build + dbt source freshness -> realnyy progon vseh testov
-  7. Otchet iz elementary tablits -> reports/
+  6. dbt build + dbt source freshness -> реальный прогон всех тестов
+  7. Отчёт из таблиц elementary -> reports/
   8. GitHub Actions CI + Dockerfile + docker-compose
 
-Vazhno pro warehouse:
-  Vsyo nizhe rabotaet na DuckDB i pereezzhaet na Snowflake smenoy target
-  v profiles.yml. Snowflake-blok v CI zagotovlen i zakommentirovan.
+Важно про warehouse:
+  Всё ниже работает на DuckDB и переезжает на Snowflake сменой target
+  в profiles.yml. Snowflake-блок в CI заготовлен и закомментирован.
 """
 
 import os
@@ -32,7 +32,7 @@ from datetime import datetime
 from pathlib import Path
 
 # --------------------------------------------------------------------------
-# Puti. Vsyo otnositelno etogo fayla - nikakih absolyutnyh putey.
+# Пути. Всё относительно этого файла — никаких абсолютных путей.
 # --------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).parent
 DBT_PROJECT = PROJECT_ROOT / "dbt_analytics"
@@ -55,36 +55,36 @@ SEP = "=" * 62
 
 
 def venv_python() -> Path:
-    """Interpretator proektnogo .venv."""
+    """Интерпретатор проектного .venv."""
     rel = "Scripts/python.exe" if os.name == "nt" else "bin/python"
     return PROJECT_ROOT / ".venv" / rel
 
 
 def ensure_venv() -> None:
-    """Perezapuskaet skript v .venv, esli zapushchen drugim Python.
+    """Перезапускает скрипт в .venv, если запущен другим Python.
 
-    Zachem: dbt_cmd() beryot dbt ryadom s sys.executable. Esli skript
-    zapushchen globalnym Python (naprimer 3.14 iz Microsoft Store), on
-    voz'myot tamoshniy dbt - a on ne obyazan byt rabochim. Realnyy sluchay:
+    Зачем: dbt_cmd() берёт dbt рядом с sys.executable. Если скрипт
+    запущен глобальным Python (например 3.14 из Microsoft Store), он
+    возьмёт тамошний dbt — а он не обязан быть рабочим. Реальный случай:
         mashumaro.exceptions.UnserializableField: Field "schema" ...
-    Eto ne oshibka dbt-proekta, eto ne to okruzhenie.
+    Это не ошибка dbt-проекта, это не то окружение.
     """
     if os.environ.get("AE_LESSON_REEXEC") == "1":
         return
 
     vpy = venv_python()
     if not vpy.exists():
-        print("  ! .venv ne nayden - rabotayu tekushchim interpretatorom")
+        print("  ! .venv не найден — работаю текущим интерпретатором")
         return
 
     if Path(sys.executable).resolve() == vpy.resolve():
         return
 
-    print(f"  Zapushcheno ne iz .venv: {sys.executable}")
-    print(f"  Perezapusk v:            {vpy}")
-    # Bez flush eti dve stroki pri redirekte v fayl uedut v konets loga:
-    # stdout roditelya buferiziruetsya blokami i sbrasyvaetsya na vyhode,
-    # a docherniy process pishet v tot zhe deskriptor ran'she.
+    print(f"  Запущено не из .venv: {sys.executable}")
+    print(f"  Перезапуск в:            {vpy}")
+    # Без flush эти две строки при редиректе в файл уедут в конец лога:
+    # stdout родителя буферизируется блоками и сбрасывается на выходе,
+    # а дочерний процесс пишет в тот же дескриптор раньше.
     sys.stdout.flush()
     env = dict(os.environ, AE_LESSON_REEXEC="1")
     proc = subprocess.run(
@@ -100,13 +100,13 @@ def banner(step: str, title: str) -> None:
 
 
 def dbt_cmd() -> list:
-    """dbt.exe ryadom s tekushchim interpretatorom, inache - modul."""
+    """dbt.exe рядом с текущим интерпретатором, иначе — модуль."""
     exe = Path(sys.executable).parent / ("dbt.exe" if os.name == "nt" else "dbt")
     return [str(exe)] if exe.exists() else [sys.executable, "-m", "dbt.cli.main"]
 
 
 def run_dbt(args: list, allow_fail: bool = False) -> tuple:
-    """Zapuskaet dbt v dbt_analytics. Vozvrashchaet (returncode, stdout)."""
+    """Запускает dbt в dbt_analytics. Возвращает (returncode, stdout)."""
     cmd = dbt_cmd() + args
     print(f"  $ dbt {' '.join(args)}")
     proc = subprocess.run(
@@ -126,7 +126,7 @@ def run_dbt(args: list, allow_fail: bool = False) -> tuple:
 
 
 def dbt_summary(out: str) -> str:
-    """Vydergivaet stroku 'Done. PASS=.. WARN=.. ERROR=..' iz loga."""
+    """Выдёргивает строку 'Done. PASS=.. WARN=.. ERROR=..' из лога."""
     for line in reversed(out.splitlines()):
         if "Done." in line and "PASS=" in line:
             return line.split("Done.")[-1].strip()
@@ -146,10 +146,10 @@ def backup_once(path: Path) -> None:
 # STEP 1
 # --------------------------------------------------------------------------
 def step1_backup():
-    banner("STEP 1", "Backup redaktiruemyh faylov")
+    banner("STEP 1", "Бэкап редактируемых файлов")
     for p in (DBT_PROJECT_YML, PACKAGES_YML, SCHEMA_YML):
         backup_once(p)
-    print("  OK: otkat vozmozhen kopirovaniem .bak obratno")
+    print("  OK: откат возможен копированием .bak обратно")
 
 
 # --------------------------------------------------------------------------
@@ -158,22 +158,22 @@ def step1_backup():
 SCHEMA_WITH_EXPECTATIONS = """version: 2
 
 # Day 86-88: Testing + Monitoring
-# Tri urovnya proverok na odnih i teh zhe modelyah:
+# Три уровня проверок на одних и тех же моделях:
 #   1. dbt core tests   - unique / not_null / accepted_values / relationships
-#   2. dbt-expectations - diapazony, formaty, sravnenie kolonok
-#   3. elementary       - anomalii vo vremeni (dobavlyayutsya v STEP 5)
+#   2. dbt-expectations — диапазоны, форматы, сравнение колонок
+#   3. elementary       — аномалии во времени (добавляются в STEP 5)
 
 models:
   - name: stg_gh_events
-    description: "Normalizovannye GitHub Events iz Airbyte raw"
+    description: "Нормализованные GitHub Events из Airbyte raw"
     tests:
-      # Pustaya tablitsa - eto zelyonyy dbt run i slomannyy dashboard.
-      # Rovno tot sluchay, kotoryy not_null ne lovit.
+      # Пустая таблица — это зелёный dbt run и сломанный dashboard.
+      # Ровно тот случай, который not_null не ловит.
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 1
     columns:
       - name: event_id
-        description: "Unikalnyy ID sobytiya v GitHub"
+        description: "Уникальный ID события в GitHub"
         tests: [unique, not_null]
       - name: event_type
         tests:
@@ -184,8 +184,8 @@ models:
       - name: actor_login
         tests:
           - not_null
-          # stg_gh_events delaet LOWER(actor_login).
-          # Test fiksiruet eto kak kontrakt, a ne kak sluchaynost.
+          # stg_gh_events делает LOWER(actor_login).
+          # Тест фиксирует это как контракт, а не как случайность.
           - dbt_expectations.expect_column_values_to_match_regex:
               regex: "^[^A-Z]*$"
       - name: repo_name
@@ -193,8 +193,8 @@ models:
       - name: payload_size
         tests:
           - not_null
-          # V staging uzhe est WHERE payload_size > 0.
-          # Verhnyaya granitsa lovit musor ot istochnika.
+          # В staging уже есть WHERE payload_size > 0.
+          # Верхняя граница ловит мусор от источника.
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 1
               max_value: 100000
@@ -202,12 +202,12 @@ models:
         tests: [not_null]
 
   - name: mart_daily_events
-    description: "Inkrementalnyy mart: aktivnost po dnyam"
+    description: "Инкрементальный mart: активность по дням"
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 1
-      # Aktivnyh avtorov ne mozhet byt bolshe, chem sobytiy.
-      # Klassicheskiy simptom slomannogo JOIN - fan-out.
+      # Активных авторов не может быть больше, чем событий.
+      # Классический симптом сломанного JOIN — fan-out.
       - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
           column_A: events
           column_B: active_actors
@@ -226,7 +226,7 @@ models:
         tests: [not_null]
 
   - name: mart_repo_activity
-    description: "Aktivnost po repozitoriyam"
+    description: "Активность по репозиториям"
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 1
@@ -250,12 +250,12 @@ models:
 
 
 def step2_dbt_expectations():
-    banner("STEP 2", "dbt-expectations: testy za predelami not_null")
+    banner("STEP 2", "dbt-expectations: тесты за пределами not_null")
     SCHEMA_YML.write_text(SCHEMA_WITH_EXPECTATIONS, encoding="utf-8")
     n = SCHEMA_WITH_EXPECTATIONS.count("dbt_expectations.")
-    print(f"  zapisan {SCHEMA_YML.relative_to(PROJECT_ROOT)}")
-    print(f"  dobavleno dbt-expectations testov: {n}")
-    print("  paket uzhe byl v packages.yml s Day 046-050 - stavit ne nuzhno")
+    print(f"  записан {SCHEMA_YML.relative_to(PROJECT_ROOT)}")
+    print(f"  добавлено dbt-expectations тестов: {n}")
+    print("  пакет уже был в packages.yml с Day 046-050 — ставить не нужно")
 
 
 # --------------------------------------------------------------------------
@@ -265,20 +265,20 @@ SHIM_SQL = """{#
     macros/duckdb_elementary_shims.sql
     Day 86-88.
 
-    Elementary dispatchit edr_multi_value_in i imeet realizatsii dlya
+    Elementary диспатчит edr_multi_value_in и имеет реализации для
     default / bigquery / redshift / fabric / sqlserver. duckdb__ net,
-    poetomu on padaet v default__, kotoryy generiruet tuple IN:
+    поэтому он падает в default__, который генерирует tuple IN:
 
         (a, b) in (select x, y from t)
 
-    DuckDB tak ne umeet:
+    DuckDB так не умеет:
         Binder Error: Subquery returns 2 columns - expected 1
 
-    Chinim tem zhe priyomom, chto Elementary primenil dlya T-SQL -
-    korrelirovannyy EXISTS. On ne trebuet CONCAT i ne lomaetsya na NULL,
+    Чиним тем же приёмом, что Elementary применил для T-SQL —
+    коррелированный EXISTS. Он не требует CONCAT и не ломается на NULL,
     v otlichie ot bigquery/redshift varianta.
 
-    Chtoby dbt vzyal etot makros vmesto paketnogo, v dbt_project.yml
+    Чтобы dbt взял этот макрос вместо пакетного, в dbt_project.yml
     propisan dispatch: search_order ['analytics_project', 'elementary'].
 #}
 
@@ -296,16 +296,16 @@ SHIM_SQL = """{#
 """
 
 DISPATCH_BLOCK = """
-# Day 86-88: Elementary ne imeet duckdb__ realizatsiy chasti makrosov.
-# search_order zastavlyaet dbt snachala iskat makros v nashem proekte,
-# i tolko potom v pakete. Sm. macros/duckdb_elementary_shims.sql
+# Day 86-88: Elementary не имеет duckdb__ реализаций части макросов.
+# search_order заставляет dbt сначала искать макрос в нашем проекте,
+# и только потом в пакете. См. macros/duckdb_elementary_shims.sql
 dispatch:
   - macro_namespace: elementary
     search_order: ['analytics_project', 'elementary']
 """
 
 ELEMENTARY_MODELS_BLOCK = """
-  # Day 86-88: sluzhebnye modeli Elementary v otdelnoy sheme
+  # Day 86-88: служебные модели Elementary в отдельной схеме
   elementary:
     +schema: elementary
 """
@@ -317,22 +317,22 @@ def step3_elementary_setup():
     # 3.1 packages.yml
     pkg = PACKAGES_YML.read_text(encoding="utf-8")
     if "elementary-data/elementary" in pkg:
-        print("  packages.yml: elementary uzhe est")
+        print("  packages.yml: elementary уже есть")
     else:
         pkg = pkg.rstrip() + (
             f"\n  - package: elementary-data/elementary"
             f"\n    version: {ELEMENTARY_VERSION}\n"
         )
         PACKAGES_YML.write_text(pkg, encoding="utf-8")
-        print(f"  packages.yml: dobavlen elementary {ELEMENTARY_VERSION}")
+        print(f"  packages.yml: добавлен elementary {ELEMENTARY_VERSION}")
 
-    # 3.2 dbt_project.yml - dispatch + shema dlya elementary modeley
+    # 3.2 dbt_project.yml — dispatch + схема для elementary моделей
     proj = DBT_PROJECT_YML.read_text(encoding="utf-8")
     changed = False
     if "macro_namespace: elementary" not in proj:
         proj = proj.replace("\nmodels:\n", DISPATCH_BLOCK + "\nmodels:\n", 1)
         changed = True
-        print("  dbt_project.yml: dobavlen dispatch dlya elementary")
+        print("  dbt_project.yml: добавлен dispatch для elementary")
     if re.search(r"^\s+elementary:\s*$", proj, flags=re.M) is None:
         proj = proj.rstrip() + "\n" + ELEMENTARY_MODELS_BLOCK
         changed = True
@@ -340,30 +340,30 @@ def step3_elementary_setup():
     if changed:
         DBT_PROJECT_YML.write_text(proj, encoding="utf-8")
     else:
-        print("  dbt_project.yml: uzhe nastroen")
+        print("  dbt_project.yml: уже настроен")
 
-    # 3.3 shim-makros
+    # 3.3 shim-макрос
     SHIM_MACRO.write_text(SHIM_SQL, encoding="utf-8")
     print(f"  zapisan {SHIM_MACRO.relative_to(PROJECT_ROOT)}")
 
-    # 3.4 ustanovka paketov
+    # 3.4 установка пакетов
     _, out = run_dbt(["deps"])
     for line in out.splitlines():
         if "Installed from version" in line or "Installing" in line:
             print("   ", line.split("  ", 1)[-1].strip())
-    print("  OK: pakety ustanovleny")
+    print("  OK: пакеты установлены")
 
 
 # --------------------------------------------------------------------------
-# STEP 4 - sluzhebnye modeli Elementary
+# STEP 4 — служебные модели Elementary
 # --------------------------------------------------------------------------
 def step4_elementary_models():
-    banner("STEP 4", "Build sluzhebnyh modeley Elementary")
-    print("  Elementary hranit istoriyu progonov v svoih tablitsah.")
-    print("  Bez nih anomaly detection ne s chem sravnivat.")
+    banner("STEP 4", "Build служебных моделей Elementary")
+    print("  Elementary хранит историю прогонов в своих таблицах.")
+    print("  Без них anomaly detection не с чем сравнивать.")
     _, out = run_dbt(["run", "--select", "elementary"])
     print(f"  {dbt_summary(out)}")
-    print(f"  OK: sluzhebnaya shema {ELEMENTARY_SCHEMA}")
+    print(f"  OK: служебная схема {ELEMENTARY_SCHEMA}")
 
 
 # --------------------------------------------------------------------------
@@ -373,34 +373,34 @@ def step5_anomaly_monitors():
     banner("STEP 5", "Elementary: anomaly monitors")
     text = SCHEMA_YML.read_text(encoding="utf-8")
     if "elementary.volume_anomalies" in text:
-        print("  monitory uzhe propisany")
+        print("  мониторы уже прописаны")
         return
-    # Monitory dopisyvayutsya v sushchestvuyushchie opisaniya modeley.
-    # Otdelnym faylom nelzya: dbt zapreshchaet opisyvat odnu i tu zhe
-    # model dvazhdy - "duplicate patch for model".
+    # Мониторы дописываются в существующие описания моделей.
+    # Отдельным файлом нельзя: dbt запрещает описывать одну и ту же
+    # модель дважды — "duplicate patch for model".
     text = _merge_monitors(text)
     SCHEMA_YML.write_text(text, encoding="utf-8")
     print(f"  monitory vpisany v {SCHEMA_YML.relative_to(PROJECT_ROOT)}")
 
 
 def _merge_monitors(text: str) -> str:
-    """Vstavlyaet elementary-testy v uzhe sushchestvuyushchie opisaniya modeley.
+    """Вставляет elementary-тесты в уже существующие описания моделей.
 
-    dbt zapreshchaet opisyvat odnu model v dvuh mestah ("duplicate patch"),
-    poetomu monitory dobavlyayutsya v tot zhe blok, a ne otdelnym faylom.
+    dbt запрещает описывать одну модель в двух местах ("duplicate patch"),
+    поэтому мониторы добавляются в тот же блок, а не отдельным файлом.
     """
     # mart_daily_events: config + volume_anomalies
     text = text.replace(
         '  - name: mart_daily_events\n'
-        '    description: "Inkrementalnyy mart: aktivnost po dnyam"\n'
+        '    description: "Инкрементальный mart: активность по дням"\n'
         '    tests:\n',
         '  - name: mart_daily_events\n'
-        '    description: "Inkrementalnyy mart: aktivnost po dnyam"\n'
+        '    description: "Инкрементальный mart: активность по дням"\n'
         '    config:\n'
         '      elementary:\n'
         '        timestamp_column: "event_date"\n'
         '    tests:\n'
-        '      # Rezkoe padenie chisla strok v dne - slomannyy ingest.\n'
+        '      # Резкое падение числа строк в дне — сломанный ingest.\n'
         '      - elementary.volume_anomalies:\n'
         '          time_bucket:\n'
         '            period: day\n'
@@ -410,10 +410,10 @@ def _merge_monitors(text: str) -> str:
     # stg_gh_events: config + volume_anomalies
     text = text.replace(
         '  - name: stg_gh_events\n'
-        '    description: "Normalizovannye GitHub Events iz Airbyte raw"\n'
+        '    description: "Нормализованные GitHub Events из Airbyte raw"\n'
         '    tests:\n',
         '  - name: stg_gh_events\n'
-        '    description: "Normalizovannye GitHub Events iz Airbyte raw"\n'
+        '    description: "Нормализованные GitHub Events из Airbyte raw"\n'
         '    config:\n'
         '      elementary:\n'
         '        timestamp_column: "created_at"\n'
@@ -451,18 +451,18 @@ def _merge_monitors(text: str) -> str:
 
 
 # --------------------------------------------------------------------------
-# STEP 6 - realnyy progon
+# STEP 6 — реальный прогон
 # --------------------------------------------------------------------------
 def step6_run_tests():
     banner("STEP 6", "dbt build + source freshness")
 
-    print("\n  6.1 source freshness (raw iz Airbyte)")
+    print("\n  6.1 source freshness (raw из Airbyte)")
     rc, out = run_dbt(["source", "freshness"], allow_fail=True)
     for line in out.splitlines():
         if any(k in line for k in ("PASS freshness", "WARN freshness",
                                    "ERROR STALE", "Done.")):
             print("   ", line.strip())
-    print(f"    rc={rc} (WARN/ERROR zdes - normalno, dannye za 04-06.08)")
+    print(f"    rc={rc} (WARN/ERROR здесь — нормально, данные за 04-06.08)")
 
     print("\n  6.2 dbt build tag:production_pipeline")
     rc, out = run_dbt(
@@ -483,10 +483,10 @@ def step6_run_tests():
 
 
 # --------------------------------------------------------------------------
-# STEP 7 - otchet iz tablits Elementary
+# STEP 7 — отчёт из таблиц Elementary
 # --------------------------------------------------------------------------
 def step7_report(build_summary: str):
-    banner("STEP 7", "Otchet iz tablits Elementary")
+    banner("STEP 7", "Отчёт из таблиц Elementary")
 
     import duckdb
 
@@ -500,7 +500,7 @@ def step7_report(build_summary: str):
                 [ELEMENTARY_SCHEMA],
             ).fetchall()
         ]
-        print(f"  tablits Elementary: {len(tables)}")
+        print(f"  таблиц Elementary: {len(tables)}")
 
         target = None
         for cand in ("elementary_test_results", "dbt_tests", "test_results"):
@@ -509,8 +509,8 @@ def step7_report(build_summary: str):
                 break
 
         if target is None:
-            print("  elementary_test_results poka net - nuzhen hotya by odin")
-            print("  progon 'dbt test' posle ustanovki paketa")
+            print("  elementary_test_results пока нет — нужен хотя бы один")
+            print("  прогон 'dbt test' после установки пакета")
             csv_path = None
         else:
             df = con.execute(
@@ -528,10 +528,10 @@ def step7_report(build_summary: str):
             ).fetchdf()
             csv_path = REPORTS_DIR / "day86_88_elementary_tests.csv"
             df.to_csv(csv_path, index=False)
-            print(f"  strok v {target}: {len(df)}")
+            print(f"  строк в {target}: {len(df)}")
             if len(df):
                 counts = df["status"].value_counts().to_dict()
-                print(f"  po statusam: {counts}")
+                print(f"  по статусам: {counts}")
             print(f"  OK: {csv_path.relative_to(PROJECT_ROOT)}")
     finally:
         con.close()
@@ -542,7 +542,7 @@ def step7_report(build_summary: str):
         f"Sgenerirovano: {datetime.now().isoformat(timespec='seconds')}\n\n"
         f"- dbt build (tag:production_pipeline): `{build_summary}`\n"
         f"- Elementary: {ELEMENTARY_VERSION}, shema `{ELEMENTARY_SCHEMA}`\n"
-        f"- Tablits Elementary: {len(tables)}\n"
+        f"- Таблиц Elementary: {len(tables)}\n"
         "- CI: `.github/workflows/dbt_ci.yml`\n"
         "- Docker: `Dockerfile`, `docker-compose.yml`\n\n"
         "## Perehod na Snowflake\n\n"
@@ -550,8 +550,8 @@ def step7_report(build_summary: str):
         "2. GitHub Secrets: SNOWFLAKE_ACCOUNT / USER / PASSWORD / ROLE /\n"
         "   WAREHOUSE / DATABASE\n"
         "3. Raskommentirovat job `dbt-snowflake` v dbt_ci.yml\n"
-        "4. Udalit macros/duckdb_elementary_shims.sql - na Snowflake\n"
-        "   default__ dispatch rabotaet\n",
+        "4. Удалить macros/duckdb_elementary_shims.sql — на Snowflake\n"
+        "   default__ dispatch работает\n",
         encoding="utf-8",
     )
     print(f"  OK: {md.relative_to(PROJECT_ROOT)}")
@@ -561,9 +561,9 @@ def step7_report(build_summary: str):
 # STEP 8 - CI + Docker
 # --------------------------------------------------------------------------
 CI_PROFILES = """# .github/ci_profiles/profiles.yml
-# Otdelnaya papka, a NE dbt_analytics/profiles.yml:
-# dbt 1.5+ chitaet profiles.yml iz papki proekta ranshe, chem ~/.dbt,
-# i lokalnaya razrabotka slomalas by.
+# Отдельная папка, а НЕ dbt_analytics/profiles.yml:
+# dbt 1.5+ читает profiles.yml из папки проекта раньше, чем ~/.dbt,
+# и локальная разработка сломалась бы.
 
 analytics:
   target: ci
@@ -573,9 +573,9 @@ analytics:
       path: ci_analytics.duckdb
       schema: main
 
-    # Snowflake - vklyuchaetsya kogda poyavitsya akkaunt.
-    # Nikakih paroley v fayle: tolko env_var, kotorye GitHub
-    # podstavlyaet iz Secrets.
+    # Snowflake — включается когда появится аккаунт.
+    # Никаких паролей в файле: только env_var, которые GitHub
+    # подставляет из Secrets.
     prod:
       type: snowflake
       account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
@@ -590,8 +590,8 @@ analytics:
 
 CI_WORKFLOW = """name: dbt CI (Days 86-88)
 
-# Zapuskaetsya na kazhdyy PR. Zadacha: PR ne dolzhen merzhitsya,
-# esli modeli ne kompiliruyutsya ili testy ne zelyonye.
+# Запускается на каждый PR. Задача: PR не должен мержиться,
+# если модели не компилируются или тесты не зелёные.
 
 on:
   pull_request:
@@ -607,8 +607,8 @@ env:
 
 jobs:
   # -----------------------------------------------------------------
-  # Job 1 - deshyovyy: lovit slomannyy Jinja i opechatki v ref()
-  # bez edinogo zaprosa k dannym.
+  # Job 1 — дешёвый: ловит сломанный Jinja и опечатки в ref()
+  # без единого запроса к данным.
   # -----------------------------------------------------------------
   parse:
     name: dbt parse + compile
@@ -632,9 +632,9 @@ jobs:
         run: dbt compile --target ci --select tag:production_pipeline
 
   # -----------------------------------------------------------------
-  # Job 2 - nastoyashchiy build na chistoy BD.
-  # *.duckdb v .gitignore, poetomu raw sobiraetsya iz CSV tem zhe
-  # kodom, chto i v Dagster - ingest_core.sync_partition.
+  # Job 2 — настоящий build на чистой БД.
+  # *.duckdb в .gitignore, поэтому raw собирается из CSV тем же
+  # кодом, что и в Dagster — ingest_core.sync_partition.
   # -----------------------------------------------------------------
   build-and-test:
     name: dbt build + test (DuckDB)
@@ -655,12 +655,12 @@ jobs:
       - name: dbt deps
         working-directory: dbt_analytics
         run: dbt deps
-      # Elementary hranit istoriyu progonov v svoih tablitsah, i ee
-      # anomaly-testy chitayut ih. Na chistoy BD etih tablits net,
-      # i build padaet:
+      # Elementary хранит историю прогонов в своих таблицах, и её
+      # anomaly-тесты читают их. На чистой БД этих таблиц нет,
+      # и build падает:
       #   Catalog Error: Schema with name main_elementary does not exist
-      # Poetomu snachala stroim sluzhebnye modeli - tot zhe poryadok,
-      # chto i v lesson86_88.py (STEP 4 do STEP 6).
+      # Поэтому сначала строим служебные модели — тот же порядок,
+      # что и в lesson86_88.py (STEP 4 до STEP 6).
       - name: Build Elementary models
         working-directory: dbt_analytics
         run: dbt run --target ci --select elementary
@@ -682,7 +682,7 @@ jobs:
           retention-days: 7
 
   # -----------------------------------------------------------------
-  # Job 3 - Snowflake. Vklyuchit, kogda budet akkaunt i Secrets.
+  # Job 3 — Snowflake. Включить, когда будет аккаунт и Secrets.
   # -----------------------------------------------------------------
   # dbt-snowflake:
   #   name: dbt build + test (Snowflake)
@@ -710,10 +710,10 @@ jobs:
 CI_SEED_SCRIPT = '''#!/usr/bin/env python3
 """
 .github/scripts/ci_seed_raw.py
-Day 86-88: napolnyaet raw tablitsu v CI.
+Day 86-88: наполняет raw таблицу в CI.
 
-*.duckdb v .gitignore, poetomu v CI BD pustaya. Ispolzuem tot zhe
-ingest_core.sync_partition, chto i Dagster asset - odna logika
+*.duckdb в .gitignore, поэтому в CI БД пустая. Используем тот же
+ingest_core.sync_partition, что и Dagster asset — одна логика
 ingestion na lokal, prod i CI.
 """
 
@@ -745,8 +745,8 @@ if __name__ == "__main__":
 '''
 
 DOCKERFILE = """# Dockerfile - Days 86-88
-# Vosproizvodimost: odna komanda i u lyubogo cheloveka tot zhe stek.
-# Multi-stage: builder stavit zavisimosti, runtime ostayotsya tonkim.
+# Воспроизводимость: одна команда и у любого человека тот же стек.
+# Multi-stage: builder ставит зависимости, runtime остаётся тонким.
 
 FROM python:3.12-slim AS builder
 
@@ -762,7 +762,7 @@ RUN python -m venv /opt/venv \\
 
 FROM python:3.12-slim AS runtime
 
-# git nuzhen dbt deps: pakety tyanutsya iz GitHub
+# git нужен dbt deps: пакеты тянутся из GitHub
 RUN apt-get update \\
  && apt-get install -y --no-install-recommends git \\
  && rm -rf /var/lib/apt/lists/*
@@ -776,8 +776,8 @@ ENV PATH="/opt/venv/bin:$PATH" \\
 
 WORKDIR /app
 
-# Snachala manifesty zavisimostey - sloy keshiruetsya i ne
-# peresobiraetsya pri pravke modeley.
+# Сначала манифесты зависимостей — слой кешируется и не
+# пересобирается при правке моделей.
 COPY dbt_analytics/packages.yml dbt_analytics/dbt_project.yml ./dbt_analytics/
 RUN cd dbt_analytics && dbt deps || true
 
@@ -794,10 +794,10 @@ CMD ["dagster", "dev", "-m", "definitions", "-h", "0.0.0.0", "-p", "3000"]
 """
 
 DOCKER_COMPOSE = """# docker-compose.yml - Days 86-88
-# docker compose up -> ves stek podnimaetsya odnoy komandoy.
+# docker compose up -> весь стек поднимается одной командой.
 
 services:
-  # Dagster UI + orkestratsiya (Days 61-85)
+  # Dagster UI + оркестрация (Days 61-85)
   dagster:
     build: .
     image: ae-pipeline:latest
@@ -814,7 +814,7 @@ services:
       - dagster_state:/app/dagster_home
     restart: unless-stopped
 
-  # dbt docs - podnimaetsya na Days 89-90
+  # dbt docs — поднимается на Days 89-90
   dbt-docs:
     build: .
     image: ae-pipeline:latest
@@ -874,8 +874,8 @@ def step8_ci_and_docker():
         path.write_text(content, encoding="utf-8")
         print(f"  zapisan {path.relative_to(PROJECT_ROOT)}")
 
-    # Proverka YAML-sintaksisa workflow - deshevle, chem uznat ob oshibke
-    # posle push.
+    # Проверка YAML-синтаксиса workflow — дешевле, чем узнать об ошибке
+    # после push.
     try:
         import yaml
 
@@ -884,16 +884,16 @@ def step8_ci_and_docker():
             yaml.safe_load(f.read_text(encoding="utf-8"))
             print(f"  YAML OK: {f.name}")
     except ImportError:
-        print("  pyyaml ne ustanovlen - YAML ne proveren")
+        print("  pyyaml не установлен — YAML не проверен")
 
     if shutil.which("docker") is None:
-        print("\n  ! Docker ne ustanovlen na etoy mashine.")
-        print("    Fayly napisany, no 'docker compose up' zdes ne proveren.")
-        print("    Eto chestnaya nezakrytaya chast bloka.")
+        print("\n  ! Docker не установлен на этой машине.")
+        print("    Файлы написаны, но 'docker compose up' здесь не проверен.")
+        print("    Это честная незакрытая часть блока.")
 
 
 # --------------------------------------------------------------------------
-# STEP 9 - negativnyy test: dokazat, chto testy voobshche krasneyut
+# STEP 9 — негативный тест: доказать, что тесты вообще краснеют
 # --------------------------------------------------------------------------
 BAD_ROWS = [
     # payload_size vyshe verhney granitsy (max_value: 100000)
@@ -904,9 +904,9 @@ BAD_ROWS = [
 
 
 def step9_negative_test():
-    banner("STEP 9", "Negativnyy test: lomaem dannye namerenno")
-    print("  Nabor testov, kotoryy nikogda ne krasnel - ne proveren.")
-    print("  Zdes portim raw, zhdyom ERROR, potom vosstanavlivaem.")
+    banner("STEP 9", "Негативный тест: ломаем данные намеренно")
+    print("  Набор тестов, который никогда не краснел — не проверен.")
+    print("  Здесь портим raw, ждём ERROR, потом восстанавливаем.")
 
     import json as _json
     import uuid
@@ -940,11 +940,11 @@ def step9_negative_test():
                     "2026-08-06",
                 ],
             )
-        print(f"  9.2 vstavleno bityh strok: {len(BAD_ROWS)}")
+        print(f"  9.2 вставлено битых строк: {len(BAD_ROWS)}")
     finally:
         con.close()
 
-    print("\n  9.3 progon testov na isporchennyh dannyh")
+    print("\n  9.3 прогон тестов на испорченных данных")
     rc, out = run_dbt(
         ["build", "--select", "tag:production_pipeline"], allow_fail=True
     )
@@ -962,17 +962,17 @@ def step9_negative_test():
         for t in red:
             print(f"      - {t}")
     else:
-        print("    ! Nichego ne pokrasnelo - testy ne lovyat etot klass oshibok")
+        print("    ! Ничего не покраснело — тесты не ловят этот класс ошибок")
 
-    print("\n  9.4 vosstanovlenie BD iz kopii")
+    print("\n  9.4 восстановление БД из копии")
     shutil.move(str(backup), str(db))
     rc2, out2 = run_dbt(
         ["build", "--select", "tag:production_pipeline"], allow_fail=True
     )
-    print(f"    posle vosstanovleniya: {dbt_summary(out2)}")
+    print(f"    после восстановления: {dbt_summary(out2)}")
 
     ok = bool(red) and rc != 0 and rc2 == 0
-    print(f"\n  {'OK' if ok else 'VNIMANIE'}: alerting {'proveren' if ok else 'ne podtverzhdyon'}")
+    print(f"\n  {'OK' if ok else 'ВНИМАНИЕ'}: alerting {'проверен' if ok else 'не подтверждён'}")
     return red
 
 
@@ -985,8 +985,8 @@ def main():
 
     ensure_venv()
 
-    # Yavno pokazyvaem, chem rabotaem: pochti vse "neponyatnye" oshibki
-    # dbt na etom proekte - eto ne tot Python.
+    # Явно показываем, чем работаем: почти все "непонятные" ошибки
+    # dbt на этом проекте — это не тот Python.
     print(f"  python: {sys.executable}")
     print(f"  dbt:    {dbt_cmd()[0]}")
 
@@ -1005,20 +1005,20 @@ def main():
     print(SEP)
     print("""
 Next steps:
-  1. Posmotret otchet:
+  1. Посмотреть отчёт:
      reports/day86_88_summary.md
      reports/day86_88_elementary_tests.csv
 
-  2. STEP 9 uzhe slomal dannye i vosstanovil ih avtomaticheski.
-     Ruchnoy variant togo zhe - cherez Dagster UI, chtoby uvidet
-     krasnyy asset check i zapis v production_pipeline/alerts.log:
+  2. STEP 9 уже сломал данные и восстановил их автоматически.
+     Ручной вариант того же — через Dagster UI, чтобы увидеть
+     красный asset check и запись в production_pipeline/alerts.log:
          cd production_pipeline && dagster dev
 
-  3. Docker (kogda budet ustanovlen):
+  3. Docker (когда будет установлен):
          docker compose build
          docker compose up
 
-  4. CI proveryaetsya tolko na realnom PR:
+  4. CI проверяется только на реальном PR:
          git checkout -b day86-88-testing
          git push origin day86-88-testing
          gh pr create   (ili knopka na GitHub)

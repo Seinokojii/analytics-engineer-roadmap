@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
 lesson81_85.py - Days 81-85: Production Pipeline
-Zapusk: python lesson81_85.py
+Запуск: python lesson81_85.py
 
 End-to-end pipeline: Airbyte (ingest) -> raw schema -> dbt (transform) -> marts,
-orkestratsiya cherez Dagster s dnevnymi partitsiyami.
+оркестрация через Dagster с дневными партициями.
 
-Chto delaet:
-  1. Sozdaet paket production_pipeline/ - Dagster kod vsego pipeline
-  2. Generiruet datasset GitHub Events (format GH Archive)
-  3. Simuliruet Airbyte sync po dnevnym partitsiyam -> schema raw v DuckDB
-  4. Zapuskaet dbt run + dbt test na novykh modelyakh (staging + marts)
-  5. Progonyaet quality gate, pri faile pishet alert v alerts.log
-  6. Sokhranyaet otchety v reports/
+Что делает:
+  1. Создаёт пакет production_pipeline/ — Dagster код всего pipeline
+  2. Генерирует датасет GitHub Events (формат GH Archive)
+  3. Симулирует Airbyte sync по дневным партициям -> schema raw в DuckDB
+  4. Запускает dbt run + dbt test на новых моделях (staging + marts)
+  5. Прогоняет quality gate, при провале пишет alert в alerts.log
+  6. Сохраняет отчёты в reports/
 
-Trebovaniya: .venv s dagster, dagster-dbt, dbt-duckdb, duckdb, pandas
+Требования: .venv с dagster, dagster-dbt, dbt-duckdb, duckdb, pandas
 """
 
 import csv
@@ -41,7 +41,7 @@ REPORTS_DIR = PROJECT_ROOT / "reports"
 for d in (PIPELINE_DIR, SOURCE_DIR, REPORTS_DIR):
     d.mkdir(parents=True, exist_ok=True)
 
-# Partitsii: poslednie 3 dnya. 1 partitsiya = 1 sutki dannykh.
+# Партиции: последние 3 дня. 1 партиция = 1 сутки данных.
 TODAY = date.today()
 PARTITIONS = [(TODAY - timedelta(days=i)).isoformat() for i in (3, 2, 1)]
 PARTITION_START = (TODAY - timedelta(days=30)).isoformat()
@@ -70,16 +70,16 @@ def banner(step: str, title: str) -> None:
 
 
 # ==========================================================================
-# 1. Kod paketa production_pipeline/
+# 1. Код пакета production_pipeline/
 # ==========================================================================
 
 INGEST_CORE_PY = '''"""
 production_pipeline/ingest_core.py
-Chistaya funktsiya sync odnoy partitsii. Vyzyvaetsya i iz Dagster asseta,
-i iz lesson81_85.py - logika ingestion zhivet v odnom meste.
+Чистая функция sync одной партиции. Вызывается и из Dagster ассета,
+и из lesson81_85.py — логика ingestion живёт в одном месте.
 
-Emuliruet to, chto delaet Airbyte destination-konnektor:
-  source (CSV / API) -> tablitsa raw._airbyte_raw_* s meta-kolonkami
+Эмулирует то, что делает Airbyte destination-коннектор:
+  source (CSV / API) -> таблица raw._airbyte_raw_* с meta-колонками
 """
 
 import json
@@ -95,10 +95,10 @@ RAW_TABLE = "airbyte_raw_gh_events"
 
 
 def sync_partition(db_path: Path, csv_path: Path, partition_date: str) -> dict:
-    """Zagruzhaet sobytiya za odnu datu v raw tablitsu. Idempotentno.
+    """Загружает события за одну дату в raw таблицу. Идемпотентно.
 
     DuckDB ne umeet MERGE bez PK -> DELETE + INSERT po partitsii.
-    Povtornyy zapusk toy zhe partitsii ne dubliruet stroki.
+    Повторный запуск той же партиции не дублирует строки.
     """
     df = pd.read_csv(csv_path)
     df = df[df["event_date"] == partition_date].copy()
@@ -144,8 +144,8 @@ def sync_partition(db_path: Path, csv_path: Path, partition_date: str) -> dict:
             [partition_date],
         )
         if records:
-            # executemany, a ne con.register(df): pandas 3.0 otdaet novyy
-            # string dtype, kotoryy DuckDB 1.1 ne raspoznaet pri registratsii
+            # executemany, а не con.register(df): pandas 3.0 отдаёт новый
+            # string dtype, который DuckDB 1.1 не распознаёт при регистрации
             con.executemany(
                 f"INSERT INTO {RAW_SCHEMA}.{RAW_TABLE} VALUES (?, ?, ?, CAST(? AS DATE))",
                 [
@@ -174,10 +174,10 @@ def sync_partition(db_path: Path, csv_path: Path, partition_date: str) -> dict:
 
 ASSETS_INGEST_PY = '''"""
 production_pipeline/assets_ingest.py
-Day 81-85: Airbyte sync kak Dagster asset s dnevnymi partitsiyami.
+Day 81-85: Airbyte sync как Dagster asset с дневными партициями.
 
-V production zdes stoit trigger realnogo Airbyte sync (sm. airbyte_trigger.py).
-Lokalno - ta zhe funktsiya sync_partition, chtoby graf i partitsii byli nastoyashchie.
+В production здесь стоит триггер реального Airbyte sync (см. airbyte_trigger.py).
+Локально — та же функция sync_partition, чтобы граф и партиции были настоящие.
 """
 
 from pathlib import Path
@@ -199,7 +199,7 @@ PIPELINE_DIR = Path(__file__).parent
 DBT_DB = PIPELINE_DIR.parent / "dbt_analytics" / "analytics.duckdb"
 SOURCE_CSV = PIPELINE_DIR / "source_data" / "gh_events.csv"
 
-# 1 partitsiya = 1 sutki. Inkrementalnyy zapusk kazhdye 24 chasa.
+# 1 партиция = 1 сутки. Инкрементальный запуск каждые 24 часа.
 daily_partitions = DailyPartitionsDefinition(
     start_date="__PARTITION_START__",
     timezone="UTC",
@@ -211,11 +211,11 @@ daily_partitions = DailyPartitionsDefinition(
     partitions_def=daily_partitions,
     group_name="ingest",
     kinds={"airbyte", "duckdb"},
-    description="Airbyte sync GitHub Events -> raw schema (1 partitsiya = 1 den)",
+    description="Airbyte sync GitHub Events -> raw schema (1 партиция = 1 день)",
     backfill_policy=BackfillPolicy.multi_run(max_partitions_per_run=1),
-    # Vtoroy uroven zashchity ot gonki za DuckDB (pervyy - ochered v dagster.yaml).
-    # Setevoy ingest voobshche padaet regulyarno: timeout, 503, rate limit.
-    # Retry s exponential backoff - standart dlya lyubogo ingest asseta.
+    # Второй уровень защиты от гонки за DuckDB (первый — очередь в dagster.yaml).
+    # Сетевой ingest вообще падает регулярно: timeout, 503, rate limit.
+    # Retry с exponential backoff — стандарт для любого ingest ассета.
     retry_policy=RetryPolicy(
         max_retries=3,
         delay=2,
@@ -245,11 +245,11 @@ def airbyte_raw_gh_events(context: AssetExecutionContext) -> Output:
 
 ASSETS_DBT_PY = '''"""
 production_pipeline/assets_dbt.py
-Day 81-85: dbt modeli kak Dagster assets, podklyuchennye k ingest assetu.
+Day 81-85: dbt модели как Dagster assets, подключённые к ingest ассету.
 
 Klyuchevoy moment: DagsterDbtTranslator mapit dbt source gh_raw.airbyte_raw_gh_events
-v AssetKey ["raw", "airbyte_raw_gh_events"] - tot zhe klyuch, chto u ingest asseta.
-Poetomu Dagster stroit odin skvoznoy graf: Airbyte -> staging -> marts.
+в AssetKey ["raw", "airbyte_raw_gh_events"] — тот же ключ, что у ingest ассета.
+Поэтому Dagster строит один сквозной граф: Airbyte -> staging -> marts.
 """
 
 import os
@@ -266,10 +266,10 @@ from dagster_dbt import (
     dbt_assets,
 )
 
-# V PATH mozhet stoyat dbt Fusion (Rust-dvizhok, `dbt --version` -> dbt-fusion).
-# On ne podderzhivaet DuckDB: `unknown variant duckdb` pri parse profiles.yml.
-# Yavno beryom dbt Core iz .venv. PATH pravim potomu, chto prepare_if_dev()
-# zapuskaet `dbt parse` v obkhod DbtCliResource i ishchet dbt v PATH.
+# В PATH может стоять dbt Fusion (Rust-движок, `dbt --version` -> dbt-fusion).
+# Он не поддерживает DuckDB: `unknown variant duckdb` при parse profiles.yml.
+# Явно берём dbt Core из .venv. PATH правим потому, что prepare_if_dev()
+# запускает `dbt parse` в обход DbtCliResource и ищет dbt в PATH.
 DBT_EXECUTABLE = Path(sys.executable).parent / (
     "dbt.exe" if sys.platform == "win32" else "dbt"
 )
@@ -287,7 +287,7 @@ dbt_project.prepare_if_dev()
 
 
 class PipelineDbtTranslator(DagsterDbtTranslator):
-    """Skleivaet dbt sources s Dagster ingest assetami po AssetKey."""
+    """Склеивает dbt sources с Dagster ingest ассетами по AssetKey."""
 
     def get_asset_key(self, dbt_resource_props: Mapping[str, Any]) -> AssetKey:
         resource_type = dbt_resource_props["resource_type"]
@@ -305,7 +305,7 @@ class PipelineDbtTranslator(DagsterDbtTranslator):
     dagster_dbt_translator=PipelineDbtTranslator(),
 )
 def analytics_dbt_assets(context: AssetExecutionContext, dbt: DbtCliResource):
-    # dbt build = run + test odnoy komandoy, testy stanovyatsya asset checks
+    # dbt build = run + test одной командой, тесты становятся asset checks
     yield from dbt.cli(["build"], context=context).stream()
 '''
 
@@ -313,8 +313,8 @@ CHECKS_PY = '''"""
 production_pipeline/checks.py
 Day 81-85: quality gate + alerting.
 
-dbt testy uzhe pokryvayut modeli (dbt build -> asset checks).
-Zdes - proverki na urovne pipeline: svezhest raw i nepustaya partitsiya.
+dbt тесты уже покрывают модели (dbt build -> asset checks).
+Здесь — проверки на уровне pipeline: свежесть raw и непустая партиция.
 """
 
 from datetime import datetime, timedelta
@@ -337,7 +337,7 @@ FRESHNESS_WARN_HOURS = 26
 
 
 def send_alert(message: str, level: str = "ERROR") -> None:
-    """V production - Slack webhook / PagerDuty. Zdes - fayl + stdout."""
+    """В production — Slack webhook / PagerDuty. Здесь — файл + stdout."""
     entry = f"[{datetime.now().isoformat(timespec='seconds')}] [{level}] {message}"
     with open(ALERTS_LOG, "a", encoding="utf-8") as f:
         f.write(entry + "\\n")
@@ -352,7 +352,7 @@ def _con():
 
 @asset_check(
     asset=["raw", RAW_TABLE],
-    description="raw ne pustaya",
+    description="raw не пустая",
 )
 def check_raw_not_empty():
     con = _con()
@@ -382,7 +382,7 @@ def check_raw_not_empty():
 
 @asset_check(
     asset=["raw", RAW_TABLE],
-    description=f"Svezhest raw: sync ne starshe {FRESHNESS_WARN_HOURS}h",
+    description=f"Свежесть raw: sync не старше {FRESHNESS_WARN_HOURS}h",
 )
 def check_raw_freshness():
     con = _con()
@@ -418,15 +418,15 @@ def check_raw_freshness():
 
 AIRBYTE_TRIGGER_PY = '''"""
 production_pipeline/airbyte_trigger.py
-Day 81-85: kak eto vyglyadit s realnym Airbyte (a ne simulyatsiey).
+Day 81-85: как это выглядит с реальным Airbyte (а не симуляцией).
 
-Airbyte OSS API v1: POST /api/v1/connections/sync -> job_id -> polling do success.
-Sekrety tolko iz env: AIRBYTE_URL, AIRBYTE_CONNECTION_ID.
+Airbyte OSS API v1: POST /api/v1/connections/sync -> job_id -> polling до success.
+Секреты только из env: AIRBYTE_URL, AIRBYTE_CONNECTION_ID.
 
-V Dagster etot vyzov stavitsya vnutr asseta vmesto sync_partition().
-Alternativa - paket dagster-airbyte (pip install dagster-airbyte), on daet
-gotovye assety iz Airbyte workspace. Zdes namerenno raw HTTP: menshe zavisimostey
-i vidno, chto imenno proiskhodit.
+В Dagster этот вызов ставится внутрь ассета вместо sync_partition().
+Альтернатива — пакет dagster-airbyte (pip install dagster-airbyte), он даёт
+готовые ассеты из Airbyte workspace. Здесь намеренно raw HTTP: меньше зависимостей
+и видно, что именно происходит.
 """
 
 import os
@@ -480,15 +480,15 @@ if __name__ == "__main__":
 
 DEFINITIONS_PY = '''"""
 production_pipeline/definitions.py
-Day 81-85: tochka vkhoda. Zapusk: dagster dev -f definitions.py
+Day 81-85: точка входа. Запуск: dagster dev -f definitions.py
 
 Skvoznoy graf:
-  raw/airbyte_raw_gh_events (Airbyte sync, dnevnye partitsii)
+  raw/airbyte_raw_gh_events (Airbyte sync, дневные партиции)
       -> stg_gh_events (dbt view)
           -> mart_daily_events (dbt incremental)
           -> mart_repo_activity (dbt table)
-Plus asset checks (svezhest + nepustaya raw) i dbt testy iz dbt build.
-Schedule: kazhdyy den v 05:00 UTC.
+Плюс asset checks (свежесть + непустая raw) и dbt тесты из dbt build.
+Schedule: каждый день в 05:00 UTC.
 """
 
 from dagster import (
@@ -503,9 +503,9 @@ from assets_dbt import DBT_EXECUTABLE, analytics_dbt_assets, dbt_project
 from assets_ingest import airbyte_raw_gh_events
 from checks import check_raw_freshness, check_raw_not_empty
 
-# Ne AssetSelection.all(): v dbt_analytics 40 modeley, nakoplennykh s Day 17,
-# chast iz nikh Snowflake-only i v DuckDB ne soberetsya.
-# Berem tolko ingest asset i vse, chto nizhe po grafu.
+# Не AssetSelection.all(): в dbt_analytics 40 моделей, накопленных с Day 17,
+# часть из них Snowflake-only и в DuckDB не соберётся.
+# Берём только ingest asset и всё, что ниже по графу.
 production_job = define_asset_job(
     name="production_pipeline_job",
     selection=AssetSelection.assets(["raw", "airbyte_raw_gh_events"]).downstream(),
@@ -516,7 +516,7 @@ daily_schedule = ScheduleDefinition(
     name="production_pipeline_daily",
     job=production_job,
     cron_schedule="0 5 * * *",
-    description="Inkrementalnyy zapusk kazhdye 24 chasa",
+    description="Инкрементальный запуск каждые 24 часа",
 )
 
 defs = Definitions(
@@ -525,7 +525,7 @@ defs = Definitions(
     jobs=[production_job],
     schedules=[daily_schedule],
     resources={
-        # dbt_executable yavno: inache voz'metsya dbt iz PATH (mozhet byt Fusion)
+        # dbt_executable явно: иначе возьмётся dbt из PATH (может быть Fusion)
         "dbt": DbtCliResource(
             project_dir=dbt_project,
             dbt_executable=str(DBT_EXECUTABLE),
@@ -601,7 +601,7 @@ SOURCES_GH_YML = """version: 2
 
 sources:
   - name: gh_raw
-    description: "GitHub Events, zagruzhennye Airbyte v raw schema"
+    description: "GitHub Events, загруженные Airbyte в raw schema"
     schema: raw
     loaded_at_field: _airbyte_extracted_at
     freshness:
@@ -609,14 +609,14 @@ sources:
       error_after: {count: 48, period: hour}
     tables:
       - name: airbyte_raw_gh_events
-        description: "Syrye sobytiya: _airbyte_data JSON + meta kolonki"
+        description: "Сырые события: _airbyte_data JSON + meta колонки"
 """
 
 STG_GH_EVENTS_SQL = """-- models/staging/stg_gh_events.sql
--- Day 81-85: normalizatsiya Airbyte raw -> tipizirovannye kolonki
+-- Day 81-85: нормализация Airbyte raw -> типизированные колонки
 -- [[Airbyte]] [[dbt]] [[Dagster]]
 --
--- Snowflake variant togo zhe izvlecheniya:
+-- Snowflake вариант того же извлечения:
 --   _airbyte_data:event_id::VARCHAR AS event_id
 
 {{
@@ -651,14 +651,14 @@ SELECT
 FROM raw
 WHERE event_id IS NOT NULL
   AND payload_size > 0
--- Airbyte mozhet dostavit odnu stroku dvazhdy: beryom samuyu svezhuyu
+-- Airbyte может доставить одну строку дважды: берём самую свежую
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY event_id ORDER BY airbyte_extracted_at DESC
 ) = 1
 """
 
 MART_DAILY_EVENTS_SQL = """-- models/marts/mart_daily_events.sql
--- Day 81-85: inkrementalnyy mart po dnyam
+-- Day 81-85: инкрементальный mart по дням
 -- DuckDB ne umeet MERGE bez PK -> strategiya delete+insert
 
 {{
@@ -683,7 +683,7 @@ SELECT
 FROM {{ ref('stg_gh_events') }}
 
 {% if is_incremental() %}
--- Perechityvaem tolko svezhie partitsii, a ne vsyu istoriyu
+-- Перечитываем только свежие партиции, а не всю историю
 WHERE event_date >= (SELECT COALESCE(MAX(event_date), '1970-01-01') FROM {{ this }})
 {% endif %}
 
@@ -691,7 +691,7 @@ GROUP BY event_date
 """
 
 MART_REPO_ACTIVITY_SQL = """-- models/marts/mart_repo_activity.sql
--- Day 81-85: aktivnost po repozitoriyam za vsyu istoriyu
+-- Day 81-85: активность по репозиториям за всю историю
 
 {{
     config(materialized='table', tags=['production_pipeline', 'marts'])
@@ -722,10 +722,10 @@ SCHEMA_PRODUCTION_YML = """version: 2
 
 models:
   - name: stg_gh_events
-    description: "Normalizovannye GitHub Events iz Airbyte raw"
+    description: "Нормализованные GitHub Events из Airbyte raw"
     columns:
       - name: event_id
-        description: "Unikalnyy ID sobytiya v GitHub"
+        description: "Уникальный ID события в GitHub"
         tests: [unique, not_null]
       - name: event_type
         tests:
@@ -741,7 +741,7 @@ models:
         tests: [not_null]
 
   - name: mart_daily_events
-    description: "Inkrementalnyy mart: aktivnost po dnyam"
+    description: "Инкрементальный mart: активность по дням"
     columns:
       - name: event_date
         tests: [unique, not_null]
@@ -749,7 +749,7 @@ models:
         tests: [not_null]
 
   - name: mart_repo_activity
-    description: "Aktivnost po repozitoriyam"
+    description: "Активность по репозиториям"
     columns:
       - name: repo_name
         tests: [unique, not_null]
@@ -764,7 +764,7 @@ models:
 
 
 def step1_scaffold_pipeline() -> None:
-    banner("STEP 1", "Sozdanie paketa production_pipeline/")
+    banner("STEP 1", "Создание пакета production_pipeline/")
 
     write_utf8(PIPELINE_DIR / "ingest_core.py", INGEST_CORE_PY)
     write_utf8(
@@ -778,7 +778,7 @@ def step1_scaffold_pipeline() -> None:
     write_utf8(PIPELINE_DIR / "pyproject.toml", PYPROJECT_TOML)
     write_utf8(PIPELINE_DIR / "README.md", PIPELINE_README)
 
-    print("\n  Proverka sintaksisa sgenerirovannykh .py:")
+    print("\n  Проверка синтаксиса сгенерированных .py:")
     import py_compile
 
     for py in sorted(PIPELINE_DIR.glob("*.py")):
@@ -838,14 +838,14 @@ def step3_generate_source_data() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"  OK {csv_path.relative_to(PROJECT_ROOT)}: {len(rows)} sobytiy")
+    print(f"  OK {csv_path.relative_to(PROJECT_ROOT)}: {len(rows)} событий")
     for pdate in PARTITIONS:
         cnt = sum(1 for r in rows if r["event_date"] == pdate)
         print(f"    {pdate}: {cnt} sobytiy")
 
 
 def _load_ingest_core():
-    """Importiruem tolko chto sozdannyy modul po puti."""
+    """Импортируем только что созданный модуль по пути."""
     spec = importlib.util.spec_from_file_location(
         "ingest_core", PIPELINE_DIR / "ingest_core.py"
     )
@@ -856,7 +856,7 @@ def _load_ingest_core():
 
 
 def step4_airbyte_sync() -> list:
-    banner("STEP 4", "Airbyte sync po partitsiyam -> raw schema")
+    banner("STEP 4", "Airbyte sync по партициям -> raw schema")
 
     ingest = _load_ingest_core()
     csv_path = SOURCE_DIR / "gh_events.csv"
@@ -870,11 +870,11 @@ def step4_airbyte_sync() -> list:
             f"total in raw {res['rows_total']:>4}"
         )
 
-    # Idempotentnost: povtor toy zhe partitsii ne dolzhen razdut tablitsu
+    # Идемпотентность: повтор той же партиции не должен раздуть таблицу
     before = results[-1]["rows_total"]
     again = ingest.sync_partition(DBT_DB, csv_path, PARTITIONS[-1])
     print(
-        f"\n  Povtornyy sync {PARTITIONS[-1]}: bylo {before}, "
+        f"\n  Повторный sync {PARTITIONS[-1]}: bylo {before}, "
         f"stalo {again['rows_total']} "
         f"({'idempotentno OK' if before == again['rows_total'] else 'DUBLI!'})"
     )
@@ -882,10 +882,10 @@ def step4_airbyte_sync() -> list:
 
 
 def _run_dbt(args: list) -> tuple:
-    """Zapuskaet dbt iz tekushchego venv. Vozvrashchaet (rc, output).
+    """Запускает dbt из текущего venv. Возвращает (rc, output).
 
-    Beryom dbt.exe ryadom s interpretatorom, a ne `python -m dbt.cli.main`:
-    vtoroy variant daet RuntimeWarning 'found in sys.modules after import'.
+    Берём dbt.exe рядом с интерпретатором, а не `python -m dbt.cli.main`:
+    второй вариант даёт RuntimeWarning 'found in sys.modules after import'.
     """
     dbt_exe = Path(sys.executable).parent / ("dbt.exe" if sys.platform == "win32" else "dbt")
     cmd = [str(dbt_exe)] + args if dbt_exe.exists() else [sys.executable, "-m", "dbt.cli.main"] + args
@@ -990,13 +990,13 @@ def step6_quality_gate(build: dict) -> list:
                 )
         print(f"\n  {len(failed)} check(s) FAILED -> alert v production_pipeline/alerts.log")
     else:
-        print("\n  OK quality gate: vse proverki zelenye")
+        print("\n  OK quality gate: все проверки зелёные")
 
     return checks
 
 
 def step7_reports(sync_results: list, checks: list) -> None:
-    banner("STEP 7", "Otchety v reports/")
+    banner("STEP 7", "Отчёты в reports/")
 
     stamp = TODAY.isoformat()
 
@@ -1052,15 +1052,15 @@ def main() -> None:
     print(
         """
 Next steps:
-  1. Dagster UI - posmotret skvoznoy graf i partitsii:
+  1. Dagster UI — посмотреть сквозной граф и партиции:
        cd production_pipeline
        dagster dev -f definitions.py
-       # localhost:3000 -> Assets -> Materialize -> vybrat partitsiyu
+       # localhost:3000 -> Assets -> Materialize -> выбрать партицию
        # Backfill: vydelit diapazon dat -> Launch backfill
-  2. Proverit, chto dbt source svyazan s ingest assetom:
-       v grafe raw/airbyte_raw_gh_events -> stg_gh_events (odna strelka, ne dva grafa)
-  3. Slomat pipeline namerenno i posmotret alert:
-       udalit stroki iz raw -> zapustit shag quality gate zanovo
+  2. Проверить, что dbt source связан с ingest ассетом:
+       в графе raw/airbyte_raw_gh_events -> stg_gh_events (одна стрелка, не два графа)
+  3. Сломать pipeline намеренно и посмотреть alert:
+       удалить строки из raw -> запустить шаг quality gate заново
   4. Snowflake: sm. production_pipeline/README.md, razdel pro Snowflake
 
 Git:

@@ -1,13 +1,13 @@
 version: 2
 
 # Days 89-90: Documentation.
-# Etot fayl - poslednyaya instantsiya dlya production-modeley.
-# Soderzhit vse testy Day 86-88 PLUS opisanie kazhdoy kolonki.
+# Этот файл — последняя инстанция для production-моделей.
+# Содержит все тесты Day 86-88 ПЛЮС описание каждой колонки.
 #
-# Tri urovnya proverok:
+# Три уровня проверок:
 #   1. dbt core        - unique / not_null / accepted_values
-#   2. dbt-expectations - diapazony, formaty, sravnenie kolonok
-#   3. elementary       - anomalii vo vremeni
+#   2. dbt-expectations — диапазоны, форматы, сравнение колонок
+#   3. elementary       — аномалии во времени
 
 models:
   - name: stg_gh_events

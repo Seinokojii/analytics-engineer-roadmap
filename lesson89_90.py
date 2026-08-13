@@ -1,31 +1,31 @@
 #!/usr/bin/env python3
 """
-lesson89_90.py - Days 89-90: Dokumentatsiya + GitHub
+lesson89_90.py — Days 89-90: Документация + GitHub
 
-Zapusk:
+Запуск:
     python lesson89_90.py
 
-Zakryvaet nedelyu 12 i Mesyats 3. Prodolzhaet dni 81-88.
+Закрывает неделю 12 и Месяц 3. Продолжает дни 81-88.
 
-Chto delaet:
-  1. Audit pokrytiya opisaniyami do pravok (manifest.json)
-  2. schema_production.yml: opisanie kazhdoy kolonki + vse testy Day 86-88
-  3. dbt docs generate -> catalog.json, pokrytie posle
-  4. Dagster asset catalog -> CSV
-  5. README.md: Mermaid-diagramma + instruktsii zapuska + CI badge
-  6. docs/DEMO_SCRIPT.md - stsenariy 2-minutnogo video s taymingami
-  7. Otchet v reports/
+Что делает:
+  1. Аудит покрытия описаниями до правок (manifest.json)
+  2. schema_production.yml: описание каждой колонки + все тесты Day 86-88
+  3. dbt docs generate -> catalog.json, покрытие после
+  4. Каталог ассетов Dagster -> CSV
+  5. README.md: Mermaid-диаграмма + инструкции запуска + CI badge
+  6. docs/DEMO_SCRIPT.md — сценарий 2-минутного видео с таймингами
+  7. Отчёт в reports/
 
-Pochemu artefakty na angliyskom:
-  README, opisaniya modeley i stsenariy demo - eto portfolio, kotoroe
-  chitaet rekruter i hiring manager v EU/US. Tsel roadmap - remote
-  global. Kod i kommentarii ostayutsya kak byli.
+Почему артефакты на английском:
+  README, описания моделей и сценарий демо — это портфолио, которое
+  читает рекрутер и hiring manager в EU/US. Цель roadmap — remote
+  global. Код и комментарии — на русском, они для тебя.
 
-Poryadok vazhen:
-  Etot skript perezapisyvaet schema_production.yml i yavlyaetsya
-  posledney instantsiey dlya nego. Esli posle nego zapustit
-  lesson86_88.py, opisaniya kolonok propadut (tam versiya bez nih) -
-  togda prosto zapustit lesson89_90.py snova.
+Порядок важен:
+  Этот скрипт перезаписывает schema_production.yml и является
+  последней инстанцией для него. Если после него запустить
+  lesson86_88.py, описания колонок пропадут (там версия без них) —
+  тогда просто запустить lesson89_90.py снова.
 """
 
 import csv
@@ -69,18 +69,18 @@ def venv_python() -> Path:
 
 
 def ensure_venv() -> None:
-    """Perezapuskaet skript v .venv. Sm. lesson86_88.py - ta zhe lovushka:
-    globalnyy Python neset nerabochiy dbt."""
+    """Перезапускает скрипт в .venv. См. lesson86_88.py — та же ловушка:
+    глобальный Python несёт нерабочий dbt."""
     if os.environ.get("AE_LESSON_REEXEC") == "1":
         return
     vpy = venv_python()
     if not vpy.exists():
-        print("  ! .venv ne nayden - rabotayu tekushchim interpretatorom")
+        print("  ! .venv не найден — работаю текущим интерпретатором")
         return
     if Path(sys.executable).resolve() == vpy.resolve():
         return
-    print(f"  Zapushcheno ne iz .venv: {sys.executable}")
-    print(f"  Perezapusk v:            {vpy}")
+    print(f"  Запущено не из .venv: {sys.executable}")
+    print(f"  Перезапуск в:            {vpy}")
     sys.stdout.flush()
     env = dict(os.environ, AE_LESSON_REEXEC="1")
     proc = subprocess.run(
@@ -116,10 +116,10 @@ def dbt_summary(out: str) -> str:
 
 
 # --------------------------------------------------------------------------
-# STEP 1 - audit
+# STEP 1 — аудит
 # --------------------------------------------------------------------------
 def coverage_from_manifest() -> dict:
-    """Skolko kolonok production-modeley imeyut description."""
+    """Сколько колонок production-моделей имеют description."""
     if not MANIFEST.exists():
         return {}
     man = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -156,27 +156,27 @@ def print_coverage(cov: dict, label: str) -> None:
 
 
 def step1_audit():
-    banner("STEP 1", "Audit: chto zadokumentirovano do pravok")
-    print("  dbt docs stroitsya iz manifest.json. Chego net v schema.yml -")
-    print("  togo ne budet i v dokumentatsii, dazhe esli kolonka est v BD.")
+    banner("STEP 1", "Аудит: что задокументировано до правок")
+    print("  dbt docs строится из manifest.json. Чего нет в schema.yml —")
+    print("  того не будет и в документации, даже если колонка есть в БД.")
     cov = coverage_from_manifest()
-    print_coverage(cov, "DO:")
+    print_coverage(cov, "ДО:")
     return cov
 
 
 # --------------------------------------------------------------------------
-# STEP 2 - polnye opisaniya
+# STEP 2 — полные описания
 # --------------------------------------------------------------------------
 SCHEMA_DOCUMENTED = '''version: 2
 
 # Days 89-90: Documentation.
-# Etot fayl - poslednyaya instantsiya dlya production-modeley.
-# Soderzhit vse testy Day 86-88 PLUS opisanie kazhdoy kolonki.
+# Этот файл — последняя инстанция для production-моделей.
+# Содержит все тесты Day 86-88 ПЛЮС описание каждой колонки.
 #
-# Tri urovnya proverok:
+# Три уровня проверок:
 #   1. dbt core        - unique / not_null / accepted_values
-#   2. dbt-expectations - diapazony, formaty, sravnenie kolonok
-#   3. elementary       - anomalii vo vremeni
+#   2. dbt-expectations — диапазоны, форматы, сравнение колонок
+#   3. elementary       — аномалии во времени
 
 models:
   - name: stg_gh_events
@@ -343,43 +343,43 @@ models:
 
 
 def step2_descriptions():
-    banner("STEP 2", "Opisanie kazhdoy kolonki v schema_production.yml")
+    banner("STEP 2", "Описание каждой колонки в schema_production.yml")
     SCHEMA_YML.write_text(SCHEMA_DOCUMENTED, encoding="utf-8")
     n_desc = SCHEMA_DOCUMENTED.count("description:")
     n_tests = (
         SCHEMA_DOCUMENTED.count("dbt_expectations.")
         + SCHEMA_DOCUMENTED.count("elementary.")
     )
-    print(f"  zapisan {SCHEMA_YML.relative_to(PROJECT_ROOT)}")
+    print(f"  записан {SCHEMA_YML.relative_to(PROJECT_ROOT)}")
     print(f"  description: {n_desc}")
-    print(f"  testov dbt-expectations + elementary sohraneno: {n_tests}")
-    print("  vazhno: testy Day 86-88 dolzhny vyzhit - proveryaem v STEP 3")
+    print(f"  тестов dbt-expectations + elementary сохранено: {n_tests}")
+    print("  важно: тесты Day 86-88 должны выжить — проверяем в STEP 3")
 
 
 # --------------------------------------------------------------------------
-# STEP 3 - dbt docs
+# STEP 3 — dbt docs
 # --------------------------------------------------------------------------
 def step3_dbt_docs(cov_before: dict):
     banner("STEP 3", "dbt docs generate")
 
-    print("\n  3.1 build - ubezhdaemsya, chto testy ne poteryalis")
+    print("\n  3.1 build — убеждаемся, что тесты не потерялись")
     rc, out = run_dbt(["build", "--select", "tag:production_pipeline"],
                       allow_fail=True)
     summary = dbt_summary(out)
     print(f"    {summary}")
     if "ERROR=0" not in summary:
-        print("    ! testy ne zelyonye - dokumentatsiya podozhdet")
+        print("    ! тесты не зелёные — документация подождёт")
 
     print("\n  3.2 docs generate")
     run_dbt(["docs", "generate"])
 
     cov_after = coverage_from_manifest()
-    print_coverage(cov_before, "DO:")
-    print_coverage(cov_after, "POSLE:")
+    print_coverage(cov_before, "ДО:")
+    print_coverage(cov_after, "ПОСЛЕ:")
 
     total_before = sum(c["columns_with_desc"] for c in cov_before.values())
     total_after = sum(c["columns_with_desc"] for c in cov_after.values())
-    print(f"\n  kolonok s opisaniem: {total_before} -> {total_after}")
+    print(f"\n  колонок с описанием: {total_before} -> {total_after}")
 
     if CATALOG.exists():
         cat = json.loads(CATALOG.read_text(encoding="utf-8"))
@@ -388,19 +388,19 @@ def step3_dbt_docs(cov_before: dict):
             nm = node["metadata"]["name"]
             if nm in PROD_MODELS:
                 in_db[nm] = len(node.get("columns", {}))
-        print("\n  kolonok v BD po catalog.json:")
+        print("\n  колонок в БД по catalog.json:")
         for nm in PROD_MODELS:
             documented = cov_after.get(nm, {}).get("columns_with_desc", 0)
             actual = in_db.get(nm, 0)
             mark = "OK" if actual and documented >= actual else "!"
             print(f"    {mark} {nm:<22} {documented}/{actual}")
 
-    print("\n  Posmotret: cd dbt_analytics && dbt docs serve --port 8080")
+    print("\n  Посмотреть: cd dbt_analytics && dbt docs serve --port 8080")
     return summary, cov_after
 
 
 # --------------------------------------------------------------------------
-# STEP 4 - Dagster asset catalog
+# STEP 4 — каталог ассетов Dagster
 # --------------------------------------------------------------------------
 def step4_dagster_catalog():
     banner("STEP 4", "Dagster asset catalog")
@@ -410,7 +410,7 @@ def step4_dagster_catalog():
     try:
         from definitions import defs
     except Exception as e:
-        print(f"  ! ne udalos zagruzit definitions.py: {e}")
+        print(f"  ! не удалось загрузить definitions.py: {e}")
         return []
 
     rows = []
@@ -419,8 +419,8 @@ def step4_dagster_catalog():
         for key in getattr(a, "keys", []) or []:
             name = key.to_user_string()
             desc = (descriptions.get(key) or "").strip()
-            # dbt-assety poluchayut description iz schema.yml, i tuda zhe
-            # dbt kladyot ves Raw SQL - beryom tolko pervuyu stroku.
+            # dbt-ассеты получают description из schema.yml, и туда же
+            # dbt кладёт весь Raw SQL — берём только первую строку.
             short = desc.split("\n")[0][:110]
             rows.append({"type": "asset", "name": name, "description": short})
 
@@ -444,10 +444,10 @@ def step4_dagster_catalog():
         r for r in ours if r["type"] == "asset" and not r["description"]
     ]
 
-    print(f"  vsego v kataloge: {len(rows)}")
-    print(f"  iz nih sluzhebnyh elementary/: {len(rows) - len(ours)}")
-    print(f"  nashih: {len(ours)}")
-    print(f"  assets bez opisaniya: {len(undocumented)}")
+    print(f"  всего в каталоге: {len(rows)}")
+    print(f"  из них служебных elementary/: {len(rows) - len(ours)}")
+    print(f"  наших: {len(ours)}")
+    print(f"  assets без описания: {len(undocumented)}")
 
     print("\n  Production pipeline:")
     for r in ours:
@@ -467,7 +467,7 @@ def step4_dagster_catalog():
 
 
 # --------------------------------------------------------------------------
-# STEP 5 - README
+# STEP 5 — README
 # --------------------------------------------------------------------------
 README = """# Production Analytics Pipeline
 
@@ -642,19 +642,19 @@ to. Progress is tracked outside the repo.
 
 
 def step5_readme():
-    banner("STEP 5", "README s arhitekturnoy diagrammoy")
+    banner("STEP 5", "README с архитектурной диаграммой")
     content = README.format(user=GITHUB_USER, repo=GITHUB_REPO)
     path = PROJECT_ROOT / "README.md"
     old = path.read_text(encoding="utf-8") if path.exists() else ""
     path.write_text(content, encoding="utf-8")
     print(f"  {len(old)} -> {len(content)} baytov")
-    print("  Mermaid, a ne draw.io: GitHub renderit ego pryamo v README,")
-    print("  diagramma zhivet v repozitorii tekstom i vidna v diff.")
+    print("  Mermaid, а не draw.io: GitHub рендерит его прямо в README,")
+    print("  диаграмма живёт в репозитории текстом и видна в diff.")
     print(f"  OK: {path.relative_to(PROJECT_ROOT)}")
 
 
 # --------------------------------------------------------------------------
-# STEP 6 - stsenariy demo
+# STEP 6 — сценарий демо
 # --------------------------------------------------------------------------
 DEMO_SCRIPT = """# 2-Minute Pipeline Demo - Script
 
@@ -736,20 +736,20 @@ JSON extraction syntax.
 
 
 def step6_demo_script():
-    banner("STEP 6", "Stsenariy 2-minutnogo demo")
+    banner("STEP 6", "Сценарий 2-минутного демо")
     path = DOCS_DIR / "DEMO_SCRIPT.md"
     path.write_text(DEMO_SCRIPT, encoding="utf-8")
-    print("  Stsenariy s taymingami - chtoby ne zapisyvat pyat dublyey.")
-    print("  Video samo po sebe ne artefakt: artefakt - eto to, chto v nem")
-    print("  pokazano za dve minuty bez zapinok.")
+    print("  Сценарий с таймингами — чтобы не записывать пять дублей.")
+    print("  Видео само по себе не артефакт: артефакт — это то, что в нём")
+    print("  показано за две минуты без запинок.")
     print(f"  OK: {path.relative_to(PROJECT_ROOT)}")
 
 
 # --------------------------------------------------------------------------
-# STEP 7 - otchet
+# STEP 7 — отчёт
 # --------------------------------------------------------------------------
 def step7_report(build_summary: str, cov_after: dict, catalog_rows: list):
-    banner("STEP 7", "Otchet")
+    banner("STEP 7", "Отчёт")
 
     cols_documented = sum(c["columns_with_desc"] for c in cov_after.values())
     cols_total = sum(c["columns_documented"] for c in cov_after.values())
@@ -758,11 +758,11 @@ def step7_report(build_summary: str, cov_after: dict, catalog_rows: list):
     lines = [
         "# Days 89-90 - Documentation + GitHub",
         "",
-        f"Sgenerirovano: {datetime.now().isoformat(timespec='seconds')}",
+        f"Сгенерировано: {datetime.now().isoformat(timespec='seconds')}",
         "",
-        "## Pokrytie dokumentatsiey",
+        "## Покрытие документацией",
         "",
-        "| Model | Kolonok v yml | S opisaniem |",
+        "| Модель | Колонок в yml | С описанием |",
         "|---|---|---|",
     ]
     for name in PROD_MODELS:
@@ -773,30 +773,30 @@ def step7_report(build_summary: str, cov_after: dict, catalog_rows: list):
         )
     lines += [
         "",
-        f"Itogo kolonok s opisaniem: **{cols_documented} iz {cols_total}**",
+        f"Итого колонок с описанием: **{cols_documented} из {cols_total}**",
         "",
-        "## Artefakty",
+        "## Артефакты",
         "",
         f"- `dbt build`: `{build_summary}`",
         f"- Dagster catalog: {len(catalog_rows)} zapisey",
-        "- `README.md` - Mermaid-diagramma, quick start, CI, Snowflake",
-        "- `docs/DEMO_SCRIPT.md` - stsenariy video s taymingami",
+        "- `README.md` — Mermaid-диаграмма, quick start, CI, Snowflake",
+        "- `docs/DEMO_SCRIPT.md` — сценарий видео с таймингами",
         "- `dbt_analytics/target/index.html` - dbt docs",
         "",
-        "## Chto ostalos",
+        "## Что осталось",
         "",
-        "- Zapisat video po stsenariyu",
-        "- Docker: obraz ne sobiralsya, Docker ne ustanovlen",
+        "- Записать видео по сценарию",
+        "- Docker: образ не собирался, Docker не установлен",
     ]
     md.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"  kolonok s opisaniem: {cols_documented} iz {cols_total}")
+    print(f"  колонок с описанием: {cols_documented} из {cols_total}")
     print(f"  OK: {md.relative_to(PROJECT_ROOT)}")
 
 
 # --------------------------------------------------------------------------
 def main():
     print(SEP)
-    print("  lesson89_90.py - Days 89-90: Dokumentatsiya + GitHub")
+    print("  lesson89_90.py — Days 89-90: Документация + GitHub")
     print(f"  {datetime.now().isoformat(timespec='seconds')}")
     print(SEP)
 
@@ -817,16 +817,16 @@ def main():
     print(SEP)
     print("""
 Next steps:
-  1. Posmotret dokumentatsiyu:
+  1. Посмотреть документацию:
          cd dbt_analytics
          dbt docs serve --port 8080
-     Lineage graph - knopka v pravom nizhnem uglu.
+     Lineage graph — кнопка в правом нижнем углу.
 
-  2. Zapisat video po docs/DEMO_SCRIPT.md (2 minuty, tayminogi vnutri).
+  2. Записать видео по docs/DEMO_SCRIPT.md (2 минуты, тайминги внутри).
 
-  3. Proverit, kak README vyglyadit na GitHub - Mermaid renderitsya
-     tolko na storone GitHub, lokalnyy prosmotr v VS Code trebuet
-     rasshireniya.
+  3. Проверить, как README выглядит на GitHub — Mermaid рендерится
+     только на стороне GitHub, локальный просмотр в VS Code требует
+     расширения.
 
 Git:
   git add README.md docs/ lesson89_90.py \\
