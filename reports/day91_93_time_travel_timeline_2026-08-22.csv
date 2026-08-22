@@ -1,0 +1,5 @@
+moment,event,rows_current,rows_at_moment,statuses_at_moment,snowflake_command
+10:00,"первичная загрузка, 200 заказов",200,200,new=200,COPY INTO orders FROM @stage
+10:05,UPDATE: 40 заказов -> shipped,200,200,new=160; shipped=40,UPDATE orders SET status='shipped' WHERE ...
+10:10,случайный DELETE: -20 строк,180,180,new=144; shipped=36,DELETE FROM orders WHERE amount < 50
+10:15,восстановлено на 10:05,200,200,new=160; shipped=40,INSERT INTO orders SELECT * FROM orders AT(...) MINUS SELECT * FROM orders
