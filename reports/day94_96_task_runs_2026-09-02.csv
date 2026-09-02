@@ -1,0 +1,17 @@
+tick,task,state,reason
+1,t_load_stg,SUCCEEDED,
+1,t_build_marts,SUCCEEDED,
+1,t_audit_log,SUCCEEDED,
+1,t_notify,SUCCEEDED,
+2,t_load_stg,SKIPPED,WHEN: SYSTEM$STREAM_HAS_DATA = FALSE
+2,t_build_marts,SKIPPED,родитель t_load_stg → SKIPPED
+2,t_audit_log,SKIPPED,родитель t_load_stg → SKIPPED
+2,t_notify,SKIPPED,родитель t_build_marts → SKIPPED
+3,t_load_stg,SKIPPED,предыдущий прогон графа ещё идёт
+3,t_build_marts,SKIPPED,предыдущий прогон графа ещё идёт
+3,t_audit_log,SKIPPED,предыдущий прогон графа ещё идёт
+3,t_notify,SKIPPED,предыдущий прогон графа ещё идёт
+4,t_load_stg,SUCCEEDED,
+4,t_build_marts,FAILED,ошибка в теле задачи
+4,t_audit_log,SUCCEEDED,
+4,t_notify,SKIPPED,родитель t_build_marts → FAILED

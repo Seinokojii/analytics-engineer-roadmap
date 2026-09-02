@@ -1,0 +1,13 @@
+проверка,значение,комментарий
+DML-команд выполнено,8,"4 INSERT, 2 UPDATE, 2 DELETE"
+строк в стриме,8,"net change, а не журнал операций"
+чистых INSERT,3,METADATA$ISUPDATE = FALSE
+чистых DELETE,1,METADATA$ISUPDATE = FALSE
+строк от UPDATE,4,"2 обновления = 4 строки, пары DELETE+INSERT"
+INSERT+DELETE схлопнулись,True,заказ 1012 в стриме не появился
+повторный SELECT стабилен,True,чтение не двигает offset
+стрим stg опустошён после DML,True,offset сдвинут коммитом
+стрим audit не тронут,True,независимый offset второго потребителя
+наивная загрузка без фильтра,8,против 5 с фильтром по action
+STANDARD строк,8,видит INSERT/UPDATE/DELETE
+APPEND_ONLY строк,3,видит только новые строки
