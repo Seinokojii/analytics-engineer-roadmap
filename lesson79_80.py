@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 lesson79_80.py - Days 79-80: Airbyte Self-Hosted
-Zapusk: python lesson79_80.py
+Запуск: python lesson79_80.py
 """
 
 import duckdb
@@ -137,7 +137,7 @@ SELECT * FROM analytics_db.raw._airbyte_raw_orders LIMIT 10;
 
 STG_AIRBYTE_ORDERS_SQL = """\
 -- models/staging/stg_airbyte_orders.sql
--- Day 80: Normalizatsiya Airbyte dannykh cherez dbt
+-- Day 80: Нормализация Airbyte данных через dbt
 -- [[Airbyte]] [[Snowflake]]
 
 {{
@@ -195,7 +195,7 @@ SOURCES_AIRBYTE_YML = """\
 version: 2
 sources:
   - name: airbyte_raw
-    description: "Dannye zagruzhennye Airbyte v Snowflake raw schema"
+    description: "Данные загруженные Airbyte в Snowflake raw schema"
     database: analytics_db
     schema: raw
     tables:
@@ -207,7 +207,7 @@ sources:
 
 
 def generate_airbyte_csv():
-    """Pishem CSV fayly kak budet pisat Airbyte v Stage."""
+    """Пишем CSV файлы как будет писать Airbyte в Stage."""
     print("\n  Generating simulated Airbyte CSV files...")
 
     cities   = ["MOSCOW", "SPB", "KAZAN", "NOVOSIBIRSK"]
@@ -244,7 +244,7 @@ def generate_airbyte_csv():
 
 
 def simulate_airbyte_pipeline():
-    """Chitaem CSV cherez read_csv_auto — bez register, bez DataFrame v execute."""
+    """Читаем CSV через read_csv_auto — без register, без DataFrame в execute."""
     print("\n  Simulating Airbyte pipeline via DuckDB (read_csv_auto)...")
 
     orders_csv  = str(DATA_DIR / "airbyte_raw_orders.csv")

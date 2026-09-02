@@ -9,9 +9,20 @@ macro-paths: ["macros"]
 seed-paths: ["data"]
 test-paths: ["tests"]
 
+# Day 86-88: Elementary ne imeet duckdb__ realizatsiy chasti makrosov.
+# search_order zastavlyaet dbt snachala iskat makros v nashem proekte,
+# i tolko potom v pakete. Sm. macros/duckdb_elementary_shims.sql
+dispatch:
+  - macro_namespace: elementary
+    search_order: ['analytics_project', 'elementary']
+
 models:
   analytics_project:
     staging:
       +materialized: view
     marts:
       +materialized: table
+
+  # Day 86-88: sluzhebnye modeli Elementary v otdelnoy sheme
+  elementary:
+    +schema: elementary

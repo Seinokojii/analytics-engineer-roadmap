@@ -1,6 +1,6 @@
 """
 Den 23: dbt Testing
-Schema tests, generic tests, singular tests - 5+ testov kachestva
+Schema tests, generic tests, singular tests — 5+ тестов качества
 """
 
 from pathlib import Path
@@ -12,16 +12,16 @@ print("=" * 70)
 project_path = Path('dbt_analytics')
 
 if not project_path.exists():
-    print("Snachala zapusti lesson17_dbt_basics.py!")
+    print("Сначала запусти lesson17_dbt_basics.py!")
     exit(1)
 
 
 # ========================================
-# CHAST 1: SCHEMA TESTS
+# ЧАСТЬ 1: SCHEMA TESTS
 # ========================================
 
 print("\n" + "=" * 70)
-print("CHAST 1: Schema Tests - vstroennye testy")
+print("ЧАСТЬ 1: Schema Tests — встроенные тесты")
 print("=" * 70)
 
 schema_yml = """
@@ -29,10 +29,10 @@ version: 2
 
 sources:
   - name: raw_data
-    description: "Syryye dannyye internet-magazina"
+    description: "Сырые данные интернет-магазина"
     tables:
       - name: raw_users
-        description: "Polzovateli iz CRM"
+        description: "Пользователи из CRM"
         columns:
           - name: user_id
             tests:
@@ -43,7 +43,7 @@ sources:
               - not_null
 
       - name: raw_orders
-        description: "Zakazy"
+        description: "Заказы"
         columns:
           - name: order_id
             tests:
@@ -56,23 +56,23 @@ sources:
 
 models:
   - name: stg_users
-    description: "Staging: ochishchennyye polzovateli"
+    description: "Staging: очищенные пользователи"
     columns:
       - name: user_id
-        description: "Unikalnyy ID polzovatelya"
+        description: "Уникальный ID пользователя"
         tests:
           - unique
           - not_null
       - name: email
-        description: "Email polzovatelya"
+        description: "Email пользователя"
         tests:
           - not_null
 
   - name: stg_orders
-    description: "Staging: completed zakazy"
+    description: "Staging: completed заказы"
     columns:
       - name: order_id
-        description: "Unikalnyy ID zakaza"
+        description: "Уникальный ID заказа"
         tests:
           - unique
           - not_null
@@ -92,7 +92,7 @@ models:
           - not_null
 
   - name: fct_orders_enriched
-    description: "Fact table s obogashchennymi dannymi"
+    description: "Fact table с обогащёнными данными"
     columns:
       - name: order_id
         tests:
@@ -104,7 +104,7 @@ models:
               values: ['zero', 'low', 'medium', 'high', 'vip']
 
   - name: dim_customers
-    description: "Dimension: agregatsiya po klientam"
+    description: "Dimension: агрегация по клиентам"
     columns:
       - name: user_id
         tests:
@@ -121,19 +121,19 @@ models:
 with open(project_path / 'models' / 'schema.yml', 'w', encoding='utf-8') as f:
     f.write(schema_yml.strip())
 
-print("Sozdan schema.yml s 4 vstroennymi testami:")
-print("  - unique          : net dubley")
-print("  - not_null        : net NULL")
-print("  - accepted_values : tolko iz spiska")
-print("  - relationships   : FK sushchestvuyet v roditelskoy tablitse")
+print("Создан schema.yml с 4 встроенными тестами:")
+print("  - unique          : нет дублей")
+print("  - not_null        : нет NULL")
+print("  - accepted_values : только из списка")
+print("  - relationships   : FK существует в родительской таблице")
 
 
 # ========================================
-# CHAST 2: SEVERITY
+# ЧАСТЬ 2: SEVERITY
 # ========================================
 
 print("\n" + "=" * 70)
-print("CHAST 2: Severity - warn vs error")
+print("ЧАСТЬ 2: Severity — warn vs error")
 print("=" * 70)
 
 severity_schema = """
@@ -162,28 +162,28 @@ path = project_path / 'models' / 'staging' / 'schema_severity.yml'
 with open(path, 'w', encoding='utf-8') as f:
     f.write(severity_schema.strip())
 
-print("Sozdan schema_severity.yml:")
-print("  severity: error  -> test upavl -> dbt ostanovitsya")
-print("  severity: warn   -> test upal -> dbt prodolzhayet, vydayet WARNING")
-print("  warn_if / error_if -> porogovyye znacheniya narusheniy")
+print("Создан schema_severity.yml:")
+print("  severity: error  -> тест упал -> dbt остановится")
+print("  severity: warn   -> тест упал -> dbt продолжает, выдаёт WARNING")
+print("  warn_if / error_if -> пороговые значения нарушений")
 
 
 # ========================================
-# CHAST 3: GENERIC TESTS
+# ЧАСТЬ 3: GENERIC TESTS
 # ========================================
 
 print("\n" + "=" * 70)
-print("CHAST 3: Generic Tests - pereispolzuyemyye pravila")
+print("ЧАСТЬ 3: Generic Tests — переиспользуемые правила")
 print("=" * 70)
 
 (project_path / 'macros' / 'tests').mkdir(parents=True, exist_ok=True)
 
 generic_tests = """
 -- macros/tests/generic_tests.sql
--- Pereispolzuyemyye testy (vyzyvayutsya iz schema.yml)
+-- Переиспользуемые тесты (вызываются из schema.yml)
 
 
--- TEST 5: Znacheniya dolzhny byt > 0
+-- TEST 5: Значения должны быть > 0
 {% test positive_values(model, column_name) %}
 
     SELECT {{ column_name }}
@@ -194,7 +194,7 @@ generic_tests = """
 {% endtest %}
 
 
--- Test: net probelov v nachale/kontse stroki
+-- Тест: нет пробелов в начале/конце строки
 {% test no_whitespace(model, column_name) %}
 
     SELECT {{ column_name }}
@@ -205,7 +205,7 @@ generic_tests = """
 {% endtest %}
 
 
--- Test: data ne v budushchem
+-- Тест: дата не в будущем
 {% test not_in_future(model, column_name) %}
 
     SELECT {{ column_name }}
@@ -215,7 +215,7 @@ generic_tests = """
 {% endtest %}
 
 
--- Test: znacheniye v zadannom diapazone
+-- Тест: значение в заданном диапазоне
 {% test in_range(model, column_name, min_value, max_value) %}
 
     SELECT {{ column_name }}
@@ -229,11 +229,11 @@ generic_tests = """
 with open(project_path / 'macros' / 'tests' / 'generic_tests.sql', 'w', encoding='utf-8') as f:
     f.write(generic_tests.strip())
 
-print("Sozdany generic tests v macros/tests/generic_tests.sql:")
-print("  - positive_values(column)      : znacheniya > 0")
-print("  - no_whitespace(column)        : net probelov")
-print("  - not_in_future(column)        : data ne v budushchem")
-print("  - in_range(column, min, max)   : znacheniye v diapazone")
+print("Созданы generic tests в macros/tests/generic_tests.sql:")
+print("  - positive_values(column)      : значения > 0")
+print("  - no_whitespace(column)        : нет пробелов")
+print("  - not_in_future(column)        : дата не в будущем")
+print("  - in_range(column, min, max)   : значение в диапазоне")
 
 generic_usage_schema = """
 version: 2
@@ -263,23 +263,23 @@ path = project_path / 'models' / 'staging' / 'schema_generic.yml'
 with open(path, 'w', encoding='utf-8') as f:
     f.write(generic_usage_schema.strip())
 
-print("Sozdan schema_generic.yml - primeneniye generic tests")
+print("Создан schema_generic.yml — применение generic tests")
 
 
 # ========================================
-# CHAST 4: SINGULAR TESTS
+# ЧАСТЬ 4: SINGULAR TESTS
 # ========================================
 
 print("\n" + "=" * 70)
-print("CHAST 4: Singular Tests - biznes-pravila")
+print("ЧАСТЬ 4: Singular Tests — бизнес-правила")
 print("=" * 70)
 
 (project_path / 'tests').mkdir(exist_ok=True)
 
 no_orphans_test = """
 -- tests/test_no_orphan_orders.sql
--- Biznes-pravilo: kazhdyy zakaz dolzhen imet sushchestvuyushchego polzovatelya
--- Orphan = zakaz bez klienta
+-- Бизнес-правило: каждый заказ должен иметь существующего пользователя
+-- Orphan = заказ без клиента
 
 SELECT
     o.order_id,
@@ -294,8 +294,8 @@ with open(project_path / 'tests' / 'test_no_orphan_orders.sql', 'w', encoding='u
 
 revenue_consistency_test = """
 -- tests/test_revenue_consistency.sql
--- Biznes-pravilo: dim_customers.total_spent >= 0 vsegda
--- Otritsatelnyy LTV - priznak oshibki v dannykh
+-- Бизнес-правило: dim_customers.total_spent >= 0 всегда
+-- Отрицательный LTV — признак ошибки в данных
 
 SELECT
     user_id,
@@ -309,8 +309,8 @@ with open(project_path / 'tests' / 'test_revenue_consistency.sql', 'w', encoding
 
 no_future_orders_test = """
 -- tests/test_no_future_orders.sql
--- Biznes-pravilo: zakazy ne mogut byt v budushchem
--- Yesli yest - oshibka v ETL ili testovyye dannyye popali v prod
+-- Бизнес-правило: заказы не могут быть в будущем
+-- Если есть — ошибка в ETL или тестовые данные попали в prod
 
 SELECT
     order_id,
@@ -324,8 +324,8 @@ with open(project_path / 'tests' / 'test_no_future_orders.sql', 'w', encoding='u
 
 tier_logic_test = """
 -- tests/test_tier_logic_consistency.sql
--- Biznes-pravilo: revenue_tier dolzhen sootvetstvovat amount
--- VIP zakazy ne mogut imet amount < 20000
+-- Бизнес-правило: revenue_tier должен соответствовать amount
+-- VIP заказы не могут иметь amount < 20000
 
 SELECT
     order_id,
@@ -339,71 +339,71 @@ WHERE (revenue_tier = 'vip' AND amount < 20000)
 with open(project_path / 'tests' / 'test_tier_logic_consistency.sql', 'w', encoding='utf-8') as f:
     f.write(tier_logic_test.strip())
 
-print("Sozdany singular tests v tests/:")
-print("  - test_no_orphan_orders.sql       : zakazy bez klientov")
+print("Созданы singular tests в tests/:")
+print("  - test_no_orphan_orders.sql       : заказы без клиентов")
 print("  - test_revenue_consistency.sql    : total_spent >= 0")
-print("  - test_no_future_orders.sql       : net dat v budushchem")
+print("  - test_no_future_orders.sql       : нет дат в будущем")
 print("  - test_tier_logic_consistency.sql : tier sootvetstvuyet amount")
 
 
 # ========================================
-# CHAST 5: ITOG
+# ЧАСТЬ 5: ИТОГ
 # ========================================
 
 print("\n" + "=" * 70)
-print("CHAST 5: Itog - 10 testov kachestva dannykh")
+print("ЧАСТЬ 5: Итог — 10 тестов качества данных")
 print("=" * 70)
 
 print("""
-POLNYY SPISOK TESTOV:
+ПОЛНЫЙ СПИСОК ТЕСТОВ:
 
-Schema Tests (iz schema.yml):
+Schema Tests (из schema.yml):
   TEST 1: unique          : stg_orders.order_id
   TEST 2: not_null        : stg_orders.user_id, amount
   TEST 3: accepted_values : stg_orders.status = ['completed']
   TEST 4: relationships   : stg_orders.user_id -> stg_users.user_id
 
-Generic Tests (iz macros/tests/):
+Generic Tests (из macros/tests/):
   TEST 5: positive_values : stg_orders.amount > 0
   TEST 6: not_in_future   : stg_orders.created_at <= CURRENT_DATE
   TEST 7: no_whitespace   : stg_users.user_name
 
-Singular Tests (iz tests/):
+Singular Tests (из tests/):
   TEST 8:  test_no_orphan_orders
   TEST 9:  test_revenue_consistency
   TEST 10: test_tier_logic_consistency
 
-ITOGO: 10 testov (trebuvalos 5) OK
+ИТОГО: 10 тестов (требовалось 5) OK
 """)
 
 
 # ========================================
-# CHAST 6: KOMANDY
+# ЧАСТЬ 6: КОМАНДЫ
 # ========================================
 
 print("\n" + "=" * 70)
-print("CHAST 6: Komandy dlya zapuska testov")
+print("ЧАСТЬ 6: Команды для запуска тестов")
 print("=" * 70)
 
 print("""
 Komandy dbt test:
 
-Zapustit VSE testy:
+Запустить ВСЕ тесты:
    dbt test
 
-Testy tolko odnoy modeli:
+Тесты только одной модели:
    dbt test --select stg_orders
 
-Testy istochnikov (sources):
+Тесты источников (sources):
    dbt test --select source:raw_data
 
-Sokhranit provalivshiyesya stroki v BD:
+Сохранить провалившиеся строки в БД:
    dbt test --store-failures
 
-Zapustit modeli + testy za odin raz:
+Запустить модели + тесты за один раз:
    dbt build
 
-Ozhidayemyy rezultat:
+Ожидаемый результат:
    Running 10 tests...
    PASS unique_stg_orders_order_id ............. [PASS in 0.08s]
    PASS not_null_stg_orders_user_id ............ [PASS in 0.06s]
@@ -417,23 +417,23 @@ Ozhidayemyy rezultat:
    PASS test_tier_logic_consistency ............ [PASS in 0.10s]
    Finished running 10 tests. 10 passed, 0 failed.
 
-Yesli test upal:
+Если тест упал:
    dbt test --select stg_orders --store-failures
-   -> smotri tablitsu failures v BD: kakiye stroki narushayut pravilo
+   -> смотри таблицу failures в БД: какие строки нарушают правило
 """)
 
 
 # ========================================
-# ITOGI
+# ИТОГИ
 # ========================================
 
 print("\n" + "=" * 70)
-print("DEN 23 ZAVERSHEN!")
+print("ДЕНЬ 23 ЗАВЕРШЁН!")
 print("=" * 70)
 print(f"""
-Ty sozdal sistemu testirovaniya dannykh:
+Ты создал систему тестирования данных:
 1. Schema tests      : unique, not_null, accepted_values, relationships
-2. Severity          : error (kritichno) vs warn (preduprezhdeniye)
+2. Severity          : error (критично) vs warn (предупреждение)
 3. Generic tests     : positive_values, not_in_future, no_whitespace, in_range
 4. Singular tests    : 4 biznes-pravila v tests/
 5. 10 testov         : polnoye pokrytiye proyekta
@@ -442,8 +442,8 @@ Proyekt: {project_path.absolute()}
 
 KOMANDY:
 cd dbt_analytics
-dbt build          # run + test za odin shag
+dbt build          # run + test за один шаг
 dbt docs serve     # Posmotri graf testov v brauzere
 
-Sleduyushchiy den: Den 24 - BI osnovy (Power BI / Tableau)
+Следующий день: День 24 — BI основы (Power BI / Tableau)
 """)

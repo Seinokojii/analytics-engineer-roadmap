@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 lesson74_75.py - Days 74-75: Snowflake Data Loading
-Zapusk: python lesson74_75.py
+Запуск: python lesson74_75.py
 """
 
 import pandas as pd
@@ -70,7 +70,7 @@ USE DATABASE analytics_db;
 
 CREATE STREAM IF NOT EXISTS raw.orders_stream
     ON TABLE raw.orders
-    COMMENT = 'CDC stream: izmeneniya v raw.orders';
+    COMMENT = 'CDC stream: изменения в raw.orders';
 
 SELECT * FROM raw.orders_stream LIMIT 10;
 
@@ -107,7 +107,7 @@ rolename      = analyst_role
 
 DBT_PROFILE_SNOWFLAKE = """\
 # snowflake_setup/profiles_snowflake.yml
-# Dobav v ~/.dbt/profiles.yml:
+# Добавь в ~/.dbt/profiles.yml:
 #
 # analytics:
 #   outputs:
@@ -162,7 +162,7 @@ def generate_csv_data():
 
 
 def simulate_copy_into() -> None:
-    """Chitaem pryamo iz CSV cherez DuckDB read_csv_auto — bez register."""
+    """Читаем прямо из CSV через DuckDB read_csv_auto — без register."""
     print("\n  Simulating COPY INTO via DuckDB (read_csv_auto)...")
 
     orders_csv = str(DATA_DIR / "orders.csv")
@@ -174,7 +174,7 @@ def simulate_copy_into() -> None:
     for schema in ("raw", "staging", "marts"):
         con.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
 
-    # COPY INTO raw.orders — chitaem iz CSV napryamuyu
+    # COPY INTO raw.orders — читаем из CSV напрямую
     con.execute("DROP TABLE IF EXISTS raw.orders")
     con.execute(f"""
         CREATE TABLE raw.orders AS

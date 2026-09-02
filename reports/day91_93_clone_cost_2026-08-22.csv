@@ -1,0 +1,6 @@
+feature,duckdb_local,snowflake,measured
+Копия таблицы,"CTAS: +6.5 МБ за 0.11 с на 300,000 строк","CREATE TABLE ... CLONE ...: 0 байт данных, ~1 с",на 100 млн строк: ~2.1 ГБ / ~1 мин против 0 / 1 с
+Чтение прошлого состояния,своя таблица истории valid_from/valid_to + row_hash,orders AT (TIMESTAMP =>) / AT (OFFSET =>) / BEFORE (STATEMENT =>),"восстановление на точку 10:05 сошлось, расхождений 0"
+Восстановление удалённой таблицы,невозможно: после DROP не остаётся ничего,UNDROP TABLE orders,воспроизведено вручную из orders_history
+Окно восстановления,сколько сам хранишь,Time Travel 0-90 дней + Fail-safe ровно 7 дней,"Standard edition — 1 день, Enterprise — до 90"
+Изоляция копии при записи,полная: данные физически разные,"copy-on-write, расходятся только изменённые micro-partitions",оригинал не тронут: True

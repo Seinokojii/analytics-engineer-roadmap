@@ -1,0 +1,41 @@
+# docker-compose.yml - Days 86-88
+# docker compose up -> ves stek podnimaetsya odnoy komandoy.
+
+services:
+  # Dagster UI + orkestratsiya (Days 61-85)
+  dagster:
+    build: .
+    image: ae-pipeline:latest
+    container_name: ae_dagster
+    working_dir: /app/production_pipeline
+    environment:
+      DAGSTER_HOME: /app/dagster_home
+      DBT_PROFILES_DIR: /app/.github/ci_profiles
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./dbt_analytics:/app/dbt_analytics
+      - ./production_pipeline:/app/production_pipeline
+      - dagster_state:/app/dagster_home
+    restart: unless-stopped
+
+  # dbt docs - podnimaetsya na Days 89-90
+  dbt-docs:
+    build: .
+    image: ae-pipeline:latest
+    container_name: ae_dbt_docs
+    working_dir: /app/dbt_analytics
+    environment:
+      DBT_PROFILES_DIR: /app/.github/ci_profiles
+    command: >
+      sh -c "dbt deps &&
+             dbt docs generate --target ci &&
+             dbt docs serve --port 8080 --host 0.0.0.0 --no-browser"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dbt_analytics:/app/dbt_analytics
+    profiles: ["docs"]
+
+volumes:
+  dagster_state:

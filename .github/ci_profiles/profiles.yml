@@ -1,0 +1,26 @@
+# .github/ci_profiles/profiles.yml
+# Otdelnaya papka, a NE dbt_analytics/profiles.yml:
+# dbt 1.5+ chitaet profiles.yml iz papki proekta ranshe, chem ~/.dbt,
+# i lokalnaya razrabotka slomalas by.
+
+analytics:
+  target: ci
+  outputs:
+    ci:
+      type: duckdb
+      path: ci_analytics.duckdb
+      schema: main
+
+    # Snowflake - vklyuchaetsya kogda poyavitsya akkaunt.
+    # Nikakih paroley v fayle: tolko env_var, kotorye GitHub
+    # podstavlyaet iz Secrets.
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'TRANSFORMER') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'ANALYTICS') }}"
+      schema: "dbt_ci"
+      threads: 4

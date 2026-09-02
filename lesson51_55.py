@@ -3,13 +3,13 @@
 lesson51_55.py - dbt Semantic Layer + MetricFlow
 Days 51-55
 
-Chto delaet:
-  1. Sozdaet dbt_analytics/metrics/ s tremya YAML failami
-  2. Obnovlyaet dbt_project.yml (dobavlyaet metric-paths)
-  3. Sozdaet metrics_api/ (FastAPI server)
-  4. Zapuskaet dbt parse dlya validacii
+Что делает:
+  1. Создаёт dbt_analytics/metrics/ с тремя YAML файлами
+  2. Обновляет dbt_project.yml (добавляет metric-paths)
+  3. Создаёт metrics_api/ (FastAPI server)
+  4. Запускает dbt parse для валидации
 
-Zapusk:
+Запуск:
     python lesson51_55.py
 """
 
@@ -46,12 +46,12 @@ def run(cmd: str, cwd: Path = DBT_PROJECT) -> bool:
 
 SEMANTIC_MODELS = """\
 # metrics/_semantic_models.yml
-# [[Semantic Layer]] -- opisanie tablic dlya [[MetricFlow]]
+# [[Semantic Layer]] -- описание таблиц для [[MetricFlow]]
 
 semantic_models:
 
   - name: orders
-    description: "Zakazy -- osnova dlya revenue/AOV/order_count"
+    description: "Заказы -- основа для revenue/AOV/order_count"
     model: ref('fct_orders')
 
     entities:
@@ -76,7 +76,7 @@ semantic_models:
       - name: revenue
         agg: sum
         expr: amount
-        description: "Vyruchka (SUM amount)"
+        description: "Выручка (SUM amount)"
         agg_time_dimension: order_date
         create_metric: false
       - name: order_count
@@ -91,7 +91,7 @@ semantic_models:
         create_metric: false
 
   - name: customers
-    description: "Klienty -- osnova dlya customer_count/LTV"
+    description: "Клиенты -- основа для customer_count/LTV"
     model: ref('dim_customers')
 
     entities:
@@ -145,7 +145,7 @@ metrics:
       measure: order_count
 
   - name: customer_count
-    description: "COUNT_DISTINCT(user_id) -- pokupavshie klienty"
+    description: "COUNT_DISTINCT(user_id) -- покупавшие клиенты"
     type: simple
     label: "Active Customers"
     type_params:
@@ -168,7 +168,7 @@ metrics:
       denominator: customer_count
 
   - name: cumulative_revenue
-    description: "Narastayushchaya vyruchka (cumulative SUM)"
+    description: "Нарастающая выручка (cumulative SUM)"
     type: cumulative
     label: "Cumulative Revenue"
     type_params:
@@ -195,12 +195,12 @@ metrics:
 
 SAVED_QUERIES = """\
 # metrics/_saved_queries.yml
-# Gotovye zaprosy dlya [[Power BI]] i [[FastAPI]]
+# Готовые запросы для [[Power BI]] и [[FastAPI]]
 
 saved_queries:
 
   - name: executive_kpi_daily
-    description: "Ezhednevnye KPI dlya Executive Dashboard"
+    description: "Ежедневные KPI для Executive Dashboard"
     query_params:
       metrics:
         - total_revenue
@@ -217,7 +217,7 @@ saved_queries:
           alias: executive_kpi_daily
 
   - name: revenue_by_city
-    description: "Revenue + AOV po gorodam"
+    description: "Revenue + AOV по городам"
     query_params:
       metrics:
         - total_revenue
@@ -227,7 +227,7 @@ saved_queries:
         - Dimension('order__city')
 
   - name: ltv_report
-    description: "LTV: predskazatelnyy vs istoricheskiy"
+    description: "LTV: предсказательный vs исторический"
     query_params:
       metrics:
         - ltv_simple
@@ -267,14 +267,14 @@ models:
 """
 
 # --- FAIL 4: FastAPI main.py -------------------------------------------------
-# VAZNO: ispolzuem slozhenie strok (a + b), a ne triple-quotes,
-# chtoby vnutrennie """ ne zakryvali vneshniy literal.
+# ВАЖНО: используем сложение строк (a + b), а не triple-quotes,
+# чтобы внутренние """ не закрывали внешний литерал.
 
 _L = "\n"
 
 FASTAPI_MAIN = (
     "# metrics_api/main.py\n"
-    "# FastAPI -- Single Source of Truth dlya metrik\n"
+    "# FastAPI -- Single Source of Truth для метрик\n"
     "\n"
     "from fastapi import FastAPI, HTTPException, Query\n"
     "from fastapi.middleware.cors import CORSMiddleware\n"
@@ -462,7 +462,7 @@ duckdb==1.1.3
 """
 
 
-# --- Obnovlenie dbt_project.yml ----------------------------------------------
+# --- Обновление dbt_project.yml ----------------------------------------------
 
 def update_dbt_project() -> None:
     # metric-paths is NOT valid in dbt_project.yml (dbt 1.x).

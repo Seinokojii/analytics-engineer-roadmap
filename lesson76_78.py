@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 lesson76_78.py - Days 76-78: dbt + Snowflake
-Zapusk: python lesson76_78.py
+Запуск: python lesson76_78.py
 """
 
 import subprocess
@@ -39,7 +39,7 @@ def run_dbt(cmd: str) -> bool:
 
 PROFILES_SNOWFLAKE = """\
 # profiles_snowflake_template.yml
-# Dobav etot blok v ~/.dbt/profiles.yml
+# Добавь этот блок в ~/.dbt/profiles.yml
 
 analytics:
   target: dev
@@ -123,7 +123,7 @@ FROM {{ ref('stg_orders') }}
 
 DIM_CUSTOMERS_CLUSTERED_SQL = """\
 -- models/marts/dim_customers_clustered.sql
--- Day 77: Clustering Key po city
+-- Day 77: Clustering Key по city
 
 {{
     config(
@@ -155,7 +155,7 @@ models:
         data_tests: [not_null]
 
   - name: dim_customers_clustered
-    description: "dim_customers s Clustering Key po city"
+    description: "dim_customers с Clustering Key по city"
     columns:
       - name: user_id
         data_tests: [not_null, unique]
@@ -170,7 +170,7 @@ SNOWFLAKE_RUN_SQL = """\
 -- dbt run --select fct_orders_incremental --full-refresh --target snowflake_dev
 -- dbt test --target snowflake_dev
 
--- Proverit clustering v Snowflake:
+-- Проверить clustering в Snowflake:
 -- SELECT SYSTEM$CLUSTERING_INFORMATION(
 --     'analytics_db.marts.dim_customers_clustered', '(city)'
 -- );
@@ -217,7 +217,7 @@ def simulate_snowflake_incremental():
         FROM read_csv_auto('{users_csv}', header=true)
     """)
 
-    # Full load (pervyy zapusk)
+    # Full load (первый запуск)
     con.execute("DROP TABLE IF EXISTS marts.fct_orders_incremental")
     con.execute("""
         CREATE TABLE marts.fct_orders_incremental AS

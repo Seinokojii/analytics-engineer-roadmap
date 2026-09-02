@@ -5,19 +5,32 @@
         ".claude/skills": true,
         "~/.agents/skills": true,
         "~/.copilot/skills": true,
-        "~/.claude/skills": true
+        "~/.claude/skills": true,
+        "~/.vscode/extensions/synapsevscode.synapse-1.25.0/copilot/skills": true
     },
 
-    // Vsegda .venv - v nem dagster, dagster-dbt, dbt-snowflake.
-    // V venv312 dagster net, zapusk ottuda upadet.
-    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
-    "python.terminal.activateEnvironment": true,
+    // Переезд на Kubuntu: venv теперь общий и лежит вне проекта —
+    // ~/.venvs/ae (Python 3.12). В нём dagster, dagster-dbt, dbt-duckdb.
+    // Локальный venv312 в проекте — остаток Windows-эпохи, dagster в нём нет.
+    "python.defaultInterpreterPath": "${userHome}/.venvs/ae/bin/python",
+    // Активацию venv делает ~/.bashrc по каталогу проекта — один источник
+    // истины вместо двух. VS Code свою активацию не навязывает.
+    "python.terminal.activateEnvironment": false,
 
-    // Istoriya Dagster ranov i backfill perezhivaet restart servera.
-    // Bez etoy peremennoy dagster dev kazhdyy raz sozdaet .tmp_dagster_home_*
-    // i vsya istoriya propadaet.
-    "terminal.integrated.env.windows": {
-        "DAGSTER_HOME": "${workspaceFolder}\\dagster_home"
+    // Pylance не исполняет sys.path.insert(), поэтому не видит модуль
+    // production_pipeline/definitions.py и пишет reportMissingImports.
+    // Код при этом работает. Здесь даём анализатору те же пути, что и runtime.
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/production_pipeline",
+        "${workspaceFolder}/dagster_dbt_pipeline",
+        "${workspaceFolder}/dagster_pipeline"
+    ],
+
+    // История Dagster-ранов и backfill переживает рестарт сервера.
+    // Без этой переменной dagster dev каждый раз создаёт .tmp_dagster_home_*
+    // и вся история пропадает.
+    "terminal.integrated.env.linux": {
+        "DAGSTER_HOME": "${workspaceFolder}/dagster_home"
     },
 
     "files.exclude": {

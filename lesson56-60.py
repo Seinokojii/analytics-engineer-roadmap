@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 lesson56_60.py - Days 56-60: dbt Fusion sim + RFM + Cohort + LTV
-Zapusk: python lesson56_60.py
+Запуск: python lesson56_60.py
 """
 
 import subprocess
@@ -17,7 +17,7 @@ REPORTS_DIR.mkdir(exist_ok=True)
 
 
 def find_db() -> Path:
-    """Ishchem .duckdb fail v raznych mestach."""
+    """Ищем .duckdb файл в разных местах."""
     candidates = [
         DBT_PROJECT / "dev.duckdb",
         DBT_PROJECT / "dbt_analytics.duckdb",

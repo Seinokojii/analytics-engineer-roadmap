@@ -1,6 +1,6 @@
 """
-Den 25: Power BI — zagruzka dannykh i pervyy dashboard
-Podgotovka CSV, DAX-formuly, instruktsii po sozdaniyu dashborda
+День 25: Power BI — загрузка данных и первый dashboard
+Подготовка CSV, DAX-формулы, инструкции по созданию дашборда
 """
 
 import pandas as pd
@@ -11,21 +11,21 @@ import matplotlib.patches as mpatches
 from pathlib import Path
 
 print("=" * 70)
-print(" " * 8 + "DEN 25: POWER BI — PERVYY DASHBOARD")
+print(" " * 8 + "ДЕНЬ 25: POWER BI — ПЕРВЫЙ DASHBOARD")
 print("=" * 70)
 
 
 # ========================================
-# CHAST 1: PODGOTOVKA DANNYKH
+# ЧАСТЬ 1: ПОДГОТОВКА ДАННЫХ
 # ========================================
 
 print("\n" + "=" * 70)
-print("1  CHAST 1: Podgotovka dannykh dlya Power BI")
+print("1  ЧАСТЬ 1: Подготовка данных для Power BI")
 print("=" * 70)
 
 Path('reports').mkdir(exist_ok=True)
 
-# Podklyuchayemsya k dbt baze ili sozdayom demo
+# Подключаемся к dbt базе или создаём demo
 dbt_db_path = Path('dbt_analytics') / 'analytics.duckdb'
 
 if dbt_db_path.exists():
@@ -33,7 +33,7 @@ if dbt_db_path.exists():
     fct_orders    = con.execute("SELECT * FROM fct_orders_enriched").df()
     dim_customers = con.execute("SELECT * FROM dim_customers").df()
     con.close()
-    print(f"Dannyye iz dbt: {len(fct_orders)} zakazov, {len(dim_customers)} klientov")
+    print(f"Данные из dbt: {len(fct_orders)} заказов, {len(dim_customers)} клиентов")
 else:
     np.random.seed(42)
     N = 500
@@ -56,18 +56,18 @@ else:
         'total_orders': np.random.randint(1, 20, 100),
         'total_spent':  np.random.randint(500, 50000, 100)
     })
-    print("Demo-dannyye sozdany")
+    print("Demo-данные созданы")
 
 
 # ========================================
-# CHAST 2: OPTIMIZATSIYA CSV DLYA POWER BI
+# ЧАСТЬ 2: ОПТИМИЗАЦИЯ CSV ДЛЯ POWER BI
 # ========================================
 
 print("\n" + "=" * 70)
-print("2  CHAST 2: Optimizatsiya CSV dlya Power BI")
+print("2  ЧАСТЬ 2: Оптимизация CSV для Power BI")
 print("=" * 70)
 
-# fct_orders — dobavit poleznye kolonki
+# fct_orders — добавить полезные колонки
 fct_export = fct_orders.copy()
 if 'order_date' in fct_export.columns:
     fct_export['order_date'] = pd.to_datetime(fct_export['order_date'])
@@ -78,7 +78,7 @@ if 'order_date' in fct_export.columns:
     fct_export['day_of_week']    = fct_export['order_date'].dt.day_name()
     fct_export['week_of_year']   = fct_export['order_date'].dt.isocalendar().week.astype(int)
 
-# dim_customers — dobavit segment
+# dim_customers — добавить сегмент
 def customer_segment(spent):
     if spent >= 30000: return 'VIP'
     elif spent >= 10000: return 'Regular'
@@ -87,7 +87,7 @@ def customer_segment(spent):
 dim_export = dim_customers.copy()
 dim_export['segment'] = dim_export['total_spent'].apply(customer_segment)
 
-# dim_date — otdelnyy kalendar (luchshaya praktika Power BI)
+# dim_date — отдельный календарь (лучшая практика Power BI)
 dates = pd.date_range('2024-01-01', '2024-12-31', freq='D')
 dim_date = pd.DataFrame({
     'date':         dates,
@@ -102,46 +102,46 @@ dim_date = pd.DataFrame({
     'quarter_label': ['Q' + str(q) for q in dates.quarter]
 })
 
-# Sokhranit vse CSV
+# Сохранить все CSV
 fct_export.to_csv('reports/fct_orders_powerbi.csv', index=False, encoding='utf-8')
 dim_export.to_csv('reports/dim_customers_powerbi.csv', index=False, encoding='utf-8')
 dim_date.to_csv('reports/dim_date_powerbi.csv', index=False, encoding='utf-8')
 
-print("Sozdany 3 CSV fajla dlya Power BI:")
-print(f"  fct_orders_powerbi.csv:    {len(fct_export)} strok, {len(fct_export.columns)} kolonok")
-print(f"  dim_customers_powerbi.csv: {len(dim_export)} strok")
-print(f"  dim_date_powerbi.csv:      {len(dim_date)} strok (365 dney)")
+print("Созданы 3 CSV файла для Power BI:")
+print(f"  fct_orders_powerbi.csv:    {len(fct_export)} строк, {len(fct_export.columns)} колонок")
+print(f"  dim_customers_powerbi.csv: {len(dim_export)} строк")
+print(f"  dim_date_powerbi.csv:      {len(dim_date)} строк (365 дней)")
 
 
 # ========================================
-# CHAST 3: DAX FORMULY
+# ЧАСТЬ 3: DAX ФОРМУЛЫ
 # ========================================
 
 print("\n" + "=" * 70)
-print("3  CHAST 3: DAX-formuly dlya Power BI")
+print("3  ЧАСТЬ 3: DAX-формулы для Power BI")
 print("=" * 70)
 
-# Sokhranim DAX-formuly v fajl dlya spravki
+# Сохраним DAX-формулы в файл для справки
 dax_formulas = """
 ============================================================
-DAX FORMULY DLYA POWER BI DASHBORDA
+DAX ФОРМУЛЫ ДЛЯ POWER BI ДАШБОРДА
 ============================================================
 
---- OSNOVNYYE MERY (Measures) ---
+--- ОСНОВНЫЕ МЕРЫ (Measures) ---
 
-// Obshchaya vyruchka
+// Общая выручка
 Total Revenue =
 SUM(fct_orders_powerbi[amount])
 
-// Kolichestvo zakazov
+// Количество заказов
 Total Orders =
 COUNTROWS(fct_orders_powerbi)
 
-// Unikalnyye klienty
+// Уникальные клиенты
 Unique Customers =
 DISTINCTCOUNT(fct_orders_powerbi[user_id])
 
-// Sredniy chek
+// Средний чек
 Avg Order Value =
 DIVIDE(
     SUM(fct_orders_powerbi[amount]),
@@ -149,25 +149,25 @@ DIVIDE(
     0
 )
 
---- FILTRY I CALCULATE ---
+--- ФИЛЬТРЫ И CALCULATE ---
 
-// Vyruchka tolko VIP
+// Выручка только VIP
 VIP Revenue =
 CALCULATE(
     SUM(fct_orders_powerbi[amount]),
     fct_orders_powerbi[revenue_tier] = "vip"
 )
 
-// Zakazov za tekushchiy mesyats
+// Заказов за текущий месяц
 Orders This Month =
 CALCULATE(
     COUNTROWS(fct_orders_powerbi),
     MONTH(fct_orders_powerbi[order_date]) = MONTH(TODAY())
 )
 
---- VYCHISLYAYEMYYE KOLONKI (Calculated Columns) ---
+--- ВЫЧИСЛЯЕМЫЕ КОЛОНКИ (Calculated Columns) ---
 
-// Segment klienta
+// Сегмент клиента
 Customer Segment =
 IF(
     dim_customers_powerbi[total_spent] >= 30000, "VIP",
@@ -177,7 +177,7 @@ IF(
     )
 )
 
-// Rang klienta po vyruchke
+// Ранг клиента по выручке
 Customer Rank =
 RANKX(
     ALL(dim_customers_powerbi),
@@ -186,9 +186,9 @@ RANKX(
     DESC
 )
 
---- % OT ITOGA ---
+--- % ОТ ИТОГА ---
 
-// Dolya vyruchki ot obshchego
+// Доля выручки от общего
 Revenue Share % =
 DIVIDE(
     SUM(fct_orders_powerbi[amount]),
@@ -202,9 +202,9 @@ DIVIDE(
 with open('reports/dax_formulas.txt', 'w', encoding='utf-8') as f:
     f.write(dax_formulas)
 
-print("DAX-formuly sokhraneny: reports/dax_formulas.txt")
+print("DAX-формулы сохранены: reports/dax_formulas.txt")
 print("""
-Klyuchevyye DAX mery:
+Ключевые DAX меры:
   Total Revenue      = SUM(fct_orders[amount])
   Total Orders       = COUNTROWS(fct_orders)
   Unique Customers   = DISTINCTCOUNT(fct_orders[user_id])
@@ -214,14 +214,14 @@ Klyuchevyye DAX mery:
 
 
 # ========================================
-# CHAST 4: MAKETY DASHBORDA (PYTHON)
+# ЧАСТЬ 4: МАКЕТЫ ДАШБОРДА (PYTHON)
 # ========================================
 
 print("\n" + "=" * 70)
-print("4  CHAST 4: Makety — kak budet vyglyadet dashboard")
+print("4  ЧАСТЬ 4: Макеты — как будет выглядеть dashboard")
 print("=" * 70)
 
-# Schitaem KPI
+# Считаем KPI
 total_revenue    = fct_export['amount'].sum()
 total_orders     = len(fct_export)
 unique_customers = fct_export['user_id'].nunique()
@@ -233,7 +233,7 @@ fig.suptitle('Power BI Dashboard Mockup — E-Commerce 2024',
 
 gs = fig.add_gridspec(3, 4, hspace=0.4, wspace=0.35)
 
-# --- KPI Kartochki (verkhnyaya stroka) ---
+# --- KPI Карточки (верхняя строка) ---
 kpi_data = [
     ('Total Revenue',    f'{total_revenue:,.0f} rub', '#2ecc71'),
     ('Total Orders',     f'{total_orders:,}',          '#3498db'),
@@ -254,19 +254,19 @@ for i, (title, value, color) in enumerate(kpi_data):
             fontsize=9, color='gray', transform=ax.transAxes)
     ax.axis('off')
 
-# --- Grafik 1: Vyruchka po mesyatsam (nizhnyaya levaya polovina) ---
+# --- График 1: Выручка по месяцам (нижняя левая половина) ---
 ax2 = fig.add_subplot(gs[1:, :2])
 monthly = fct_export.groupby('month_num')['amount'].sum()
 ax2.plot(monthly.index, monthly.values, marker='o',
          color='steelblue', linewidth=2.5, markersize=6)
 ax2.fill_between(monthly.index, monthly.values, alpha=0.15, color='steelblue')
-ax2.set_title('Vyruchka po mesyatsam', fontweight='bold')
+ax2.set_title('Выручка по месяцам', fontweight='bold')
 ax2.set_xlabel('Mesyats')
-ax2.set_ylabel('Vyruchka (rub)')
+ax2.set_ylabel('Выручка (руб)')
 ax2.set_xticks(range(1, 13))
 ax2.grid(True, alpha=0.3)
 
-# --- Grafik 2: Tier pie (nizhnyaya pravaya) ---
+# --- График 2: Tier pie (нижняя правая) ---
 ax3 = fig.add_subplot(gs[1, 2:])
 tier_counts = fct_export['revenue_tier'].value_counts()
 colors_pie = ['#2ecc71', '#3498db', '#e67e22', '#9b59b6']
@@ -275,61 +275,61 @@ ax3.pie(tier_counts.values, labels=tier_counts.index,
         startangle=90, textprops={'fontsize': 9})
 ax3.set_title('Revenue Tier', fontweight='bold')
 
-# --- Grafik 3: Top-5 gorodov (pravyy nizhniy) ---
+# --- График 3: Топ-5 городов (правый нижний) ---
 ax4 = fig.add_subplot(gs[2, 2:])
 city_rev = dim_export.groupby('city')['total_spent'].sum().sort_values(ascending=True)
 ax4.barh(city_rev.index, city_rev.values, color='coral', alpha=0.8)
-ax4.set_title('Vyruchka po gorodam', fontweight='bold')
+ax4.set_title('Выручка по городам', fontweight='bold')
 ax4.set_xlabel('Total Spent (rub)')
 
 plt.savefig('reports/powerbi_mockup.png', dpi=150, bbox_inches='tight')
 plt.close()
-print("Maket dashborda sokhranyon: reports/powerbi_mockup.png")
+print("Макет дашборда сохранён: reports/powerbi_mockup.png")
 
 
 # ========================================
-# CHAST 5: INSTRUKTSIYA POWER BI DESKTOP
+# ЧАСТЬ 5: ИНСТРУКЦИЯ POWER BI DESKTOP
 # ========================================
 
 print("\n" + "=" * 70)
-print("5  CHAST 5: Poshagovaya instruktsiya Power BI Desktop")
+print("5  ЧАСТЬ 5: Пошаговая инструкция Power BI Desktop")
 print("=" * 70)
 
 instruction = """
-INSTRUKTSIYA: Pervyy dashboard v Power BI Desktop
+ИНСТРУКЦИЯ: Первый dashboard в Power BI Desktop
 ==================================================
 
-SHAG 1: Ustanovka
+ШАГ 1: Установка
   Skachat: https://powerbi.microsoft.com/ru-ru/desktop/
   Ustanovit, otkryt Power BI Desktop
 
-SHAG 2: Zagruzka dannykh
+ШАГ 2: Загрузка данных
   Home → Get Data → Text/CSV
   Vyberi: reports/fct_orders_powerbi.csv → Load
-  Eshche raz Get Data → vyberi: reports/dim_customers_powerbi.csv → Load
-  Eshche raz Get Data → vyberi: reports/dim_date_powerbi.csv → Load
+  Ещё раз Get Data → выбери: reports/dim_customers_powerbi.csv → Load
+  Ещё раз Get Data → выбери: reports/dim_date_powerbi.csv → Load
 
-SHAG 3: Svyazi (Model View)
+ШАГ 3: Связи (Model View)
   Klikni na ikonku "Model" sleva
-  Peretyashchi user_id iz fct_orders na user_id v dim_customers
-    → svyaz many-to-one (mnogo zakazov → odin klient)
-  Peretyashchi order_date iz fct_orders na date v dim_date
-    → svyaz many-to-one
+  Перетащи user_id из fct_orders на user_id в dim_customers
+    → связь many-to-one (много заказов → один клиент)
+  Перетащи order_date из fct_orders на date в dim_date
+    → связь many-to-one
 
-SHAG 4: DAX Mery
-  Vyberi tablitsu fct_orders_powerbi v Fields
-  New Measure → vvedi:
+ШАГ 4: DAX Меры
+  Выбери таблицу fct_orders_powerbi в Fields
+  New Measure → введи:
     Total Revenue = SUM(fct_orders_powerbi[amount])
-  Eshche New Measure:
+  Ещё New Measure:
     Total Orders = COUNTROWS(fct_orders_powerbi)
-  Eshche:
+  Ещё:
     Avg Check = DIVIDE([Total Revenue], [Total Orders], 0)
 
-SHAG 5: Vizualizatsii
-  Vyberi "Card" vizualizatsiyu
-    → v Fields peretyashchi [Total Revenue]
-    → peretyashchi eshche odnu kartochku: [Total Orders]
-    → eshche odnu: [Avg Check]
+ШАГ 5: Визуализации
+  Выбери "Card" визуализацию
+    → в Fields перетащи [Total Revenue]
+    → перетащи ещё одну карточку: [Total Orders]
+    → ещё одну: [Avg Check]
   Vyberi "Line Chart":
     → Axis: month_num
     → Values: [Total Revenue]
@@ -337,12 +337,12 @@ SHAG 5: Vizualizatsii
     → Legend: revenue_tier
     → Values: [Total Revenue]
 
-SHAG 6: Filtr po gorodu
+ШАГ 6: Фильтр по городу
   Vyberi "Slicer":
     → Field: dim_customers_powerbi[city]
-  Teper klikaya na gorod — vse grafiki filtruutsya!
+  Теперь кликая на город — все графики фильтруются!
 
-SHAG 7: Skhranit
+ШАГ 7: Сохранить
   File → Save As → dashboard_ecommerce.pbix
 """
 
@@ -357,16 +357,16 @@ print(instruction)
 # ========================================
 
 print("\n" + "=" * 70)
-print("DEN 25 ZAVERSHEN!")
+print("ДЕНЬ 25 ЗАВЕРШЁН!")
 print("=" * 70)
 print(f"""
-Ty sozdal:
-1. 3 optimizirovannyye CSV dlya Power BI (s dim_date)
+Ты создал:
+1. 3 оптимизированные CSV для Power BI (с dim_date)
 2. DAX-formuly v reports/dax_formulas.txt
 3. Maket dashborda → reports/powerbi_mockup.png
-4. Poshagovuyu instruktsiyu → reports/powerbi_instruction.txt
+4. Пошаговую инструкцию → reports/powerbi_instruction.txt
 
-TEPER OTKROY POWER BI DESKTOP I SLEDUY INSTRUKTSII!
+ТЕПЕРЬ ОТКРОЙ POWER BI DESKTOP И СЛЕДУЙ ИНСТРУКЦИИ!
 
 Fajly v reports/:
   fct_orders_powerbi.csv
@@ -376,5 +376,5 @@ Fajly v reports/:
   powerbi_instruction.txt
   powerbi_mockup.png
 
-Sleduyushchiy den: Den 26 — Power BI uglubleniye (3 vizualizatsii)
+Следующий день: День 26 — Power BI углубление (3 визуализации)
 """)
