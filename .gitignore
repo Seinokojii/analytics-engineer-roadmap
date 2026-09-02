@@ -230,3 +230,14 @@ production_pipeline/alerts.log
 *.bak
 dbt_analytics/ci_analytics.duckdb
 .user.yml
+
+# Day 94-96: превентивная защита кредов.
+# Репозиторий публичный. Файлы в snowflake_setup/ — шаблоны с
+# плейсхолдерами YOUR_ACCOUNT, их коммитить можно. Настоящие
+# подключения не должны попасть сюда ни при каких условиях.
+**/profiles.yml
+!snowflake_setup/profiles_snowflake_template.yml
+.snowsql/
+*_credentials*
+*_secret*
+secrets.*
