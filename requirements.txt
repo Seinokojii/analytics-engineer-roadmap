@@ -1,5 +1,24 @@
+# Окружение AE: venv ~/.venvs/ae (Python 3.12).
+# Системный Python 3.14 несовместим с dbt — трейсбек про mashumaro
+# означает не тот интерпретатор, а не баг проекта.
+#
+# Пересоздать окружение с нуля:
+#   uv venv ~/.venvs/ae --python 3.12
+#   uv pip install --python ~/.venvs/ae/bin/python -r requirements.txt
+
+# --- Оркестрация (дни 61-90) ---
+dagster>=1.13,<2.0
+dagster-webserver>=1.13,<2.0
+dagster-dbt>=0.29,<1.0
+
+# --- Трансформация и хранилище ---
 dbt-duckdb>=1.8.0,<2.0.0
+duckdb>=1.4,<2.0
+
+# --- Качество данных (дни 38-40, 86-88) ---
 great-expectations>=1.0.0,<2.0.0
 pytest>=7.0.0
 pytest-cov>=4.0.0
+
+# --- Анализ и отчёты ---
 pandas>=2.0.0

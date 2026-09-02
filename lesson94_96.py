@@ -830,8 +830,11 @@ def step6_tradeoffs():
 # ═══════════════════════════════════════════════════════════
 
 def write_csv(path: Path, rows: list[dict]) -> Path:
+    # lineterminator обязателен: диалект excel по умолчанию пишет CRLF
+    # даже на Linux, и git ругается на смешанные переводы строк.
     with path.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+        writer = csv.DictWriter(fh, fieldnames=list(rows[0].keys()),
+                                lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     print(f"  OK  {path.relative_to(PROJECT_ROOT)}  ({len(rows)} строк)")
