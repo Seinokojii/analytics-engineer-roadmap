@@ -6,6 +6,8 @@ deliberate practice: **SQL · dbt · Snowflake · Dagster · Airbyte · DuckDB**
 Looking for an internship or part-time role, remote.
 
 **[Live dashboard](https://seinokojii.github.io/analytics-engineer-roadmap/)** ·
+[dbt docs — lineage & catalog](https://seinokojii.github.io/analytics-engineer-roadmap/dbt/) ·
+[CV — PDF, EN & RU](https://seinokojii.github.io/analytics-engineer-roadmap/cv/) ·
 [Production pipeline docs](docs/PRODUCTION_PIPELINE.md) ·
 [dbt CI](https://github.com/Seinokojii/analytics-engineer-roadmap/actions/workflows/dbt_ci.yml)
 
@@ -76,12 +78,15 @@ it from the Dagster UI.
 
 ## SaaS Subscriptions — retention, churn, cohorts
 
-A subscription analytics stack: 500 users, 800 subscriptions, 8 dbt models
-across staging and marts, SCD Type 2 snapshots, MetricFlow semantic layer.
+A subscription analytics stack over the dbt seeds: 500 users, 500 subscriptions,
+9 models across staging and marts, an SCD Type 2 snapshot, a MetricFlow semantic
+layer, and a dashboard that shows where every number came from.
 
 **[→ Open the dashboard](https://seinokojii.github.io/analytics-engineer-roadmap/)**
-— MRR, churn by plan, churn by acquisition channel, revenue mix. Every number
-on the page expands to the SQL that produced it.
+— MRR as a month-end balance, cohort survival, churn by plan and by channel, LTV,
+RFM. Filters recompute the charts from rows, every figure expands to its SQL, and
+two panels sit under the charts: a lineage graph down to the model, and the
+results of the latest `dbt build` read from Elementary's own tables.
 
 ```mermaid
 flowchart LR
@@ -90,30 +95,49 @@ flowchart LR
     S3[raw_events] --> ST
     ST --> D[dim_subscribers<br/>SCD Type 2]
     ST --> F[fct_subscriptions<br/>MRR · churn · lifetime]
-    F --> C[mart_cohort_retention]
+    F --> MM[mart_mrr_monthly<br/>month-end balance]
+    F --> C[mart_cohort_retention<br/>survival]
     F --> R[mart_rfm_segments]
     F --> L[mart_ltv]
     F --> M[MetricFlow<br/>5 metrics]
 ```
 
-**The finding that matters more than the models.** While building the
-dashboard I checked the cohort table against the raw data and found retention
-that *grows* month over month — 11 → 32 → 51 → 71 users in the January cohort,
-which is impossible. Cause: subscription `start_date` is generated
-independently of user `signup_date`, so the dataset carries no temporal link
-between signup and subscription. Cohort retention and survival-based LTV cannot
-be computed from it at all, and the shipped `cohort_analysis` table hid this
-behind rows with a negative "months since signup".
+### Two defects, and neither was in the chart
 
-The dashboard therefore shows churn, which the data supports, and states the
-limitation on the page instead of drawing a curve that would look fine and mean
-nothing.
+**One in my own model.** `mart_cohort_retention` measured `month_num` from the
+subscription's own `start_date`, so every cohort produced exactly one row —
+month 0 at 100 % — and the retention "curve" was a flat line that looked
+perfectly healthy. A `not_null` test on the column passed the whole time,
+because the column was never null; it was just never anything else either.
+Rewritten as a survival curve and guarded by a singular test that fails if
+retention ever rises inside a cohort:
 
-**What I would improve:** replace the generator so subscription dates derive
-from signup dates with a rising churn hazard, and add a `start_date >=
-signup_date` test — one rule would have caught this on the first run.
+```sql
+-- tests/assert_retention_monotonic.sql — rows returned = test failure
+with r as (
+    select cohort_month, month_num, retention_pct,
+           lag(retention_pct) over (partition by cohort_month order by month_num) as prev_pct
+    from {{ ref('mart_cohort_retention') }}
+)
+select * from r where prev_pct is not null and retention_pct > prev_pct
+```
 
-→ code in [`dbt_analytics/models/`](dbt_analytics/models/)
+**One in the data.** The exploratory dataset from `monthly_project2.py` — 800
+subscriptions — generates subscription `start_date` independently of user
+`signup_date`, so recomputing cohorts there gives retention that *grows*:
+11 → 32 → 51 → 71 users in the January cohort, which is impossible. Cohort
+retention and survival-based LTV cannot be computed from it at all, and the
+shipped `cohort_analysis` table hid this behind rows with a negative "months
+since signup". That dataset is not what the dashboard reads; the dbt seeds are,
+and there `start_date >= signup_date` holds in all 500 rows.
+
+**What I would improve:** give the generator a rising churn hazard instead of a
+uniform one, add `start_date >= signup_date` as a source test — one rule would
+have caught the second defect on the first run — and make `mart_mrr_monthly`
+incremental by month rather than rebuilding all 21.
+
+→ code in [`dbt_analytics/models/`](dbt_analytics/models/) · dashboard in
+[`docs/`](docs/)
 
 ---
 
@@ -171,6 +195,20 @@ production experience.
 
 ---
 
+## Evidence, not claims
+
+Every claim above has something to click.
+
+| Claim | Where to check it |
+|---|---|
+| Tests exist and are green | [Quality panel on the dashboard](https://seinokojii.github.io/analytics-engineer-roadmap/#s-quality) — read from Elementary's tables, with the run date |
+| The models are wired the way I say | [dbt docs lineage graph](https://seinokojii.github.io/analytics-engineer-roadmap/dbt/) and the lineage panel on the dashboard |
+| CI actually runs on pull requests | [Workflow runs](https://github.com/Seinokojii/analytics-engineer-roadmap/actions/workflows/dbt_ci.yml) |
+| The test suite has failed at least once | [`lesson86_88.py`](lesson86_88.py), `step9_negative_test()` — corrupts the raw table on purpose, asserts the tests go red, restores the database |
+| The dashboard numbers match the marts | [`docs/test_build_dashboard.py`](docs/test_build_dashboard.py) recomputes month-end MRR from rows and compares against `mart_mrr_monthly` |
+
+---
+
 ## Stack
 
 | | |
@@ -195,7 +233,9 @@ production experience.
 | `contracts/` | Data contracts |
 | `snowflake_setup/` | Snowflake SQL scripts |
 | `airbyte_setup/` | Connector configuration |
-| `docs/` | Pipeline documentation, dashboard, demo script |
+| `docs/` | Dashboard (`index.html`, `build_dashboard.py`), pipeline documentation, demo script |
+| `docs/dbt/` | Published dbt docs — model catalog and lineage graph |
+| `docs/cv/` | CV in English and Russian, PDF |
 | `lesson*.py` | Daily exercises, days 1–96 |
 
 <details>
