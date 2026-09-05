@@ -1,4 +1,4 @@
-{{ config(materialized='table') }}
+{{ config(materialized='table', tags=['saas']) }}
 SELECT
     plan,
     COUNT(DISTINCT user_id)          AS subscribers,

@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='view', tags=['saas']) }}
 SELECT
     user_id,
     LOWER(TRIM(email)) AS email,

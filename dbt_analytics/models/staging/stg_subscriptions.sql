@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='view', tags=['saas']) }}
 SELECT
     subscription_id,
     user_id,

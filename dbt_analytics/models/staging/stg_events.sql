@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='view', tags=['saas']) }}
 SELECT
     event_id,
     user_id,
