@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SaaS Subscriptions — витрина метрик · Дияр Махмудов</title>
+<meta name="description" content="Витрина подписочных метрик SaaS: MRR, отток по планам и каналам привлечения. Каждая цифра прослеживается до модели и SQL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;450;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#F3F4F1; --surface:#FFFFFF; --deep:#10231C;
+  --ink:#0F1412; --ink-2:#525A56; --ink-3:#858C88; --on-deep:#EAF0EC; --on-deep-2:#93AAA0;
+  --rule:#E2E5E0; --rule-2:#CDD1CB;
+  /* данные — палитра прошла проверку на дальтонизм, не менять */
+  --s1:#1C7C54; --s2:#C08519; --s3:#A32E3E;
+  --accent:#1C7C54; --accent-soft:#EAF2ED;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  --disp:"Archivo","IBM Plex Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--sans);
+  font-size:15.5px;line-height:1.55;font-feature-settings:"tnum" 1;-webkit-font-smoothing:antialiased}
+.shell{max-width:1180px;margin:0 auto;padding:0 32px}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+h1,h2,h3{font-family:var(--disp);margin:0}
+
+/* ═══ шапка ═══ */
+.masthead{background:var(--deep);color:var(--on-deep);padding:52px 0 44px;position:relative}
+.masthead::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:linear-gradient(90deg,var(--s1) 0 34%,var(--s2) 34% 67%,var(--s3) 67% 100%)}
+.mast-grid{display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--on-deep-2);margin:0 0 18px}
+h1{font-weight:700;font-variation-settings:"wdth" 112;font-size:clamp(32px,4.6vw,54px);
+  line-height:1.02;letter-spacing:-.025em;max-width:16ch;color:#fff}
+.standfirst{font-size:16.5px;line-height:1.55;color:var(--on-deep-2);margin:16px 0 0;max-width:56ch}
+.standfirst b{color:var(--on-deep);font-weight:500}
+.mast-card{font-family:var(--mono);font-size:12px;color:var(--on-deep-2);text-align:right;line-height:1.85}
+.mast-card .who{color:#fff;font-family:var(--sans);font-size:15px;font-weight:600;
+  display:block;margin-bottom:5px;letter-spacing:-.005em}
+.mast-card a{color:var(--on-deep);text-decoration:none;border-bottom:1px solid rgba(234,240,236,.32);
+  padding-bottom:1px;transition:border-color .15s}
+.mast-card a:hover{border-color:var(--on-deep)}
+
+/* ═══ сетка ═══ */
+.body-grid{display:grid;grid-template-columns:200px 1fr;gap:56px;padding:44px 0 0;align-items:start}
+
+/* ═══ колонка ═══ */
+.rail{position:sticky;top:28px}
+.rail-label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--rule-2)}
+.rail nav{display:flex;flex-direction:column}
+.rail nav a{display:flex;gap:9px;align-items:baseline;padding:7px 0;font-size:13.5px;
+  color:var(--ink-2);text-decoration:none;line-height:1.35;transition:color .15s}
+.rail nav a .tick{width:12px;height:1px;background:var(--rule-2);flex:none;
+  transform:translateY(-4px);transition:background .18s,width .18s}
+.rail nav a:hover{color:var(--ink)}
+.rail nav a.on{color:var(--ink);font-weight:600}
+.rail nav a.on .tick{background:var(--accent);width:20px}
+.sqlbox{margin-top:22px;padding-top:18px;border-top:1px solid var(--rule-2)}
+.sw{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--ink-2)}
+.sw input{position:absolute;opacity:0;width:0;height:0}
+.sw .track{width:34px;height:19px;border-radius:10px;background:var(--rule-2);flex:none;
+  position:relative;transition:background .18s}
+.sw .track::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.22);transition:transform .18s}
+.sw input:checked + .track{background:var(--accent)}
+.sw input:checked + .track::after{transform:translateX(15px)}
+.sw input:focus-visible + .track{outline:2px solid var(--accent);outline-offset:3px}
+.sw-hint{font-size:11.5px;color:var(--ink-3);margin:8px 0 0;line-height:1.4}
+
+/* ═══ содержимое ═══ */
+.content{min-width:0}
+.sec{margin-bottom:64px;scroll-margin-top:24px}
+.sec:last-child{margin-bottom:0}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin:0 0 20px}
+.sec-head h2{font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3)}
+.sec-head .line{flex:1;height:1px;background:var(--rule)}
+
+/* ═══ ключевые цифры ═══ */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);
+  border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.kpi{padding:22px 22px 18px;border-right:1px solid var(--rule)}
+.kpi:last-child{border-right:none}
+.kpi .lab{font-size:12.5px;color:var(--ink-2);margin:0;line-height:1.3;min-height:2.6em}
+.kpi .val{font-family:var(--disp);font-weight:700;font-variation-settings:"wdth" 106;
+  font-size:40px;line-height:1;letter-spacing:-.03em;margin:10px 0 0;display:flex;align-items:baseline;gap:3px}
+.kpi .val .u{font-size:17px;font-weight:500;color:var(--ink-3);letter-spacing:0}
+.kpi .note{font-size:11.5px;color:var(--ink-3);margin:9px 0 0;line-height:1.4}
+
+/* ═══ границы данных ═══ */
+.note-block{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--s2);
+  border-radius:4px;padding:22px 24px}
+.note-block .chip{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:#7A5A12;background:#FBF3E0;border-radius:3px;padding:4px 8px;margin-bottom:13px}
+.note-block p{margin:0 0 9px;font-size:14.5px;color:var(--ink-2);max-width:74ch}
+.note-block p:last-child{margin-bottom:0}
+.note-block b{color:var(--ink);font-weight:600}
+
+/* ═══ графики ═══ */
+figure{margin:0;background:var(--surface);border:1px solid var(--rule);border-radius:4px;
+  padding:26px 26px 22px}
+.fig-title{font-size:21px;font-weight:600;font-variation-settings:"wdth" 104;
+  letter-spacing:-.017em;margin:0;line-height:1.2}
+.fig-sub{font-size:14px;color:var(--ink-2);margin:7px 0 0;max-width:76ch;line-height:1.5}
+.chart{margin-top:22px;overflow-x:auto}
+svg{display:block;max-width:100%;height:auto}
+.scroll-hint{display:none;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin:7px 0 0}
+.legend{display:flex;flex-wrap:wrap;gap:7px 20px;margin:16px 0 0;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.swatch{width:10px;height:10px;border-radius:2px;flex:none}
+
+.take{margin:20px 0 0;padding:16px 18px;background:var(--accent-soft);border-radius:4px;
+  display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
+.take .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);background:#fff;border-radius:3px;padding:5px 8px;white-space:nowrap;margin-top:1px}
+.take p{margin:0;font-size:15px;line-height:1.55;color:var(--ink)}
+
+/* происхождение цифры */
+.prov{margin-top:16px;border-top:1px solid var(--rule);padding-top:14px}
+.prov summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:11px;color:var(--ink-2);background:#F4F6F3;border:1px solid var(--rule);
+  border-radius:99px;padding:6px 12px 6px 10px;transition:border-color .15s,color .15s}
+.prov summary::-webkit-details-marker{display:none}
+.prov summary:hover{border-color:var(--accent);color:var(--accent)}
+.prov summary .chev{width:9px;height:9px;flex:none;transition:transform .18s}
+.prov[open] summary{border-color:var(--accent);color:var(--accent)}
+.prov[open] summary .chev{transform:rotate(90deg)}
+.prov pre{font-family:var(--mono);font-size:12px;line-height:1.65;background:var(--deep);color:#D6E2DA;
+  border-radius:4px;padding:16px 18px;margin:12px 0 0;overflow-x:auto;white-space:pre}
+.prov .kw{color:#7FC9A3;font-weight:500}
+.prov .fn{color:#E0B45F}
+
+.tbl{margin-top:12px}
+.tbl summary{list-style:none;cursor:pointer;display:inline-block;font-family:var(--mono);font-size:11px;
+  color:var(--ink-3);border:1px dashed var(--rule-2);border-radius:99px;padding:6px 12px;
+  transition:border-color .15s,color .15s}
+.tbl summary::-webkit-details-marker{display:none}
+.tbl summary:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;margin-top:11px;font-size:13.5px;width:100%}
+th,td{text-align:right;padding:7px 11px;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;font-size:11.5px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;
+  border-bottom:1px solid var(--rule-2)}
+td{font-family:var(--mono);font-size:12.5px}
+td:first-child{font-family:var(--sans);font-size:13.5px}
+
+/* что бы я улучшил */
+.improve{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.improve .row{background:var(--surface);padding:20px 24px}
+.improve h3{font-size:15.5px;font-weight:600;margin:0 0 5px;letter-spacing:-.008em}
+.improve p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55;max-width:78ch}
+.improve code{font-family:var(--mono);font-size:12.5px;background:#F1F3F0;padding:1px 5px;border-radius:3px;color:var(--ink)}
+
+footer{margin-top:60px;background:var(--deep);color:var(--on-deep-2);padding:34px 0 42px}
+footer p{margin:0 0 8px;font-size:13.5px;max-width:74ch}
+footer a{font-family:var(--mono);font-size:13px;color:var(--on-deep);text-decoration:none;
+  border-bottom:1px solid rgba(234,240,236,.32)}
+footer a:hover{border-color:var(--on-deep)}
+
+.tip{position:fixed;pointer-events:none;background:var(--deep);color:#fff;font-family:var(--mono);
+  font-size:11.5px;padding:8px 11px;border-radius:4px;opacity:0;visibility:hidden;
+  transition:opacity .12s;z-index:30;white-space:nowrap;line-height:1.6;
+  box-shadow:0 4px 14px rgba(16,35,28,.24)}
+.tip.on{opacity:1;visibility:visible}
+@media (hover:none){.tip{display:none}}
+
+/* ═══ адаптив ═══ */
+@media (max-width:1020px){
+  .body-grid{grid-template-columns:1fr;gap:0;padding-top:34px}
+  .rail{position:static;margin-bottom:34px;padding-bottom:22px;border-bottom:1px solid var(--rule-2)}
+  .rail nav{flex-direction:row;flex-wrap:wrap;gap:0 22px}
+  .rail nav a{padding:5px 0}
+  .sqlbox{margin-top:16px;padding-top:14px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .kpi:nth-child(2n){border-right:none}
+  .kpi:nth-child(-n+2){border-bottom:1px solid var(--rule)}
+}
+@media (max-width:760px){
+  .shell{padding:0 18px}
+  .masthead{padding:36px 0 32px}
+  .mast-grid{grid-template-columns:1fr;gap:22px;align-items:start}
+  .mast-card{text-align:left}
+  .sec{margin-bottom:48px}
+  figure{padding:20px 16px 18px}
+  .chart{margin-right:-16px;padding-right:16px;-webkit-overflow-scrolling:touch}
+  .chart svg{min-width:600px}
+  .scroll-hint{display:block}
+  .take{grid-template-columns:1fr;gap:9px}
+  .take .tag{justify-self:start}
+}
+@media (max-width:420px){
+  .kpis{grid-template-columns:1fr}
+  .kpi{border-right:none;border-bottom:1px solid var(--rule)}
+  .kpi:last-child{border-bottom:none}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="shell mast-grid">
+    <div>
+      <p class="eyebrow">Витрина подписочных метрик · портфолио Analytics Engineer</p>
+      <h1>800 подписок, 500 пользователей, шесть месяцев</h1>
+      <p class="standfirst">Отчёт собран из витрин dbt поверх хранилища подписок. <b>Каждый показатель раскрывается до SQL, который его даёт</b> — включая те, что показывают неудобное.</p>
+    </div>
+    <div class="mast-card">
+      <span class="who">Дияр Махмудов</span>
+      Бишкек · UTC+6<br>
+      dbt · DuckDB · Dagster<br>
+      <a href="https://github.com/Seinokojii/analytics-engineer-roadmap">Репозиторий →</a>
+    </div>
+  </div>
+</header>
+
+<div class="shell body-grid">
+
+  <aside class="rail">
+    <p class="rail-label">Разделы</p>
+    <nav id="nav">
+      <a href="#kpi"><span class="tick"></span>Ключевые цифры</a>
+      <a href="#limits"><span class="tick"></span>Границы данных</a>
+      <a href="#f-mrr"><span class="tick"></span>MRR по месяцам</a>
+      <a href="#f-plans"><span class="tick"></span>Отток по тарифам</a>
+      <a href="#f-chan"><span class="tick"></span>Отток по каналам</a>
+      <a href="#f-mix"><span class="tick"></span>Структура MRR</a>
+      <a href="#improve"><span class="tick"></span>Что бы я улучшил</a>
+    </nav>
+    <div class="sqlbox">
+      <label class="sw">
+        <input type="checkbox" id="sqlAll">
+        <span class="track"></span>
+        <span>Показать SQL</span>
+      </label>
+      <p class="sw-hint">Раскрывает запрос под каждым блоком — страницу можно читать как отчёт или как сборник запросов.</p>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <section class="sec" id="kpi">
+      <div class="sec-head"><h2>Ключевые цифры</h2><span class="line"></span></div>
+      <div class="kpis" id="kpis"></div>
+      <details class="prov" data-sql>
+        <summary><svg class="chev" viewBox="0 0 8 10" fill="none" aria-hidden="true"><path d="M1.5 1L6 5l-4.5 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span>subscriptions · user_metrics</span></summary>
+        <pre id="kpiSql"></pre>
+      </details>
+    </section>
+
+    <section class="sec" id="limits">
+      <div class="sec-head"><h2>Границы данных</h2><span class="line"></span></div>
+      <div class="note-block">
+        <span class="chip">Что эти данные не позволяют посчитать</span>
+        <p>Датасет синтетический. Дата начала подписки сгенерирована независимо от даты регистрации пользователя, поэтому <b>когортное удержание по нему посчитать нельзя</b>: пересчёт из сырых таблиц даёт кривую, которая растёт — 11 → 32 → 51 → 71 пользователь в когорте января, а это невозможно. Кривой удержания на странице нет; вместо неё отток, который данные поддерживают.</p>
+        <p>По той же причине распределение времени жизни подписки равномерное: 42–57 подписок в каждом из 17 месяцев. Генератор не моделирует выживание.</p>
+        <p>Июнь 2023 обрезан на 16-м числе — последняя запись в источнике. На графике MRR он показан отдельно и в сравнение месяцев не входит.</p>
+      </div>
+    </section>
+
+    <div id="figs"></div>
+
+    <section class="sec" id="improve">
+      <div class="sec-head"><h2>Что бы я улучшил</h2><span class="line"></span></div>
+      <div class="improve">
+        <div class="row"><div>
+          <h3>Заменил бы генератор данных</h3>
+          <p>Текущий делает <code>start_date</code> подписки независимой от <code>signup_date</code> пользователя, из-за чего половина заявленных метрик проекта — когорты, кривая удержания, LTV по выживанию — физически не считается. Правильный генератор рисует дату подписки от даты регистрации и задаёт вероятность оттока, растущую со временем.</p></div></div>
+        <div class="row"><div>
+          <h3>Добавил бы тест на упорядоченность дат</h3>
+          <p>Дефект жил в готовой витрине <code>cohort_analysis</code> и маскировался строками с отрицательным «месяцем с регистрации». Одно правило — <code>start_date &gt;= signup_date</code> — поймало бы его на первом же прогоне.</p></div></div>
+        <div class="row"><div>
+          <h3>Считал бы MRR на конец месяца, а не по дате старта</h3>
+          <p>Сейчас месячная сумма — это MRR подписок, начавшихся в этом месяце. Корректная метрика — снимок активных подписок на последний день месяца; для этого нужна витрина по дням и SCD-таблица подписок.</p></div></div>
+        <div class="row"><div>
+          <h3>Довёл бы отток до когортного</h3>
+          <p>Отток по планам здесь — доля закрытых подписок за всё время наблюдения, а не месячный отток. Сравнивать планы между собой так можно, а с рыночными бенчмарками — нет.</p></div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="shell">
+    <p>Данные: витрины проекта Retention &amp; Cohort, DuckDB. Страница статическая — графики нарисованы из агрегатов, посчитанных запросами, которые раскрываются под каждым блоком.</p>
+    <p><a href="https://github.com/Seinokojii/analytics-engineer-roadmap">github.com/Seinokojii/analytics-engineer-roadmap</a></p>
+  </div>
+</footer>
+
+<div class="tip" id="tip"></div>
+
+<script>
+const D = {
+  kpi:{mrr_active:29880,users_active:338,users_total:500,churn_pct:"25,3",arpu:50},
+  mrr:[{m:"Январь",mrr:7560,subs:149},{m:"Февраль",mrr:7780,subs:135},{m:"Март",mrr:7450,subs:148},
+       {m:"Апрель",mrr:7850,subs:144},{m:"Май",mrr:7500,subs:149},{m:"Июнь",mrr:3320,subs:75,partial:true}],
+  plans:[{plan:"pro",total:295,churned:87,rate:29.49},{plan:"enterprise",total:114,churned:32,rate:28.07},
+         {plan:"basic",total:391,churned:83,rate:21.23}],
+  channels:[{ch:"social",users:52,rate:40.4},{ch:"referral",users:95,rate:37.9},
+            {ch:"organic",users:152,rate:30.3},{ch:"paid",users:201,rate:29.4}],
+  mix:[{plan:"enterprise",n:82,mrr:16400},{plan:"pro",n:208,mrr:10400},{plan:"basic",n:308,mrr:3080}]
+};
+const C={s1:"#1C7C54",s2:"#C08519",s3:"#A32E3E",ink:"#0F1412",ink2:"#525A56",ink3:"#858C88",
+         rule:"#E2E5E0",rule2:"#CDD1CB",surface:"#FFFFFF"};
+const PLAN_COLOR={enterprise:C.s1,pro:C.s2,basic:C.s3};
+const nf = n => n.toLocaleString("ru-RU");
+const pc = n => String(n).replace(".",",")+"%";
+const CHEV='<svg class="chev" viewBox="0 0 8 10" fill="none" aria-hidden="true"><path d="M1.5 1L6 5l-4.5 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const hl = s => esc(s)
+  .replace(/\b(select|from|where|group by|order by|case|when|then|else|end|is|null|not|and|as)\b/gi, m=>`<span class="kw">${m}</span>`)
+  .replace(/\b(sum|count|avg|round|date_trunc)\b/gi, m=>`<span class="fn">${m}</span>`);
+const prov = (src,sql) => `<details class="prov" data-sql><summary>${CHEV}<span>${src}</span></summary><pre>${hl(sql)}</pre></details>`;
+
+const tip=document.getElementById("tip");
+function bind(el,html){
+  el.addEventListener("pointerenter",()=>{tip.innerHTML=html;tip.classList.add("on")});
+  el.addEventListener("pointermove",e=>{
+    const w=tip.offsetWidth,x=Math.min(e.clientX+16,innerWidth-w-10);
+    tip.style.left=x+"px";tip.style.top=(e.clientY-40)+"px";
+  });
+  el.addEventListener("pointerleave",()=>tip.classList.remove("on"));
+}
+
+/* ─── ключевые цифры ─── */
+document.getElementById("kpis").innerHTML=[
+  {lab:"MRR активных подписок",val:nf(D.kpi.mrr_active),u:"$",note:"598 из 800 подписок без даты закрытия"},
+  {lab:"Активные пользователи",val:D.kpi.users_active,u:"",note:`из ${D.kpi.users_total} зарегистрированных`},
+  {lab:"Отток подписок",val:D.kpi.churn_pct,u:"%",note:"доля закрытых за весь период"},
+  {lab:"Средний чек подписки",val:D.kpi.arpu,u:"$",note:"по активным, в месяц"}
+].map(k=>`<div class="kpi"><p class="lab">${k.lab}</p>
+  <p class="val">${k.val}<span class="u">${k.u}</span></p><p class="note">${k.note}</p></div>`).join("");
+document.getElementById("kpiSql").innerHTML=hl(`select round(sum(mrr))    as mrr_active,
+       count(*)             as subs_active,
+       round(avg(mrr), 1)   as arpu
+from subscriptions
+where end_date is null;
+
+select count(*)                                            as users_total,
+       sum(case when status = 'active' then 1 else 0 end)   as users_active
+from user_metrics;`);
+
+/* ─── каркас графика ─── */
+function fig(o){
+  return `<section class="sec" id="${o.id}">
+    <div class="sec-head"><h2>${o.kicker}</h2><span class="line"></span></div>
+    <figure>
+      <figcaption>
+        <h3 class="fig-title">${o.title}</h3>
+        <p class="fig-sub">${o.sub}</p>
+      </figcaption>
+      <div class="chart">${o.svg}</div>
+      <p class="scroll-hint">график прокручивается вбок →</p>
+      ${o.legend||""}
+      <div class="take"><span class="tag">Вывод</span><p>${o.take}</p></div>
+      ${o.table}
+      ${prov(o.src,o.sql)}
+    </figure></section>`;
+}
+function table(head,rows){
+  return `<details class="tbl"><summary>Таблица значений</summary><table><thead><tr>${
+    head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${
+    rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></details>`;
+}
+
+/* общая геометрия: одинаковый левый край у всех графиков */
+const W=860, PL=96, PR=30;
+
+function chartMrr(){
+  const H=306,PT=18,PB=42,d=D.mrr,iw=W-PL-PR,ih=H-PT-PB,max=8600;
+  const x=i=>PL+(iw/(d.length-1))*i, y=v=>PT+ih-(v/max)*ih;
+  let g="";
+  [0,2000,4000,6000,8000].forEach(v=>{
+    g+=`<line x1="${PL}" x2="${W-PR}" y1="${y(v)}" y2="${y(v)}" stroke="${C.rule}" stroke-width="1"/>
+        <text x="${PL-14}" y="${y(v)+4}" text-anchor="end" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">${v?v/1000+" к":"0"}</text>`;
+  });
+  const line=d.slice(0,5).map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.mrr)}`).join(" ");
+  let marks="";
+  d.forEach((p,i)=>{
+    marks+=`<circle class="pt" data-i="${i}" cx="${x(i)}" cy="${y(p.mrr)}" r="6" fill="${p.partial?C.surface:C.s1}"
+      stroke="${p.partial?C.ink3:C.surface}" stroke-width="2.5"/>`;
+    g+=`<text x="${x(i)}" y="${H-16}" text-anchor="middle" font-size="12.5" fill="${p.partial?C.ink3:C.ink2}">${p.m}</text>`;
+  });
+  const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="MRR по месяцам, январь–июнь 2023">
+    ${g}
+    <path d="${line}" fill="none" stroke="${C.s1}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M${x(4)},${y(d[4].mrr)} L${x(5)},${y(d[5].mrr)}" fill="none" stroke="${C.ink3}" stroke-width="2"
+      stroke-dasharray="5 5" stroke-linecap="round"/>
+    ${marks}
+    <text x="${x(5)}" y="${y(d[5].mrr)+26}" text-anchor="end" font-size="12" fill="${C.ink3}">неполный месяц</text>
+  </svg>`;
+  return fig({id:"f-mrr",kicker:"MRR по месяцам",
+    title:"MRR подписок, начавшихся в месяце",
+    sub:"Сумма месячной выручки по подпискам с датой старта внутри месяца. Январь–май сопоставимы между собой; июнь оборван источником и показан пунктиром.",
+    svg,
+    take:"За пять полных месяцев MRR держится в коридоре 7 450–7 850 $ — разброс 5%. Приток новых подписок стабилен, роста нет.",
+    table:table(["Месяц","MRR, $","Подписок"],D.mrr.map(p=>[p.m+(p.partial?" (неполный)":""),nf(p.mrr),p.subs])),
+    src:"subscriptions · start_date, mrr",
+    sql:`select date_trunc('month', start_date) as month,
+       round(sum(mrr))                    as mrr,
+       count(*)                           as subs
+from subscriptions
+group by 1
+order by 1`});
+}
+
+function chartPlans(){
+  const rowH=58,PT=10,PB=30,d=D.plans,H=PT+rowH*d.length+PB,iw=W-PL-190,max=35;
+  let g="",bars="";
+  [0,10,20,30].forEach(v=>{
+    const x=PL+(v/max)*iw;
+    g+=`<line x1="${x}" x2="${x}" y1="${PT}" y2="${PT+rowH*d.length}" stroke="${C.rule}" stroke-width="1"/>
+        <text x="${x}" y="${H-10}" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">${v}%</text>`;
+  });
+  d.forEach((p,i)=>{
+    const y=PT+i*rowH+14,w=(p.rate/max)*iw;
+    bars+=`<rect class="bar" data-i="${i}" x="${PL}" y="${y}" width="${w}" height="30" rx="4" fill="${C.s1}"/>
+      <text x="${PL-14}" y="${y+20}" text-anchor="end" font-size="14.5" fill="${C.ink}">${p.plan}</text>
+      <text x="${PL+w+14}" y="${y+20}" font-size="14" font-family="IBM Plex Mono" fill="${C.ink}">${pc(p.rate)}</text>
+      <text x="${PL+w+80}" y="${y+20}" font-size="12.5" fill="${C.ink3}">${p.churned} из ${p.total}</text>`;
+  });
+  return fig({id:"f-plans",kicker:"Отток по тарифам",
+    title:"Отток по тарифным планам",
+    sub:"Доля подписок с проставленной датой закрытия, за весь период наблюдения.",
+    svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Отток по тарифным планам">${g}${bars}</svg>`,
+    take:"Basic держится лучше платных планов: 21,2% против 29,5% у pro. Разрыв в 8 процентных пунктов на 391 подписке basic — не шум, и он противоречит обычному ожиданию, что дешёвый тариф уходит первым.",
+    table:table(["План","Подписок","Закрыто","Отток"],D.plans.map(p=>[p.plan,p.total,p.churned,pc(p.rate)])),
+    src:"subscriptions · plan, end_date",
+    sql:`select plan,
+       count(*)                                               as total_subscriptions,
+       sum(case when end_date is not null then 1 else 0 end)  as churned,
+       round(100.0 * sum(case when end_date is not null then 1 else 0 end)
+             / count(*), 2)                                   as churn_rate_pct
+from subscriptions
+group by plan
+order by churn_rate_pct desc`});
+}
+
+function chartChannels(){
+  const rowH=52,PT=12,PB=30,d=D.channels,H=PT+rowH*d.length+PB,iw=W-PL-200,min=25,max=45;
+  const x=v=>PL+((v-min)/(max-min))*iw;
+  let g="",dots="";
+  [25,30,35,40,45].forEach(v=>{
+    g+=`<line x1="${x(v)}" x2="${x(v)}" y1="${PT}" y2="${PT+rowH*d.length}" stroke="${C.rule}" stroke-width="1"/>
+        <text x="${x(v)}" y="${H-10}" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">${v}%</text>`;
+  });
+  d.forEach((c,i)=>{
+    const y=PT+i*rowH+26;
+    dots+=`<line x1="${PL}" x2="${x(c.rate)}" y1="${y}" y2="${y}" stroke="${C.rule2}" stroke-width="1.5"/>
+      <circle class="dot" data-i="${i}" cx="${x(c.rate)}" cy="${y}" r="8" fill="${C.s1}" stroke="${C.surface}" stroke-width="2.5"/>
+      <text x="${PL-14}" y="${y+5}" text-anchor="end" font-size="14.5" fill="${C.ink}">${c.ch}</text>
+      <text x="${x(c.rate)+18}" y="${y+5}" font-size="14" font-family="IBM Plex Mono" fill="${C.ink}">${pc(c.rate)}</text>
+      <text x="${x(c.rate)+82}" y="${y+5}" font-size="12.5" fill="${C.ink3}">${c.users} польз.</text>`;
+  });
+  return fig({id:"f-chan",kicker:"Отток по каналам",
+    title:"Отток по каналу привлечения",
+    sub:"Доля пользователей со статусом churned внутри каждого канала. Шкала начинается с 25%, чтобы разрыв между каналами читался.",
+    svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Отток пользователей по каналу привлечения">${g}${dots}</svg>`,
+    take:"Social и referral теряют людей заметно быстрее платного трафика — 40,4% и 37,9% против 29,4%. Но за ними всего 52 и 95 пользователей, поэтому вывод стоит проверить на большей выборке прежде, чем резать бюджет канала.",
+    table:table(["Канал","Пользователей","Отток"],D.channels.map(c=>[c.ch,c.users,pc(c.rate)])),
+    src:"user_metrics · channel, status",
+    sql:`select channel,
+       count(*)                                              as users,
+       round(100.0 * sum(case when status = 'churned' then 1 else 0 end)
+             / count(*), 1)                                  as churn_pct
+from user_metrics
+group by channel
+order by users desc`});
+}
+
+function chartMix(){
+  const H=150,PT=26,d=D.mix,iw=W-PL-PR,total=d.reduce((s,p)=>s+p.mrr,0);
+  let x=PL,seg="",lab="";
+  d.forEach((p,i)=>{
+    const w=(p.mrr/total)*iw-(i<d.length-1?3:0),share=100*p.mrr/total;
+    seg+=`<rect class="seg" data-i="${i}" x="${x}" y="${PT}" width="${w}" height="46" rx="4" fill="${PLAN_COLOR[p.plan]}"/>`;
+    if(share>8) lab+=`<text x="${x+w/2}" y="${PT+76}" text-anchor="middle" font-size="14" font-family="IBM Plex Mono" fill="${C.ink}">${pc(share.toFixed(1))}</text>
+      <text x="${x+w/2}" y="${PT+96}" text-anchor="middle" font-size="12.5" fill="${C.ink3}">${p.n} подписок</text>`;
+    x+=w+3;
+  });
+  return fig({id:"f-mix",kicker:"Структура MRR",
+    title:"Из чего складывается MRR",
+    sub:"Доля каждого плана в MRR активных подписок против доли в их количестве. Те же 598 подписок, что в первой плитке наверху.",
+    svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Доля планов в MRR">${seg}${lab}</svg>`,
+    legend:`<div class="legend">${d.map(p=>`<span><i class="swatch" style="background:${PLAN_COLOR[p.plan]}"></i>${p.plan} — ${nf(p.mrr)} $</span>`).join("")}</div>`,
+    take:"82 подписки enterprise дают 55% выручки, а 308 подписок basic — 10%. Низкий отток basic из предыдущего графика при этом почти не влияет на деньги: удерживать нужно enterprise.",
+    table:table(["План","Подписок","MRR, $","Доля MRR"],D.mix.map(p=>{
+      const t=D.mix.reduce((s,q)=>s+q.mrr,0);
+      return [p.plan,p.n,nf(p.mrr),pc((100*p.mrr/t).toFixed(1))];})),
+    src:"subscriptions · plan, mrr",
+    sql:`select plan,
+       count(*)         as n,
+       round(sum(mrr))  as mrr
+from subscriptions
+where end_date is null
+group by plan
+order by mrr desc`});
+}
+
+document.getElementById("figs").innerHTML=chartMrr()+chartPlans()+chartChannels()+chartMix();
+
+document.querySelectorAll(".pt").forEach(el=>{const p=D.mrr[+el.dataset.i];
+  bind(el,`${p.m}${p.partial?" (неполный)":""}<br>MRR ${nf(p.mrr)} $ · ${p.subs} подписок`)});
+document.querySelectorAll(".bar").forEach(el=>{const p=D.plans[+el.dataset.i];
+  bind(el,`${p.plan}<br>отток ${pc(p.rate)} · ${p.churned} из ${p.total}`)});
+document.querySelectorAll(".dot").forEach(el=>{const c=D.channels[+el.dataset.i];
+  bind(el,`${c.ch}<br>отток ${pc(c.rate)} · ${c.users} пользователей`)});
+document.querySelectorAll(".seg").forEach(el=>{const p=D.mix[+el.dataset.i],
+  t=D.mix.reduce((s,q)=>s+q.mrr,0);
+  bind(el,`${p.plan}<br>${nf(p.mrr)} $ · ${pc((100*p.mrr/t).toFixed(1))} MRR · ${p.n} подписок`)});
+
+/* ─── общий переключатель SQL ─── */
+const sqlAll=document.getElementById("sqlAll");
+const allProv=()=>[...document.querySelectorAll("details[data-sql]")];
+sqlAll.addEventListener("change",()=>{allProv().forEach(d=>{d.open=sqlAll.checked})});
+allProv().forEach(d=>d.addEventListener("toggle",()=>{
+  const all=allProv(),open=all.filter(x=>x.open).length;
+  sqlAll.checked = open===all.length;
+  sqlAll.indeterminate = open>0 && open<all.length;
+}));
+
+/* ─── подсветка активного раздела ─── */
+const links=[...document.querySelectorAll("#nav a")];
+const secs=links.map(a=>document.querySelector(a.getAttribute("href"))).filter(Boolean);
+const spy=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting) return;
+    links.forEach(a=>a.classList.toggle("on", a.getAttribute("href")==="#"+e.target.id));
+  });
+},{rootMargin:"-12% 0px -72% 0px",threshold:0});
+secs.forEach(sec=>spy.observe(sec));
+</script>
+</body>
+</html>
