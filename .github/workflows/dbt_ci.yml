@@ -77,6 +77,14 @@ jobs:
       - name: dbt build
         working-directory: dbt_analytics
         run: dbt build --target ci --select tag:production_pipeline
+      # SaaS marts read raw_* through source(), and the raw tables come from
+      # the CSV seeds in dbt_analytics/data - so seed first, then build the tag.
+      - name: Seed SaaS raw tables
+        working-directory: dbt_analytics
+        run: dbt seed --target ci --select raw_saas_users raw_subscriptions raw_events
+      - name: dbt build (saas marts + tests)
+        working-directory: dbt_analytics
+        run: dbt build --target ci --select tag:saas
       - name: dbt source freshness
         working-directory: dbt_analytics
         continue-on-error: true
