@@ -37,12 +37,18 @@ models:
               values: [basic, pro, enterprise]
 
   - name: mart_cohort_retention
-    description: "Cohort retention by month"
+    description: "Survival-style cohort retention: cohort = start month, month_num 0-12, share of subscriptions still alive."
     columns:
       - name: cohort_month
         data_tests:
           - not_null
       - name: retention_pct
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: active_subs
         data_tests:
           - not_null
 
@@ -53,3 +59,23 @@ models:
         data_tests:
           - not_null
           - unique
+
+  - name: mart_mrr_monthly
+    description: "Month-end MRR balance per plan, Jan 2023 - Sep 2024, with new and churned subscriptions in the month."
+    columns:
+      - name: month
+        data_tests: [not_null]
+      - name: plan
+        data_tests:
+          - accepted_values:
+              values: [basic, pro, enterprise]
+      - name: mrr
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: active_subs
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [month, plan]

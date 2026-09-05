@@ -3,539 +3,813 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SaaS Subscriptions — витрина метрик · Дияр Махмудов</title>
-<meta name="description" content="Витрина подписочных метрик SaaS: MRR, отток по планам и каналам привлечения. Каждая цифра прослеживается до модели и SQL.">
+<title>SaaS Subscriptions — витрина поверх dbt · Дияр Махмудов</title>
+<meta name="description" content="Подписочные метрики по dbt-витринам: каждая цифра ведёт к модели, тесту и прогону. Analytics Engineer portfolio dashboard.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;450;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --canvas:#F3F4F1; --surface:#FFFFFF; --deep:#10231C;
-  --ink:#0F1412; --ink-2:#525A56; --ink-3:#858C88; --on-deep:#EAF0EC; --on-deep-2:#93AAA0;
+  --head:#10231C; --head-2:#183328; --head-ink:#EAF0EC; --head-mute:#9DB3A7;
+  --paper:#F4F5F2; --surface:#FFFFFF; --ink:#0F1412; --ink-2:#525A56; --ink-3:#858C88;
   --rule:#E2E5E0; --rule-2:#CDD1CB;
-  /* данные — палитра прошла проверку на дальтонизм, не менять */
   --s1:#1C7C54; --s2:#C08519; --s3:#A32E3E;
-  --accent:#1C7C54; --accent-soft:#EAF2ED;
-  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
-  --disp:"Archivo","IBM Plex Sans",system-ui,sans-serif;
+  --s1-soft:#E6F1EB; --s2-soft:#F8EEDD; --s3-soft:#F5E3E5;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --display:"Archivo","IBM Plex Sans",system-ui,sans-serif;
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
-body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--sans);
-  font-size:15.5px;line-height:1.55;font-feature-settings:"tnum" 1;-webkit-font-smoothing:antialiased}
-.shell{max-width:1180px;margin:0 auto;padding:0 32px}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{transition:none!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;
+  font-feature-settings:"tnum" 1,"ss01" 1}
 a{color:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
-h1,h2,h3{font-family:var(--disp);margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.mono{font-family:var(--mono)}
 
-/* ═══ шапка ═══ */
-.masthead{background:var(--deep);color:var(--on-deep);padding:52px 0 44px;position:relative}
-.masthead::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+/* ───────── header ───────── */
+header{background:var(--head);color:var(--head-ink);position:relative}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
   background:linear-gradient(90deg,var(--s1) 0 34%,var(--s2) 34% 67%,var(--s3) 67% 100%)}
-.mast-grid{display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end}
-.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--on-deep-2);margin:0 0 18px}
-h1{font-weight:700;font-variation-settings:"wdth" 112;font-size:clamp(32px,4.6vw,54px);
-  line-height:1.02;letter-spacing:-.025em;max-width:16ch;color:#fff}
-.standfirst{font-size:16.5px;line-height:1.55;color:var(--on-deep-2);margin:16px 0 0;max-width:56ch}
-.standfirst b{color:var(--on-deep);font-weight:500}
-.mast-card{font-family:var(--mono);font-size:12px;color:var(--on-deep-2);text-align:right;line-height:1.85}
-.mast-card .who{color:#fff;font-family:var(--sans);font-size:15px;font-weight:600;
-  display:block;margin-bottom:5px;letter-spacing:-.005em}
-.mast-card a{color:var(--on-deep);text-decoration:none;border-bottom:1px solid rgba(234,240,236,.32);
-  padding-bottom:1px;transition:border-color .15s}
-.mast-card a:hover{border-color:var(--on-deep)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 32px}
+.head-in{display:grid;grid-template-columns:1fr auto;gap:24px 48px;padding:36px 0 34px;align-items:end}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--head-mute);margin:0 0 14px}
+h1{font-family:var(--display);font-variation-settings:"wdth" 112;font-weight:700;font-size:clamp(30px,4.2vw,50px);
+  line-height:1.02;letter-spacing:-.025em;margin:0 0 16px;max-width:15ch}
+.lede{margin:0;max-width:62ch;font-size:16px;color:#C9D6CE}
+.lede b{color:var(--head-ink);font-weight:600}
+.author{text-align:right;font-size:13.5px;color:var(--head-mute);line-height:1.6}
+.author b{display:block;color:var(--head-ink);font-weight:600;font-size:15px}
+.author .mono{font-size:12px}
+.author a{color:var(--head-ink);text-decoration:none;border-bottom:1px solid #3E5A4E}
+.author a:hover{border-color:var(--head-ink)}
+.lang{display:inline-flex;border:1px solid #3E5A4E;border-radius:6px;overflow:hidden;margin-bottom:12px}
+.lang button{padding:5px 12px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--head-mute)}
+.lang button[aria-pressed="true"]{background:var(--head-ink);color:var(--head)}
+.lang button:not([aria-pressed="true"]):hover{color:var(--head-ink)}
+.head-links{display:flex;gap:18px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px}
 
-/* ═══ сетка ═══ */
-.body-grid{display:grid;grid-template-columns:200px 1fr;gap:56px;padding:44px 0 0;align-items:start}
+/* ───────── layout ───────── */
+.body{display:grid;grid-template-columns:232px minmax(0,1fr);gap:56px;padding:40px 0 80px}
+aside{position:sticky;top:20px;align-self:start;font-size:13.5px}
+aside h4{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;font-weight:500}
+.toc{list-style:none;margin:0 0 26px;padding:0}
+.toc li a{display:block;padding:5px 0 5px 14px;text-decoration:none;color:var(--ink-2);border-left:2px solid var(--rule)}
+.toc li a:hover{color:var(--ink)}
+.toc li a.on{color:var(--ink);border-color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{border:1px solid var(--rule-2);border-radius:999px;padding:3px 10px;font-size:12.5px;color:var(--ink-2);background:var(--surface);
+  transition:background .15s,border-color .15s}
+.chip:hover{border-color:var(--ink-3)}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:1px}
+.reset{font-size:12.5px;color:var(--ink-3);text-decoration:underline;text-underline-offset:3px;margin-bottom:22px;display:none}
+.reset.show{display:inline-block}
+.switch{display:flex;align-items:center;gap:10px;color:var(--ink-2);margin-bottom:6px}
+.switch .tr{width:32px;height:18px;border-radius:9px;background:var(--rule-2);position:relative;transition:background .15s;flex:none}
+.switch .tr::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}
+.switch[aria-pressed="true"] .tr{background:var(--s1)}
+.switch[aria-pressed="true"] .tr::after{left:16px}
+.hint{font-size:12px;color:var(--ink-3);margin:0}
 
-/* ═══ колонка ═══ */
-.rail{position:sticky;top:28px}
-.rail-label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--ink-3);margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--rule-2)}
-.rail nav{display:flex;flex-direction:column}
-.rail nav a{display:flex;gap:9px;align-items:baseline;padding:7px 0;font-size:13.5px;
-  color:var(--ink-2);text-decoration:none;line-height:1.35;transition:color .15s}
-.rail nav a .tick{width:12px;height:1px;background:var(--rule-2);flex:none;
-  transform:translateY(-4px);transition:background .18s,width .18s}
-.rail nav a:hover{color:var(--ink)}
-.rail nav a.on{color:var(--ink);font-weight:600}
-.rail nav a.on .tick{background:var(--accent);width:20px}
-.sqlbox{margin-top:22px;padding-top:18px;border-top:1px solid var(--rule-2)}
-.sw{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--ink-2)}
-.sw input{position:absolute;opacity:0;width:0;height:0}
-.sw .track{width:34px;height:19px;border-radius:10px;background:var(--rule-2);flex:none;
-  position:relative;transition:background .18s}
-.sw .track::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;
-  background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.22);transition:transform .18s}
-.sw input:checked + .track{background:var(--accent)}
-.sw input:checked + .track::after{transform:translateX(15px)}
-.sw input:focus-visible + .track{outline:2px solid var(--accent);outline-offset:3px}
-.sw-hint{font-size:11.5px;color:var(--ink-3);margin:8px 0 0;line-height:1.4}
+main{min-width:0}
+.fstate{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin:0 0 26px;min-height:22px}
+.fstate .n{font-family:var(--mono);color:var(--ink)}
+.fstate .tag{background:var(--ink);color:#fff;border-radius:4px;padding:1px 8px;font-size:12px}
 
-/* ═══ содержимое ═══ */
-.content{min-width:0}
-.sec{margin-bottom:64px;scroll-margin-top:24px}
-.sec:last-child{margin-bottom:0}
-.sec-head{display:flex;align-items:baseline;gap:14px;margin:0 0 20px}
-.sec-head h2{font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3)}
+.sec{margin-bottom:56px;scroll-margin-top:16px}
+.sec-head{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.sec-head h2{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin:0;font-weight:500;white-space:nowrap}
 .sec-head .line{flex:1;height:1px;background:var(--rule)}
+.sec-head .model{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+.sec-head .model b{color:var(--ink-2);font-weight:500}
+figure{margin:0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:26px 28px 20px}
+figcaption h3{font-family:var(--display);font-variation-settings:"wdth" 104;font-weight:600;font-size:21px;letter-spacing:-.012em;margin:0 0 6px}
+.sub{margin:0 0 18px;color:var(--ink-2);max-width:70ch}
+.chart{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.chart svg{display:block;min-width:860px;width:100%;height:auto}
+.scroll-hint{display:none;font-size:12px;color:var(--ink-3);margin:6px 0 0}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin:12px 0 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px;vertical-align:-1px}
+.take{display:flex;gap:14px;align-items:flex-start;background:var(--paper);border-radius:8px;padding:12px 16px;margin:18px 0 0}
+.take .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--s1);padding-top:4px;white-space:nowrap}
+.take p{margin:0;font-size:14px}
+details.tbl,details.prov{margin-top:12px;border-top:1px solid var(--rule);padding-top:10px}
+details summary{cursor:pointer;font-size:13px;color:var(--ink-2);list-style:none;display:flex;align-items:center;gap:8px}
+details summary::-webkit-details-marker{display:none}
+details summary .chev{width:8px;height:10px;transition:transform .15s}
+details[open] summary .chev{transform:rotate(90deg)}
+details summary:hover{color:var(--ink)}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;margin-top:10px;font-size:13px}
+th,td{text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--rule)}
+th{font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+td.num,th.num{text-align:right;font-family:var(--mono)}
+pre{margin:10px 0 0;background:var(--head);color:#DCE7E0;border-radius:8px;padding:16px 18px;font-family:var(--mono);font-size:12.5px;line-height:1.55;overflow-x:auto}
+.kw{color:#8FD3B3}.fn{color:#F0C36A}.cm{color:#7E9A8C}
 
-/* ═══ ключевые цифры ═══ */
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);
-  border:1px solid var(--rule);border-radius:4px;overflow:hidden}
-.kpi{padding:22px 22px 18px;border-right:1px solid var(--rule)}
-.kpi:last-child{border-right:none}
-.kpi .lab{font-size:12.5px;color:var(--ink-2);margin:0;line-height:1.3;min-height:2.6em}
-.kpi .val{font-family:var(--disp);font-weight:700;font-variation-settings:"wdth" 106;
-  font-size:40px;line-height:1;letter-spacing:-.03em;margin:10px 0 0;display:flex;align-items:baseline;gap:3px}
-.kpi .val .u{font-size:17px;font-weight:500;color:var(--ink-3);letter-spacing:0}
-.kpi .note{font-size:11.5px;color:var(--ink-3);margin:9px 0 0;line-height:1.4}
+/* kpi */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.kpi{background:var(--surface);padding:20px 22px 18px}
+.kpi .lab{margin:0 0 8px;font-size:12.5px;color:var(--ink-2)}
+.kpi .val{margin:0;font-family:var(--display);font-variation-settings:"wdth" 108;font-weight:600;font-size:34px;letter-spacing:-.02em;line-height:1}
+.kpi .val .u{font-size:16px;color:var(--ink-3);margin-left:5px;font-weight:500}
+.kpi .note{margin:8px 0 0;font-size:12px;color:var(--ink-3)}
+.kpi-foot{margin-top:12px}
 
-/* ═══ границы данных ═══ */
-.note-block{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--s2);
-  border-radius:4px;padding:22px 24px}
-.note-block .chip{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
-  text-transform:uppercase;color:#7A5A12;background:#FBF3E0;border-radius:3px;padding:4px 8px;margin-bottom:13px}
-.note-block p{margin:0 0 9px;font-size:14.5px;color:var(--ink-2);max-width:74ch}
-.note-block p:last-child{margin-bottom:0}
-.note-block b{color:var(--ink);font-weight:600}
+/* lineage */
+.lin{position:relative}
+.lin .node{cursor:pointer}
+.lin .node rect{fill:var(--surface);stroke:var(--rule-2);transition:stroke .15s,fill .15s}
+.lin .node text{font-family:var(--mono);font-size:12.5px;fill:var(--ink)}
+.lin .node .lay{font-size:10px;fill:var(--ink-3);letter-spacing:.1em}
+.lin .node:hover rect{stroke:var(--ink)}
+.lin .edge{fill:none;stroke:var(--rule-2);stroke-width:1.5;transition:stroke .15s,opacity .15s}
+.lin.focus .edge{opacity:.25}
+.lin.focus .node{opacity:.35}
+.lin.focus .edge.lit{opacity:1;stroke:var(--s1);stroke-width:2}
+.lin.focus .node.lit{opacity:1}
+.lin.focus .node.lit rect{stroke:var(--s1);fill:var(--s1-soft)}
+.lin .colhead{font-family:var(--mono);font-size:11px;letter-spacing:.14em;fill:var(--ink-3)}
+.lin-note{font-size:13px;color:var(--ink-2);margin:14px 0 0}
 
-/* ═══ графики ═══ */
-figure{margin:0;background:var(--surface);border:1px solid var(--rule);border-radius:4px;
-  padding:26px 26px 22px}
-.fig-title{font-size:21px;font-weight:600;font-variation-settings:"wdth" 104;
-  letter-spacing:-.017em;margin:0;line-height:1.2}
-.fig-sub{font-size:14px;color:var(--ink-2);margin:7px 0 0;max-width:76ch;line-height:1.5}
-.chart{margin-top:22px;overflow-x:auto}
-svg{display:block;max-width:100%;height:auto}
-.scroll-hint{display:none;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin:7px 0 0}
-.legend{display:flex;flex-wrap:wrap;gap:7px 20px;margin:16px 0 0;font-size:13px;color:var(--ink-2)}
-.legend span{display:inline-flex;align-items:center;gap:8px}
-.swatch{width:10px;height:10px;border-radius:2px;flex:none}
+/* quality */
+.qgrid{display:grid;grid-template-columns:260px 1fr;gap:28px;align-items:start}
+.qcard{border:1px solid var(--rule);border-radius:8px;padding:18px 20px}
+.qcard .big{font-family:var(--display);font-weight:600;font-size:40px;letter-spacing:-.02em;line-height:1;margin:6px 0 4px}
+.qcard .big small{font-size:14px;color:var(--ink-3);font-weight:500;letter-spacing:0;margin-left:6px}
+.qcard .row{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2);padding:6px 0;border-top:1px solid var(--rule)}
+.qcard .row .mono{color:var(--ink)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:0}
+.dot.pass{background:var(--s1)}.dot.fail{background:var(--s3)}.dot.warn{background:var(--s2)}
+.tests{font-size:13px}
+.tests .grp{padding:10px 0 8px;border-bottom:1px solid var(--rule)}
+.tests .grp:last-child{border-bottom:0}
+.tests .mname{font-family:var(--mono);font-size:12.5px;font-weight:500;margin-bottom:6px;display:flex;justify-content:space-between}
+.tests .mname span{color:var(--ink-3);font-weight:400}
+.tests ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:3px 18px}
+.tests li{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tests li .mono{font-size:12px;color:var(--ink);margin-left:4px}
+.hist{margin-top:14px}
+.hist svg{width:100%;height:auto;display:block}
 
-.take{margin:20px 0 0;padding:16px 18px;background:var(--accent-soft);border-radius:4px;
-  display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
-.take .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--accent);background:#fff;border-radius:3px;padding:5px 8px;white-space:nowrap;margin-top:1px}
-.take p{margin:0;font-size:15px;line-height:1.55;color:var(--ink)}
+/* limits & improve */
+.note-card{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--s2);border-radius:10px;padding:20px 24px;font-size:14.5px}
+.note-card p{margin:0 0 10px}
+.note-card p:last-child{margin:0}
+.note-card .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--s2);display:block;margin-bottom:8px}
+.note-card.fixed{border-left-color:var(--s1)}
+.note-card.fixed .lbl{color:var(--s1)}
+.note-card + .note-card{margin-top:14px}
+.improve{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.improve .it{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:18px 20px;font-size:14px}
+.improve b{display:block;font-weight:600;margin-bottom:6px}
+.improve p{margin:0;color:var(--ink-2)}
 
-/* происхождение цифры */
-.prov{margin-top:16px;border-top:1px solid var(--rule);padding-top:14px}
-.prov summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
-  font-family:var(--mono);font-size:11px;color:var(--ink-2);background:#F4F6F3;border:1px solid var(--rule);
-  border-radius:99px;padding:6px 12px 6px 10px;transition:border-color .15s,color .15s}
-.prov summary::-webkit-details-marker{display:none}
-.prov summary:hover{border-color:var(--accent);color:var(--accent)}
-.prov summary .chev{width:9px;height:9px;flex:none;transition:transform .18s}
-.prov[open] summary{border-color:var(--accent);color:var(--accent)}
-.prov[open] summary .chev{transform:rotate(90deg)}
-.prov pre{font-family:var(--mono);font-size:12px;line-height:1.65;background:var(--deep);color:#D6E2DA;
-  border-radius:4px;padding:16px 18px;margin:12px 0 0;overflow-x:auto;white-space:pre}
-.prov .kw{color:#7FC9A3;font-weight:500}
-.prov .fn{color:#E0B45F}
+footer{border-top:1px solid var(--rule);padding:22px 0 0;font-size:12.5px;color:var(--ink-3)}
+footer .mono{font-size:12px}
+footer a{color:var(--ink-2)}
+#tip{position:fixed;z-index:9;pointer-events:none;background:var(--head);color:#EAF0EC;font-size:12.5px;line-height:1.45;
+  padding:8px 11px;border-radius:6px;max-width:260px;opacity:0;transition:opacity .12s;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+#tip.on{opacity:1}
+#tip b{color:#fff;font-weight:600}
+#tip .mono{font-size:12px}
 
-.tbl{margin-top:12px}
-.tbl summary{list-style:none;cursor:pointer;display:inline-block;font-family:var(--mono);font-size:11px;
-  color:var(--ink-3);border:1px dashed var(--rule-2);border-radius:99px;padding:6px 12px;
-  transition:border-color .15s,color .15s}
-.tbl summary::-webkit-details-marker{display:none}
-.tbl summary:hover{color:var(--accent);border-color:var(--accent)}
-table{border-collapse:collapse;margin-top:11px;font-size:13.5px;width:100%}
-th,td{text-align:right;padding:7px 11px;border-bottom:1px solid var(--rule)}
-th:first-child,td:first-child{text-align:left}
-th{font-weight:600;font-size:11.5px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;
-  border-bottom:1px solid var(--rule-2)}
-td{font-family:var(--mono);font-size:12.5px}
-td:first-child{font-family:var(--sans);font-size:13.5px}
-
-/* что бы я улучшил */
-.improve{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:4px;overflow:hidden}
-.improve .row{background:var(--surface);padding:20px 24px}
-.improve h3{font-size:15.5px;font-weight:600;margin:0 0 5px;letter-spacing:-.008em}
-.improve p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55;max-width:78ch}
-.improve code{font-family:var(--mono);font-size:12.5px;background:#F1F3F0;padding:1px 5px;border-radius:3px;color:var(--ink)}
-
-footer{margin-top:60px;background:var(--deep);color:var(--on-deep-2);padding:34px 0 42px}
-footer p{margin:0 0 8px;font-size:13.5px;max-width:74ch}
-footer a{font-family:var(--mono);font-size:13px;color:var(--on-deep);text-decoration:none;
-  border-bottom:1px solid rgba(234,240,236,.32)}
-footer a:hover{border-color:var(--on-deep)}
-
-.tip{position:fixed;pointer-events:none;background:var(--deep);color:#fff;font-family:var(--mono);
-  font-size:11.5px;padding:8px 11px;border-radius:4px;opacity:0;visibility:hidden;
-  transition:opacity .12s;z-index:30;white-space:nowrap;line-height:1.6;
-  box-shadow:0 4px 14px rgba(16,35,28,.24)}
-.tip.on{opacity:1;visibility:visible}
-@media (hover:none){.tip{display:none}}
-
-/* ═══ адаптив ═══ */
-@media (max-width:1020px){
-  .body-grid{grid-template-columns:1fr;gap:0;padding-top:34px}
-  .rail{position:static;margin-bottom:34px;padding-bottom:22px;border-bottom:1px solid var(--rule-2)}
-  .rail nav{flex-direction:row;flex-wrap:wrap;gap:0 22px}
-  .rail nav a{padding:5px 0}
-  .sqlbox{margin-top:16px;padding-top:14px}
+/* responsive */
+@media (max-width:1040px){
+  .body{grid-template-columns:1fr;gap:0}
+  aside{position:static;border-bottom:1px solid var(--rule);padding-bottom:18px;margin-bottom:26px}
+  .toc{display:flex;flex-wrap:wrap;gap:4px 14px;margin-bottom:16px}
+  .toc li a{border-left:0;padding:2px 0}
   .kpis{grid-template-columns:repeat(2,1fr)}
-  .kpi:nth-child(2n){border-right:none}
-  .kpi:nth-child(-n+2){border-bottom:1px solid var(--rule)}
+  .qgrid{grid-template-columns:1fr}
 }
-@media (max-width:760px){
-  .shell{padding:0 18px}
-  .masthead{padding:36px 0 32px}
-  .mast-grid{grid-template-columns:1fr;gap:22px;align-items:start}
-  .mast-card{text-align:left}
-  .sec{margin-bottom:48px}
-  figure{padding:20px 16px 18px}
-  .chart{margin-right:-16px;padding-right:16px;-webkit-overflow-scrolling:touch}
-  .chart svg{min-width:600px}
+@media (max-width:640px){
+  .wrap{padding:0 18px}
+  .head-in{grid-template-columns:1fr;gap:18px;padding:28px 0 26px}
+  .author{text-align:left}
+  .head-links{justify-content:flex-start}
+  h1{max-width:none}
+  figure{padding:18px 16px 14px}
   .scroll-hint{display:block}
-  .take{grid-template-columns:1fr;gap:9px}
-  .take .tag{justify-self:start}
+  .improve{grid-template-columns:1fr}
+  .kpi .val{font-size:28px}
+  pre{font-size:11.5px}
 }
-@media (max-width:420px){
-  .kpis{grid-template-columns:1fr}
-  .kpi{border-right:none;border-bottom:1px solid var(--rule)}
-  .kpi:last-child{border-bottom:none}
-}
+@media print{aside,#tip,.lang{display:none} .body{display:block} figure{break-inside:avoid}}
 </style>
 </head>
 <body>
+<div id="tip" role="tooltip"></div>
 
-<header class="masthead">
-  <div class="shell mast-grid">
+<header>
+  <div class="wrap head-in">
     <div>
-      <p class="eyebrow">Витрина подписочных метрик · портфолио Analytics Engineer</p>
-      <h1>800 подписок, 500 пользователей, шесть месяцев</h1>
-      <p class="standfirst">Отчёт собран из витрин dbt поверх хранилища подписок. <b>Каждый показатель раскрывается до SQL, который его даёт</b> — включая те, что показывают неудобное.</p>
+      <p class="eyebrow" data-i="eyebrow"></p>
+      <h1 data-i="title"></h1>
+      <p class="lede" data-i="lede"></p>
     </div>
-    <div class="mast-card">
-      <span class="who">Дияр Махмудов</span>
-      Бишкек · UTC+6<br>
-      dbt · DuckDB · Dagster<br>
-      <a href="https://github.com/Seinokojii/analytics-engineer-roadmap">Репозиторий →</a>
+    <div class="author">
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="ru" aria-pressed="true">RU</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <b data-i="author_name"></b>
+      <span data-i="author_role"></span><br>
+      <span class="mono">Bishkek · UTC+6 · dbt · DuckDB · Dagster</span>
+      <div class="head-links">
+        <a href="https://github.com/Seinokojii/analytics-engineer-roadmap" data-i="l_repo"></a>
+        <a href="./dbt/" data-i="l_docs"></a>
+        <a href="./cv/" data-i="l_cv"></a>
+      </div>
     </div>
   </div>
 </header>
 
-<div class="shell body-grid">
-
-  <aside class="rail">
-    <p class="rail-label">Разделы</p>
-    <nav id="nav">
-      <a href="#kpi"><span class="tick"></span>Ключевые цифры</a>
-      <a href="#limits"><span class="tick"></span>Границы данных</a>
-      <a href="#f-mrr"><span class="tick"></span>MRR по месяцам</a>
-      <a href="#f-plans"><span class="tick"></span>Отток по тарифам</a>
-      <a href="#f-chan"><span class="tick"></span>Отток по каналам</a>
-      <a href="#f-mix"><span class="tick"></span>Структура MRR</a>
-      <a href="#improve"><span class="tick"></span>Что бы я улучшил</a>
-    </nav>
-    <div class="sqlbox">
-      <label class="sw">
-        <input type="checkbox" id="sqlAll">
-        <span class="track"></span>
-        <span>Показать SQL</span>
-      </label>
-      <p class="sw-hint">Раскрывает запрос под каждым блоком — страницу можно читать как отчёт или как сборник запросов.</p>
-    </div>
+<div class="wrap body">
+  <aside>
+    <h4 data-i="nav"></h4>
+    <ul class="toc" id="toc"></ul>
+    <h4 data-i="filters"></h4>
+    <div class="chips" id="chips-plan"></div>
+    <div class="chips" id="chips-channel"></div>
+    <div class="chips" id="chips-country"></div>
+    <button type="button" class="reset" id="reset" data-i="reset"></button>
+    <h4 data-i="view"></h4>
+    <button type="button" class="switch" id="sqlToggle" aria-pressed="false"><span class="tr"></span><span data-i="show_sql"></span></button>
+    <p class="hint" data-i="sql_hint"></p>
   </aside>
 
-  <main class="content">
-
-    <section class="sec" id="kpi">
-      <div class="sec-head"><h2>Ключевые цифры</h2><span class="line"></span></div>
-      <div class="kpis" id="kpis"></div>
-      <details class="prov" data-sql>
-        <summary><svg class="chev" viewBox="0 0 8 10" fill="none" aria-hidden="true"><path d="M1.5 1L6 5l-4.5 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span>subscriptions · user_metrics</span></summary>
-        <pre id="kpiSql"></pre>
-      </details>
-    </section>
-
-    <section class="sec" id="limits">
-      <div class="sec-head"><h2>Границы данных</h2><span class="line"></span></div>
-      <div class="note-block">
-        <span class="chip">Что эти данные не позволяют посчитать</span>
-        <p>Датасет синтетический. Дата начала подписки сгенерирована независимо от даты регистрации пользователя, поэтому <b>когортное удержание по нему посчитать нельзя</b>: пересчёт из сырых таблиц даёт кривую, которая растёт — 11 → 32 → 51 → 71 пользователь в когорте января, а это невозможно. Кривой удержания на странице нет; вместо неё отток, который данные поддерживают.</p>
-        <p>По той же причине распределение времени жизни подписки равномерное: 42–57 подписок в каждом из 17 месяцев. Генератор не моделирует выживание.</p>
-        <p>Июнь 2023 обрезан на 16-м числе — последняя запись в источнике. На графике MRR он показан отдельно и в сравнение месяцев не входит.</p>
-      </div>
-    </section>
-
-    <div id="figs"></div>
-
-    <section class="sec" id="improve">
-      <div class="sec-head"><h2>Что бы я улучшил</h2><span class="line"></span></div>
-      <div class="improve">
-        <div class="row"><div>
-          <h3>Заменил бы генератор данных</h3>
-          <p>Текущий делает <code>start_date</code> подписки независимой от <code>signup_date</code> пользователя, из-за чего половина заявленных метрик проекта — когорты, кривая удержания, LTV по выживанию — физически не считается. Правильный генератор рисует дату подписки от даты регистрации и задаёт вероятность оттока, растущую со временем.</p></div></div>
-        <div class="row"><div>
-          <h3>Добавил бы тест на упорядоченность дат</h3>
-          <p>Дефект жил в готовой витрине <code>cohort_analysis</code> и маскировался строками с отрицательным «месяцем с регистрации». Одно правило — <code>start_date &gt;= signup_date</code> — поймало бы его на первом же прогоне.</p></div></div>
-        <div class="row"><div>
-          <h3>Считал бы MRR на конец месяца, а не по дате старта</h3>
-          <p>Сейчас месячная сумма — это MRR подписок, начавшихся в этом месяце. Корректная метрика — снимок активных подписок на последний день месяца; для этого нужна витрина по дням и SCD-таблица подписок.</p></div></div>
-        <div class="row"><div>
-          <h3>Довёл бы отток до когортного</h3>
-          <p>Отток по планам здесь — доля закрытых подписок за всё время наблюдения, а не месячный отток. Сравнивать планы между собой так можно, а с рыночными бенчмарками — нет.</p></div></div>
-      </div>
-    </section>
-
+  <main>
+    <p class="fstate" id="fstate"></p>
+    <div id="sections"></div>
+    <footer id="foot"></footer>
   </main>
 </div>
 
-<footer>
-  <div class="shell">
-    <p>Данные: витрины проекта Retention &amp; Cohort, DuckDB. Страница статическая — графики нарисованы из агрегатов, посчитанных запросами, которые раскрываются под каждым блоком.</p>
-    <p><a href="https://github.com/Seinokojii/analytics-engineer-roadmap">github.com/Seinokojii/analytics-engineer-roadmap</a></p>
-  </div>
-</footer>
-
-<div class="tip" id="tip"></div>
-
+<script id="data" type="application/json">{"generated_at":"2026-09-05T19:00:03Z","source":"dbt_analytics/analytics.duckdb","subs":[{"id":1,"user":1,"plan":"basic","mrr":10.0,"start":"2023-01-02","end":"2023-07-21","channel":"organic","country":"US","signup":"2023-01-01"},{"id":2,"user":2,"plan":"pro","mrr":50.0,"start":"2023-01-04","end":"2023-04-26","channel":"social","country":"US","signup":"2023-01-01"},{"id":3,"user":3,"plan":"basic","mrr":10.0,"start":"2023-01-03","end":"2023-03-20","channel":"referral","country":"US","signup":"2023-01-02"},{"id":4,"user":4,"plan":"basic","mrr":10.0,"start":"2023-01-02","end":"2023-06-30","channel":"paid","country":"KG","signup":"2023-01-02"},{"id":5,"user":5,"plan":"pro","mrr":50.0,"start":"2023-01-03","end":"2024-01-30","channel":"organic","country":"FR","signup":"2023-01-03"},{"id":6,"user":6,"plan":"basic","mrr":10.0,"start":"2023-01-09","end":"2024-01-05","channel":"organic","country":"KG","signup":"2023-01-03"},{"id":7,"user":7,"plan":"pro","mrr":50.0,"start":"2023-01-08","end":null,"channel":"organic","country":"FR","signup":"2023-01-04"},{"id":8,"user":8,"plan":"basic","mrr":10.0,"start":"2023-01-04","end":"2023-05-25","channel":"referral","country":"KG","signup":"2023-01-04"},{"id":9,"user":9,"plan":"enterprise","mrr":200.0,"start":"2023-01-11","end":null,"channel":"paid","country":"KG","signup":"2023-01-05"},{"id":10,"user":10,"plan":"basic","mrr":10.0,"start":"2023-01-07","end":"2023-08-27","channel":"referral","country":"DE","signup":"2023-01-05"},{"id":11,"user":11,"plan":"enterprise","mrr":200.0,"start":"2023-01-07","end":"2023-04-26","channel":"organic","country":"KG","signup":"2023-01-06"},{"id":12,"user":12,"plan":"pro","mrr":50.0,"start":"2023-01-11","end":null,"channel":"social","country":"UK","signup":"2023-01-06"},{"id":13,"user":13,"plan":"basic","mrr":10.0,"start":"2023-01-11","end":"2023-11-02","channel":"referral","country":"DE","signup":"2023-01-07"},{"id":14,"user":14,"plan":"pro","mrr":50.0,"start":"2023-01-08","end":null,"channel":"organic","country":"KG","signup":"2023-01-07"},{"id":15,"user":15,"plan":"enterprise","mrr":200.0,"start":"2023-01-14","end":"2023-08-12","channel":"organic","country":"US","signup":"2023-01-08"},{"id":16,"user":16,"plan":"basic","mrr":10.0,"start":"2023-01-13","end":"2023-04-18","channel":"organic","country":"UK","signup":"2023-01-08"},{"id":17,"user":17,"plan":"basic","mrr":10.0,"start":"2023-01-09","end":"2023-08-05","channel":"organic","country":"UK","signup":"2023-01-09"},{"id":18,"user":18,"plan":"basic","mrr":10.0,"start":"2023-01-10","end":"2023-05-01","channel":"paid","country":"UK","signup":"2023-01-09"},{"id":19,"user":19,"plan":"pro","mrr":50.0,"start":"2023-01-16","end":"2024-02-05","channel":"paid","country":"DE","signup":"2023-01-10"},{"id":20,"user":20,"plan":"pro","mrr":50.0,"start":"2023-01-15","end":"2023-09-13","channel":"organic","country":"KG","signup":"2023-01-10"},{"id":21,"user":21,"plan":"pro","mrr":50.0,"start":"2023-01-14","end":null,"channel":"paid","country":"KG","signup":"2023-01-11"},{"id":22,"user":22,"plan":"basic","mrr":10.0,"start":"2023-01-12","end":"2023-06-08","channel":"organic","country":"US","signup":"2023-01-11"},{"id":23,"user":23,"plan":"basic","mrr":10.0,"start":"2023-01-15","end":"2023-09-26","channel":"organic","country":"US","signup":"2023-01-12"},{"id":24,"user":24,"plan":"pro","mrr":50.0,"start":"2023-01-16","end":null,"channel":"organic","country":"UK","signup":"2023-01-12"},{"id":25,"user":25,"plan":"basic","mrr":10.0,"start":"2023-01-16","end":"2023-04-14","channel":"paid","country":"US","signup":"2023-01-13"},{"id":26,"user":26,"plan":"basic","mrr":10.0,"start":"2023-01-16","end":"2023-08-25","channel":"referral","country":"DE","signup":"2023-01-13"},{"id":27,"user":27,"plan":"enterprise","mrr":200.0,"start":"2023-01-20","end":null,"channel":"organic","country":"KG","signup":"2023-01-14"},{"id":28,"user":28,"plan":"pro","mrr":50.0,"start":"2023-01-17","end":null,"channel":"paid","country":"UK","signup":"2023-01-14"},{"id":29,"user":29,"plan":"pro","mrr":50.0,"start":"2023-01-20","end":"2023-12-01","channel":"paid","country":"US","signup":"2023-01-15"},{"id":30,"user":30,"plan":"pro","mrr":50.0,"start":"2023-01-21","end":null,"channel":"organic","country":"DE","signup":"2023-01-15"},{"id":31,"user":31,"plan":"pro","mrr":50.0,"start":"2023-01-23","end":"2023-06-03","channel":"paid","country":"DE","signup":"2023-01-16"},{"id":32,"user":32,"plan":"pro","mrr":50.0,"start":"2023-01-19","end":null,"channel":"organic","country":"US","signup":"2023-01-16"},{"id":33,"user":33,"plan":"basic","mrr":10.0,"start":"2023-01-21","end":"2023-10-27","channel":"organic","country":"KG","signup":"2023-01-17"},{"id":34,"user":34,"plan":"basic","mrr":10.0,"start":"2023-01-23","end":"2023-06-02","channel":"social","country":"US","signup":"2023-01-17"},{"id":35,"user":35,"plan":"basic","mrr":10.0,"start":"2023-01-25","end":"2023-04-19","channel":"social","country":"UK","signup":"2023-01-18"},{"id":36,"user":36,"plan":"basic","mrr":10.0,"start":"2023-01-19","end":"2023-06-09","channel":"referral","country":"US","signup":"2023-01-18"},{"id":37,"user":37,"plan":"pro","mrr":50.0,"start":"2023-01-25","end":"2023-10-09","channel":"organic","country":"DE","signup":"2023-01-19"},{"id":38,"user":38,"plan":"basic","mrr":10.0,"start":"2023-01-25","end":"2023-11-20","channel":"organic","country":"US","signup":"2023-01-19"},{"id":39,"user":39,"plan":"basic","mrr":10.0,"start":"2023-01-24","end":null,"channel":"paid","country":"KG","signup":"2023-01-20"},{"id":40,"user":40,"plan":"basic","mrr":10.0,"start":"2023-01-20","end":"2023-05-18","channel":"paid","country":"FR","signup":"2023-01-20"},{"id":41,"user":41,"plan":"basic","mrr":10.0,"start":"2023-01-25","end":"2023-09-16","channel":"organic","country":"US","signup":"2023-01-21"},{"id":42,"user":42,"plan":"pro","mrr":50.0,"start":"2023-01-22","end":"2023-06-11","channel":"paid","country":"KG","signup":"2023-01-21"},{"id":43,"user":43,"plan":"basic","mrr":10.0,"start":"2023-01-29","end":"2023-08-11","channel":"organic","country":"KG","signup":"2023-01-22"},{"id":44,"user":44,"plan":"pro","mrr":50.0,"start":"2023-01-24","end":"2023-05-18","channel":"social","country":"DE","signup":"2023-01-22"},{"id":45,"user":45,"plan":"basic","mrr":10.0,"start":"2023-01-27","end":"2023-12-12","channel":"organic","country":"KG","signup":"2023-01-23"},{"id":46,"user":46,"plan":"pro","mrr":50.0,"start":"2023-01-26","end":"2023-06-17","channel":"paid","country":"KG","signup":"2023-01-23"},{"id":47,"user":47,"plan":"pro","mrr":50.0,"start":"2023-01-24","end":"2023-11-30","channel":"organic","country":"KG","signup":"2023-01-24"},{"id":48,"user":48,"plan":"basic","mrr":10.0,"start":"2023-01-24","end":"2023-09-26","channel":"paid","country":"KG","signup":"2023-01-24"},{"id":49,"user":49,"plan":"pro","mrr":50.0,"start":"2023-01-29","end":"2023-07-31","channel":"paid","country":"UK","signup":"2023-01-25"},{"id":50,"user":50,"plan":"basic","mrr":10.0,"start":"2023-01-26","end":"2023-11-30","channel":"organic","country":"UK","signup":"2023-01-25"},{"id":51,"user":51,"plan":"basic","mrr":10.0,"start":"2023-01-27","end":null,"channel":"social","country":"DE","signup":"2023-01-26"},{"id":52,"user":52,"plan":"enterprise","mrr":200.0,"start":"2023-01-28","end":"2023-11-27","channel":"referral","country":"US","signup":"2023-01-26"},{"id":53,"user":53,"plan":"basic","mrr":10.0,"start":"2023-01-29","end":"2024-02-03","channel":"social","country":"KG","signup":"2023-01-27"},{"id":54,"user":54,"plan":"basic","mrr":10.0,"start":"2023-02-02","end":null,"channel":"referral","country":"US","signup":"2023-01-27"},{"id":55,"user":55,"plan":"pro","mrr":50.0,"start":"2023-01-31","end":null,"channel":"paid","country":"US","signup":"2023-01-28"},{"id":56,"user":56,"plan":"basic","mrr":10.0,"start":"2023-02-03","end":null,"channel":"social","country":"DE","signup":"2023-01-28"},{"id":57,"user":57,"plan":"pro","mrr":50.0,"start":"2023-02-03","end":"2023-12-24","channel":"organic","country":"KG","signup":"2023-01-29"},{"id":58,"user":58,"plan":"basic","mrr":10.0,"start":"2023-02-05","end":"2023-07-30","channel":"organic","country":"KG","signup":"2023-01-29"},{"id":59,"user":59,"plan":"enterprise","mrr":200.0,"start":"2023-01-31","end":null,"channel":"organic","country":"FR","signup":"2023-01-30"},{"id":60,"user":60,"plan":"pro","mrr":50.0,"start":"2023-02-02","end":"2023-04-06","channel":"organic","country":"US","signup":"2023-01-30"},{"id":61,"user":61,"plan":"pro","mrr":50.0,"start":"2023-02-01","end":null,"channel":"organic","country":"US","signup":"2023-01-31"},{"id":62,"user":62,"plan":"enterprise","mrr":200.0,"start":"2023-01-31","end":"2023-04-17","channel":"organic","country":"UK","signup":"2023-01-31"},{"id":63,"user":63,"plan":"basic","mrr":10.0,"start":"2023-02-06","end":"2023-08-06","channel":"referral","country":"FR","signup":"2023-02-01"},{"id":64,"user":64,"plan":"enterprise","mrr":200.0,"start":"2023-02-05","end":null,"channel":"organic","country":"UK","signup":"2023-02-01"},{"id":65,"user":65,"plan":"basic","mrr":10.0,"start":"2023-02-05","end":"2024-01-23","channel":"organic","country":"UK","signup":"2023-02-02"},{"id":66,"user":66,"plan":"basic","mrr":10.0,"start":"2023-02-09","end":"2023-12-08","channel":"paid","country":"UK","signup":"2023-02-02"},{"id":67,"user":67,"plan":"basic","mrr":10.0,"start":"2023-02-09","end":"2023-05-29","channel":"organic","country":"DE","signup":"2023-02-03"},{"id":68,"user":68,"plan":"pro","mrr":50.0,"start":"2023-02-09","end":"2023-11-06","channel":"referral","country":"DE","signup":"2023-02-03"},{"id":69,"user":69,"plan":"basic","mrr":10.0,"start":"2023-02-11","end":"2023-05-09","channel":"organic","country":"UK","signup":"2023-02-04"},{"id":70,"user":70,"plan":"pro","mrr":50.0,"start":"2023-02-05","end":"2023-09-26","channel":"social","country":"FR","signup":"2023-02-04"},{"id":71,"user":71,"plan":"pro","mrr":50.0,"start":"2023-02-06","end":"2023-07-13","channel":"referral","country":"US","signup":"2023-02-05"},{"id":72,"user":72,"plan":"enterprise","mrr":200.0,"start":"2023-02-12","end":"2023-07-15","channel":"organic","country":"FR","signup":"2023-02-05"},{"id":73,"user":73,"plan":"basic","mrr":10.0,"start":"2023-02-10","end":"2023-05-19","channel":"organic","country":"KG","signup":"2023-02-06"},{"id":74,"user":74,"plan":"pro","mrr":50.0,"start":"2023-02-13","end":null,"channel":"referral","country":"DE","signup":"2023-02-06"},{"id":75,"user":75,"plan":"basic","mrr":10.0,"start":"2023-02-08","end":"2024-01-10","channel":"referral","country":"US","signup":"2023-02-07"},{"id":76,"user":76,"plan":"basic","mrr":10.0,"start":"2023-02-07","end":null,"channel":"referral","country":"US","signup":"2023-02-07"},{"id":77,"user":77,"plan":"basic","mrr":10.0,"start":"2023-02-11","end":"2023-12-16","channel":"referral","country":"KG","signup":"2023-02-08"},{"id":78,"user":78,"plan":"basic","mrr":10.0,"start":"2023-02-15","end":"2023-11-07","channel":"organic","country":"KG","signup":"2023-02-08"},{"id":79,"user":79,"plan":"pro","mrr":50.0,"start":"2023-02-09","end":"2023-04-11","channel":"organic","country":"UK","signup":"2023-02-09"},{"id":80,"user":80,"plan":"pro","mrr":50.0,"start":"2023-02-15","end":"2023-12-04","channel":"organic","country":"DE","signup":"2023-02-09"},{"id":81,"user":81,"plan":"basic","mrr":10.0,"start":"2023-02-14","end":"2024-01-24","channel":"referral","country":"DE","signup":"2023-02-10"},{"id":82,"user":82,"plan":"basic","mrr":10.0,"start":"2023-02-17","end":"2023-09-16","channel":"paid","country":"FR","signup":"2023-02-10"},{"id":83,"user":83,"plan":"basic","mrr":10.0,"start":"2023-02-14","end":null,"channel":"organic","country":"UK","signup":"2023-02-11"},{"id":84,"user":84,"plan":"basic","mrr":10.0,"start":"2023-02-11","end":"2023-05-11","channel":"organic","country":"UK","signup":"2023-02-11"},{"id":85,"user":85,"plan":"enterprise","mrr":200.0,"start":"2023-02-12","end":null,"channel":"organic","country":"UK","signup":"2023-02-12"},{"id":86,"user":86,"plan":"basic","mrr":10.0,"start":"2023-02-14","end":"2023-12-31","channel":"organic","country":"UK","signup":"2023-02-12"},{"id":87,"user":87,"plan":"basic","mrr":10.0,"start":"2023-02-14","end":"2023-05-20","channel":"referral","country":"DE","signup":"2023-02-13"},{"id":88,"user":88,"plan":"basic","mrr":10.0,"start":"2023-02-14","end":"2023-08-13","channel":"paid","country":"DE","signup":"2023-02-13"},{"id":89,"user":89,"plan":"pro","mrr":50.0,"start":"2023-02-20","end":"2024-02-06","channel":"referral","country":"UK","signup":"2023-02-14"},{"id":90,"user":90,"plan":"enterprise","mrr":200.0,"start":"2023-02-17","end":null,"channel":"paid","country":"FR","signup":"2023-02-14"},{"id":91,"user":91,"plan":"pro","mrr":50.0,"start":"2023-02-15","end":null,"channel":"organic","country":"US","signup":"2023-02-15"},{"id":92,"user":92,"plan":"pro","mrr":50.0,"start":"2023-02-21","end":null,"channel":"referral","country":"US","signup":"2023-02-15"},{"id":93,"user":93,"plan":"pro","mrr":50.0,"start":"2023-02-21","end":null,"channel":"referral","country":"FR","signup":"2023-02-16"},{"id":94,"user":94,"plan":"basic","mrr":10.0,"start":"2023-02-19","end":"2023-09-27","channel":"paid","country":"UK","signup":"2023-02-16"},{"id":95,"user":95,"plan":"enterprise","mrr":200.0,"start":"2023-02-20","end":null,"channel":"referral","country":"DE","signup":"2023-02-17"},{"id":96,"user":96,"plan":"pro","mrr":50.0,"start":"2023-02-19","end":null,"channel":"paid","country":"US","signup":"2023-02-17"},{"id":97,"user":97,"plan":"pro","mrr":50.0,"start":"2023-02-22","end":"2023-05-30","channel":"paid","country":"KG","signup":"2023-02-18"},{"id":98,"user":98,"plan":"pro","mrr":50.0,"start":"2023-02-18","end":"2024-02-01","channel":"paid","country":"KG","signup":"2023-02-18"},{"id":99,"user":99,"plan":"pro","mrr":50.0,"start":"2023-02-20","end":"2023-08-08","channel":"organic","country":"FR","signup":"2023-02-19"},{"id":100,"user":100,"plan":"pro","mrr":50.0,"start":"2023-02-23","end":"2023-10-19","channel":"organic","country":"UK","signup":"2023-02-19"},{"id":101,"user":101,"plan":"enterprise","mrr":200.0,"start":"2023-02-21","end":null,"channel":"organic","country":"US","signup":"2023-02-20"},{"id":102,"user":102,"plan":"enterprise","mrr":200.0,"start":"2023-02-25","end":null,"channel":"paid","country":"UK","signup":"2023-02-20"},{"id":103,"user":103,"plan":"pro","mrr":50.0,"start":"2023-02-28","end":null,"channel":"organic","country":"US","signup":"2023-02-21"},{"id":104,"user":104,"plan":"pro","mrr":50.0,"start":"2023-02-25","end":null,"channel":"paid","country":"FR","signup":"2023-02-21"},{"id":105,"user":105,"plan":"basic","mrr":10.0,"start":"2023-02-22","end":"2024-01-31","channel":"social","country":"FR","signup":"2023-02-22"},{"id":106,"user":106,"plan":"pro","mrr":50.0,"start":"2023-02-26","end":null,"channel":"organic","country":"KG","signup":"2023-02-22"},{"id":107,"user":107,"plan":"basic","mrr":10.0,"start":"2023-02-24","end":"2023-07-02","channel":"paid","country":"UK","signup":"2023-02-23"},{"id":108,"user":108,"plan":"pro","mrr":50.0,"start":"2023-02-27","end":"2023-06-21","channel":"referral","country":"KG","signup":"2023-02-23"},{"id":109,"user":109,"plan":"enterprise","mrr":200.0,"start":"2023-02-26","end":null,"channel":"organic","country":"UK","signup":"2023-02-24"},{"id":110,"user":110,"plan":"pro","mrr":50.0,"start":"2023-02-27","end":null,"channel":"organic","country":"KG","signup":"2023-02-24"},{"id":111,"user":111,"plan":"basic","mrr":10.0,"start":"2023-02-28","end":"2023-09-11","channel":"organic","country":"DE","signup":"2023-02-25"},{"id":112,"user":112,"plan":"basic","mrr":10.0,"start":"2023-03-04","end":"2023-05-29","channel":"organic","country":"DE","signup":"2023-02-25"},{"id":113,"user":113,"plan":"basic","mrr":10.0,"start":"2023-02-27","end":"2023-09-16","channel":"social","country":"DE","signup":"2023-02-26"},{"id":114,"user":114,"plan":"pro","mrr":50.0,"start":"2023-02-26","end":"2023-07-02","channel":"referral","country":"DE","signup":"2023-02-26"},{"id":115,"user":115,"plan":"basic","mrr":10.0,"start":"2023-03-03","end":"2023-12-14","channel":"paid","country":"US","signup":"2023-02-27"},{"id":116,"user":116,"plan":"basic","mrr":10.0,"start":"2023-03-05","end":"2023-06-30","channel":"referral","country":"DE","signup":"2023-02-27"},{"id":117,"user":117,"plan":"basic","mrr":10.0,"start":"2023-03-01","end":"2023-07-15","channel":"referral","country":"FR","signup":"2023-02-28"},{"id":118,"user":118,"plan":"pro","mrr":50.0,"start":"2023-02-28","end":null,"channel":"organic","country":"FR","signup":"2023-02-28"},{"id":119,"user":119,"plan":"pro","mrr":50.0,"start":"2023-03-03","end":"2023-05-23","channel":"referral","country":"US","signup":"2023-03-01"},{"id":120,"user":120,"plan":"basic","mrr":10.0,"start":"2023-03-05","end":"2023-05-24","channel":"paid","country":"DE","signup":"2023-03-01"},{"id":121,"user":121,"plan":"basic","mrr":10.0,"start":"2023-03-07","end":"2023-09-10","channel":"referral","country":"DE","signup":"2023-03-02"},{"id":122,"user":122,"plan":"pro","mrr":50.0,"start":"2023-03-03","end":"2024-02-12","channel":"referral","country":"DE","signup":"2023-03-02"},{"id":123,"user":123,"plan":"pro","mrr":50.0,"start":"2023-03-09","end":null,"channel":"organic","country":"KG","signup":"2023-03-03"},{"id":124,"user":124,"plan":"pro","mrr":50.0,"start":"2023-03-05","end":null,"channel":"organic","country":"UK","signup":"2023-03-03"},{"id":125,"user":125,"plan":"basic","mrr":10.0,"start":"2023-03-07","end":"2023-08-04","channel":"organic","country":"KG","signup":"2023-03-04"},{"id":126,"user":126,"plan":"pro","mrr":50.0,"start":"2023-03-10","end":"2023-10-26","channel":"paid","country":"UK","signup":"2023-03-04"},{"id":127,"user":127,"plan":"basic","mrr":10.0,"start":"2023-03-11","end":"2023-09-14","channel":"referral","country":"DE","signup":"2023-03-05"},{"id":128,"user":128,"plan":"enterprise","mrr":200.0,"start":"2023-03-09","end":"2023-07-02","channel":"referral","country":"DE","signup":"2023-03-05"},{"id":129,"user":129,"plan":"pro","mrr":50.0,"start":"2023-03-12","end":null,"channel":"organic","country":"KG","signup":"2023-03-06"},{"id":130,"user":130,"plan":"basic","mrr":10.0,"start":"2023-03-13","end":"2024-01-02","channel":"paid","country":"KG","signup":"2023-03-06"},{"id":131,"user":131,"plan":"basic","mrr":10.0,"start":"2023-03-12","end":"2023-09-04","channel":"paid","country":"UK","signup":"2023-03-07"},{"id":132,"user":132,"plan":"pro","mrr":50.0,"start":"2023-03-10","end":"2023-08-15","channel":"organic","country":"FR","signup":"2023-03-07"},{"id":133,"user":133,"plan":"pro","mrr":50.0,"start":"2023-03-14","end":"2023-06-17","channel":"organic","country":"UK","signup":"2023-03-08"},{"id":134,"user":134,"plan":"pro","mrr":50.0,"start":"2023-03-12","end":"2024-01-26","channel":"organic","country":"KG","signup":"2023-03-08"},{"id":135,"user":135,"plan":"pro","mrr":50.0,"start":"2023-03-15","end":null,"channel":"social","country":"KG","signup":"2023-03-09"},{"id":136,"user":136,"plan":"pro","mrr":50.0,"start":"2023-03-14","end":null,"channel":"organic","country":"US","signup":"2023-03-09"},{"id":137,"user":137,"plan":"pro","mrr":50.0,"start":"2023-03-11","end":null,"channel":"paid","country":"KG","signup":"2023-03-10"},{"id":138,"user":138,"plan":"basic","mrr":10.0,"start":"2023-03-14","end":"2023-09-25","channel":"referral","country":"US","signup":"2023-03-10"},{"id":139,"user":139,"plan":"enterprise","mrr":200.0,"start":"2023-03-11","end":"2023-12-18","channel":"organic","country":"FR","signup":"2023-03-11"},{"id":140,"user":140,"plan":"basic","mrr":10.0,"start":"2023-03-16","end":"2023-10-22","channel":"social","country":"UK","signup":"2023-03-11"},{"id":141,"user":141,"plan":"basic","mrr":10.0,"start":"2023-03-18","end":"2024-02-02","channel":"social","country":"UK","signup":"2023-03-12"},{"id":142,"user":142,"plan":"enterprise","mrr":200.0,"start":"2023-03-13","end":null,"channel":"organic","country":"US","signup":"2023-03-12"},{"id":143,"user":143,"plan":"basic","mrr":10.0,"start":"2023-03-16","end":"2023-12-24","channel":"paid","country":"UK","signup":"2023-03-13"},{"id":144,"user":144,"plan":"basic","mrr":10.0,"start":"2023-03-13","end":"2024-02-11","channel":"organic","country":"KG","signup":"2023-03-13"},{"id":145,"user":145,"plan":"basic","mrr":10.0,"start":"2023-03-17","end":"2023-06-20","channel":"organic","country":"DE","signup":"2023-03-14"},{"id":146,"user":146,"plan":"enterprise","mrr":200.0,"start":"2023-03-19","end":null,"channel":"organic","country":"US","signup":"2023-03-14"},{"id":147,"user":147,"plan":"basic","mrr":10.0,"start":"2023-03-16","end":"2023-10-15","channel":"paid","country":"UK","signup":"2023-03-15"},{"id":148,"user":148,"plan":"basic","mrr":10.0,"start":"2023-03-19","end":"2023-11-01","channel":"paid","country":"US","signup":"2023-03-15"},{"id":149,"user":149,"plan":"basic","mrr":10.0,"start":"2023-03-22","end":"2024-02-28","channel":"organic","country":"US","signup":"2023-03-16"},{"id":150,"user":150,"plan":"basic","mrr":10.0,"start":"2023-03-18","end":"2024-04-21","channel":"organic","country":"DE","signup":"2023-03-16"},{"id":151,"user":151,"plan":"basic","mrr":10.0,"start":"2023-03-23","end":"2023-08-19","channel":"social","country":"KG","signup":"2023-03-17"},{"id":152,"user":152,"plan":"basic","mrr":10.0,"start":"2023-03-21","end":"2023-05-20","channel":"organic","country":"US","signup":"2023-03-17"},{"id":153,"user":153,"plan":"pro","mrr":50.0,"start":"2023-03-22","end":"2023-12-27","channel":"organic","country":"UK","signup":"2023-03-18"},{"id":154,"user":154,"plan":"basic","mrr":10.0,"start":"2023-03-23","end":"2024-01-03","channel":"paid","country":"FR","signup":"2023-03-18"},{"id":155,"user":155,"plan":"basic","mrr":10.0,"start":"2023-03-22","end":"2023-08-15","channel":"social","country":"US","signup":"2023-03-19"},{"id":156,"user":156,"plan":"basic","mrr":10.0,"start":"2023-03-20","end":"2024-04-22","channel":"organic","country":"US","signup":"2023-03-19"},{"id":157,"user":157,"plan":"basic","mrr":10.0,"start":"2023-03-25","end":"2023-09-21","channel":"paid","country":"DE","signup":"2023-03-20"},{"id":158,"user":158,"plan":"pro","mrr":50.0,"start":"2023-03-24","end":"2023-09-01","channel":"referral","country":"KG","signup":"2023-03-20"},{"id":159,"user":159,"plan":"pro","mrr":50.0,"start":"2023-03-23","end":"2023-09-24","channel":"organic","country":"FR","signup":"2023-03-21"},{"id":160,"user":160,"plan":"basic","mrr":10.0,"start":"2023-03-28","end":"2023-07-03","channel":"referral","country":"UK","signup":"2023-03-21"},{"id":161,"user":161,"plan":"basic","mrr":10.0,"start":"2023-03-29","end":"2024-04-14","channel":"organic","country":"FR","signup":"2023-03-22"},{"id":162,"user":162,"plan":"basic","mrr":10.0,"start":"2023-03-25","end":"2023-12-06","channel":"paid","country":"UK","signup":"2023-03-22"},{"id":163,"user":163,"plan":"enterprise","mrr":200.0,"start":"2023-03-30","end":null,"channel":"paid","country":"KG","signup":"2023-03-23"},{"id":164,"user":164,"plan":"pro","mrr":50.0,"start":"2023-03-25","end":null,"channel":"paid","country":"UK","signup":"2023-03-23"},{"id":165,"user":165,"plan":"pro","mrr":50.0,"start":"2023-03-24","end":null,"channel":"organic","country":"DE","signup":"2023-03-24"},{"id":166,"user":166,"plan":"basic","mrr":10.0,"start":"2023-03-25","end":"2023-09-13","channel":"referral","country":"DE","signup":"2023-03-24"},{"id":167,"user":167,"plan":"enterprise","mrr":200.0,"start":"2023-03-27","end":null,"channel":"organic","country":"DE","signup":"2023-03-25"},{"id":168,"user":168,"plan":"basic","mrr":10.0,"start":"2023-04-01","end":"2023-10-05","channel":"organic","country":"DE","signup":"2023-03-25"},{"id":169,"user":169,"plan":"basic","mrr":10.0,"start":"2023-03-27","end":"2024-01-18","channel":"organic","country":"FR","signup":"2023-03-26"},{"id":170,"user":170,"plan":"basic","mrr":10.0,"start":"2023-03-31","end":"2024-01-11","channel":"paid","country":"KG","signup":"2023-03-26"},{"id":171,"user":171,"plan":"basic","mrr":10.0,"start":"2023-04-02","end":"2024-03-07","channel":"paid","country":"UK","signup":"2023-03-27"},{"id":172,"user":172,"plan":"enterprise","mrr":200.0,"start":"2023-04-03","end":null,"channel":"organic","country":"UK","signup":"2023-03-27"},{"id":173,"user":173,"plan":"pro","mrr":50.0,"start":"2023-04-04","end":"2023-10-07","channel":"paid","country":"DE","signup":"2023-03-28"},{"id":174,"user":174,"plan":"basic","mrr":10.0,"start":"2023-04-01","end":"2024-02-21","channel":"organic","country":"DE","signup":"2023-03-28"},{"id":175,"user":175,"plan":"pro","mrr":50.0,"start":"2023-04-05","end":null,"channel":"paid","country":"US","signup":"2023-03-29"},{"id":176,"user":176,"plan":"enterprise","mrr":200.0,"start":"2023-04-02","end":null,"channel":"organic","country":"KG","signup":"2023-03-29"},{"id":177,"user":177,"plan":"enterprise","mrr":200.0,"start":"2023-04-03","end":"2023-11-20","channel":"paid","country":"FR","signup":"2023-03-30"},{"id":178,"user":178,"plan":"pro","mrr":50.0,"start":"2023-04-04","end":null,"channel":"organic","country":"UK","signup":"2023-03-30"},{"id":179,"user":179,"plan":"enterprise","mrr":200.0,"start":"2023-04-01","end":"2023-09-26","channel":"social","country":"US","signup":"2023-03-31"},{"id":180,"user":180,"plan":"enterprise","mrr":200.0,"start":"2023-04-06","end":null,"channel":"organic","country":"US","signup":"2023-03-31"},{"id":181,"user":181,"plan":"pro","mrr":50.0,"start":"2023-04-04","end":"2023-12-28","channel":"organic","country":"UK","signup":"2023-04-01"},{"id":182,"user":182,"plan":"basic","mrr":10.0,"start":"2023-04-06","end":"2024-01-03","channel":"organic","country":"FR","signup":"2023-04-01"},{"id":183,"user":183,"plan":"basic","mrr":10.0,"start":"2023-04-02","end":"2024-01-02","channel":"social","country":"US","signup":"2023-04-02"},{"id":184,"user":184,"plan":"pro","mrr":50.0,"start":"2023-04-08","end":null,"channel":"referral","country":"US","signup":"2023-04-02"},{"id":185,"user":185,"plan":"basic","mrr":10.0,"start":"2023-04-03","end":"2024-03-22","channel":"organic","country":"KG","signup":"2023-04-03"},{"id":186,"user":186,"plan":"pro","mrr":50.0,"start":"2023-04-09","end":"2023-12-05","channel":"paid","country":"FR","signup":"2023-04-03"},{"id":187,"user":187,"plan":"basic","mrr":10.0,"start":"2023-04-08","end":"2024-01-07","channel":"referral","country":"US","signup":"2023-04-04"},{"id":188,"user":188,"plan":"basic","mrr":10.0,"start":"2023-04-07","end":"2023-10-23","channel":"paid","country":"FR","signup":"2023-04-04"},{"id":189,"user":189,"plan":"basic","mrr":10.0,"start":"2023-04-11","end":"2023-12-26","channel":"paid","country":"UK","signup":"2023-04-05"},{"id":190,"user":190,"plan":"basic","mrr":10.0,"start":"2023-04-10","end":"2024-01-02","channel":"organic","country":"DE","signup":"2023-04-05"},{"id":191,"user":191,"plan":"enterprise","mrr":200.0,"start":"2023-04-08","end":null,"channel":"organic","country":"US","signup":"2023-04-06"},{"id":192,"user":192,"plan":"pro","mrr":50.0,"start":"2023-04-08","end":null,"channel":"referral","country":"KG","signup":"2023-04-06"},{"id":193,"user":193,"plan":"pro","mrr":50.0,"start":"2023-04-07","end":null,"channel":"social","country":"UK","signup":"2023-04-07"},{"id":194,"user":194,"plan":"pro","mrr":50.0,"start":"2023-04-07","end":"2024-01-11","channel":"paid","country":"FR","signup":"2023-04-07"},{"id":195,"user":195,"plan":"basic","mrr":10.0,"start":"2023-04-10","end":"2023-09-10","channel":"organic","country":"UK","signup":"2023-04-08"},{"id":196,"user":196,"plan":"pro","mrr":50.0,"start":"2023-04-08","end":"2023-11-21","channel":"organic","country":"US","signup":"2023-04-08"},{"id":197,"user":197,"plan":"pro","mrr":50.0,"start":"2023-04-12","end":"2023-11-30","channel":"referral","country":"FR","signup":"2023-04-09"},{"id":198,"user":198,"plan":"pro","mrr":50.0,"start":"2023-04-15","end":"2024-01-15","channel":"referral","country":"DE","signup":"2023-04-09"},{"id":199,"user":199,"plan":"basic","mrr":10.0,"start":"2023-04-14","end":"2024-02-08","channel":"referral","country":"UK","signup":"2023-04-10"},{"id":200,"user":200,"plan":"pro","mrr":50.0,"start":"2023-04-10","end":null,"channel":"referral","country":"US","signup":"2023-04-10"},{"id":201,"user":201,"plan":"basic","mrr":10.0,"start":"2023-04-11","end":null,"channel":"paid","country":"KG","signup":"2023-04-11"},{"id":202,"user":202,"plan":"enterprise","mrr":200.0,"start":"2023-04-16","end":"2023-07-20","channel":"organic","country":"FR","signup":"2023-04-11"},{"id":203,"user":203,"plan":"enterprise","mrr":200.0,"start":"2023-04-12","end":null,"channel":"organic","country":"UK","signup":"2023-04-12"},{"id":204,"user":204,"plan":"basic","mrr":10.0,"start":"2023-04-15","end":"2023-06-24","channel":"referral","country":"UK","signup":"2023-04-12"},{"id":205,"user":205,"plan":"pro","mrr":50.0,"start":"2023-04-15","end":"2024-02-11","channel":"paid","country":"DE","signup":"2023-04-13"},{"id":206,"user":206,"plan":"pro","mrr":50.0,"start":"2023-04-14","end":"2023-10-02","channel":"organic","country":"DE","signup":"2023-04-13"},{"id":207,"user":207,"plan":"basic","mrr":10.0,"start":"2023-04-21","end":"2023-12-25","channel":"organic","country":"KG","signup":"2023-04-14"},{"id":208,"user":208,"plan":"enterprise","mrr":200.0,"start":"2023-04-16","end":null,"channel":"paid","country":"KG","signup":"2023-04-14"},{"id":209,"user":209,"plan":"enterprise","mrr":200.0,"start":"2023-04-16","end":null,"channel":"organic","country":"US","signup":"2023-04-15"},{"id":210,"user":210,"plan":"basic","mrr":10.0,"start":"2023-04-17","end":null,"channel":"organic","country":"US","signup":"2023-04-15"},{"id":211,"user":211,"plan":"basic","mrr":10.0,"start":"2023-04-17","end":"2023-11-22","channel":"paid","country":"KG","signup":"2023-04-16"},{"id":212,"user":212,"plan":"basic","mrr":10.0,"start":"2023-04-22","end":"2023-09-30","channel":"paid","country":"KG","signup":"2023-04-16"},{"id":213,"user":213,"plan":"basic","mrr":10.0,"start":"2023-04-18","end":"2024-05-03","channel":"paid","country":"FR","signup":"2023-04-17"},{"id":214,"user":214,"plan":"basic","mrr":10.0,"start":"2023-04-20","end":"2023-11-20","channel":"organic","country":"DE","signup":"2023-04-17"},{"id":215,"user":215,"plan":"enterprise","mrr":200.0,"start":"2023-04-19","end":null,"channel":"referral","country":"US","signup":"2023-04-18"},{"id":216,"user":216,"plan":"basic","mrr":10.0,"start":"2023-04-18","end":"2024-01-22","channel":"organic","country":"DE","signup":"2023-04-18"},{"id":217,"user":217,"plan":"basic","mrr":10.0,"start":"2023-04-24","end":"2024-05-19","channel":"organic","country":"DE","signup":"2023-04-19"},{"id":218,"user":218,"plan":"enterprise","mrr":200.0,"start":"2023-04-24","end":"2024-01-24","channel":"referral","country":"KG","signup":"2023-04-19"},{"id":219,"user":219,"plan":"pro","mrr":50.0,"start":"2023-04-27","end":"2023-12-28","channel":"paid","country":"FR","signup":"2023-04-20"},{"id":220,"user":220,"plan":"basic","mrr":10.0,"start":"2023-04-27","end":"2024-02-03","channel":"referral","country":"UK","signup":"2023-04-20"},{"id":221,"user":221,"plan":"basic","mrr":10.0,"start":"2023-04-23","end":"2024-05-20","channel":"paid","country":"FR","signup":"2023-04-21"},{"id":222,"user":222,"plan":"basic","mrr":10.0,"start":"2023-04-25","end":"2024-03-25","channel":"paid","country":"FR","signup":"2023-04-21"},{"id":223,"user":223,"plan":"pro","mrr":50.0,"start":"2023-04-29","end":"2024-04-26","channel":"organic","country":"DE","signup":"2023-04-22"},{"id":224,"user":224,"plan":"basic","mrr":10.0,"start":"2023-04-26","end":"2023-10-28","channel":"organic","country":"FR","signup":"2023-04-22"},{"id":225,"user":225,"plan":"pro","mrr":50.0,"start":"2023-04-24","end":"2024-02-08","channel":"organic","country":"US","signup":"2023-04-23"},{"id":226,"user":226,"plan":"enterprise","mrr":200.0,"start":"2023-04-26","end":null,"channel":"organic","country":"DE","signup":"2023-04-23"},{"id":227,"user":227,"plan":"basic","mrr":10.0,"start":"2023-04-30","end":"2024-03-08","channel":"social","country":"US","signup":"2023-04-24"},{"id":228,"user":228,"plan":"enterprise","mrr":200.0,"start":"2023-04-29","end":"2023-10-14","channel":"organic","country":"UK","signup":"2023-04-24"},{"id":229,"user":229,"plan":"enterprise","mrr":200.0,"start":"2023-04-30","end":null,"channel":"referral","country":"DE","signup":"2023-04-25"},{"id":230,"user":230,"plan":"basic","mrr":10.0,"start":"2023-04-30","end":"2024-04-29","channel":"paid","country":"UK","signup":"2023-04-25"},{"id":231,"user":231,"plan":"enterprise","mrr":200.0,"start":"2023-04-30","end":null,"channel":"referral","country":"DE","signup":"2023-04-26"},{"id":232,"user":232,"plan":"pro","mrr":50.0,"start":"2023-04-29","end":"2024-01-22","channel":"paid","country":"KG","signup":"2023-04-26"},{"id":233,"user":233,"plan":"enterprise","mrr":200.0,"start":"2023-05-04","end":null,"channel":"paid","country":"FR","signup":"2023-04-27"},{"id":234,"user":234,"plan":"pro","mrr":50.0,"start":"2023-04-30","end":null,"channel":"paid","country":"KG","signup":"2023-04-27"},{"id":235,"user":235,"plan":"pro","mrr":50.0,"start":"2023-05-05","end":"2023-07-12","channel":"organic","country":"UK","signup":"2023-04-28"},{"id":236,"user":236,"plan":"pro","mrr":50.0,"start":"2023-04-29","end":"2024-01-21","channel":"referral","country":"FR","signup":"2023-04-28"},{"id":237,"user":237,"plan":"enterprise","mrr":200.0,"start":"2023-05-02","end":null,"channel":"organic","country":"DE","signup":"2023-04-29"},{"id":238,"user":238,"plan":"pro","mrr":50.0,"start":"2023-05-04","end":"2024-03-30","channel":"organic","country":"FR","signup":"2023-04-29"},{"id":239,"user":239,"plan":"pro","mrr":50.0,"start":"2023-05-05","end":"2024-04-10","channel":"paid","country":"US","signup":"2023-04-30"},{"id":240,"user":240,"plan":"enterprise","mrr":200.0,"start":"2023-05-05","end":null,"channel":"organic","country":"FR","signup":"2023-04-30"},{"id":241,"user":241,"plan":"basic","mrr":10.0,"start":"2023-05-08","end":"2023-11-12","channel":"social","country":"US","signup":"2023-05-01"},{"id":242,"user":242,"plan":"basic","mrr":10.0,"start":"2023-05-04","end":"2023-10-09","channel":"social","country":"FR","signup":"2023-05-01"},{"id":243,"user":243,"plan":"basic","mrr":10.0,"start":"2023-05-07","end":"2024-04-05","channel":"social","country":"US","signup":"2023-05-02"},{"id":244,"user":244,"plan":"basic","mrr":10.0,"start":"2023-05-04","end":"2024-03-06","channel":"organic","country":"UK","signup":"2023-05-02"},{"id":245,"user":245,"plan":"basic","mrr":10.0,"start":"2023-05-07","end":"2024-03-30","channel":"organic","country":"KG","signup":"2023-05-03"},{"id":246,"user":246,"plan":"enterprise","mrr":200.0,"start":"2023-05-07","end":null,"channel":"social","country":"DE","signup":"2023-05-03"},{"id":247,"user":247,"plan":"basic","mrr":10.0,"start":"2023-05-07","end":"2024-01-06","channel":"paid","country":"FR","signup":"2023-05-04"},{"id":248,"user":248,"plan":"pro","mrr":50.0,"start":"2023-05-06","end":"2024-04-03","channel":"social","country":"KG","signup":"2023-05-04"},{"id":249,"user":249,"plan":"basic","mrr":10.0,"start":"2023-05-07","end":"2023-08-02","channel":"social","country":"DE","signup":"2023-05-05"},{"id":250,"user":250,"plan":"enterprise","mrr":200.0,"start":"2023-05-09","end":null,"channel":"referral","country":"DE","signup":"2023-05-05"},{"id":251,"user":251,"plan":"enterprise","mrr":200.0,"start":"2023-05-08","end":null,"channel":"organic","country":"US","signup":"2023-05-06"},{"id":252,"user":252,"plan":"basic","mrr":10.0,"start":"2023-05-13","end":"2023-07-18","channel":"organic","country":"UK","signup":"2023-05-06"},{"id":253,"user":253,"plan":"enterprise","mrr":200.0,"start":"2023-05-11","end":null,"channel":"referral","country":"UK","signup":"2023-05-07"},{"id":254,"user":254,"plan":"basic","mrr":10.0,"start":"2023-05-14","end":"2023-08-08","channel":"organic","country":"KG","signup":"2023-05-07"},{"id":255,"user":255,"plan":"pro","mrr":50.0,"start":"2023-05-12","end":null,"channel":"organic","country":"UK","signup":"2023-05-08"},{"id":256,"user":256,"plan":"basic","mrr":10.0,"start":"2023-05-15","end":"2023-08-16","channel":"paid","country":"FR","signup":"2023-05-08"},{"id":257,"user":257,"plan":"enterprise","mrr":200.0,"start":"2023-05-15","end":null,"channel":"social","country":"UK","signup":"2023-05-09"},{"id":258,"user":258,"plan":"basic","mrr":10.0,"start":"2023-05-09","end":"2024-04-21","channel":"paid","country":"KG","signup":"2023-05-09"},{"id":259,"user":259,"plan":"pro","mrr":50.0,"start":"2023-05-14","end":"2023-11-17","channel":"paid","country":"UK","signup":"2023-05-10"},{"id":260,"user":260,"plan":"pro","mrr":50.0,"start":"2023-05-11","end":"2024-02-08","channel":"organic","country":"FR","signup":"2023-05-10"},{"id":261,"user":261,"plan":"basic","mrr":10.0,"start":"2023-05-14","end":"2024-01-23","channel":"paid","country":"US","signup":"2023-05-11"},{"id":262,"user":262,"plan":"basic","mrr":10.0,"start":"2023-05-18","end":"2023-12-16","channel":"social","country":"KG","signup":"2023-05-11"},{"id":263,"user":263,"plan":"basic","mrr":10.0,"start":"2023-05-18","end":"2024-05-29","channel":"organic","country":"US","signup":"2023-05-12"},{"id":264,"user":264,"plan":"basic","mrr":10.0,"start":"2023-05-12","end":"2023-08-30","channel":"paid","country":"US","signup":"2023-05-12"},{"id":265,"user":265,"plan":"pro","mrr":50.0,"start":"2023-05-16","end":null,"channel":"referral","country":"US","signup":"2023-05-13"},{"id":266,"user":266,"plan":"basic","mrr":10.0,"start":"2023-05-17","end":"2023-10-04","channel":"referral","country":"DE","signup":"2023-05-13"},{"id":267,"user":267,"plan":"basic","mrr":10.0,"start":"2023-05-17","end":"2023-08-23","channel":"paid","country":"DE","signup":"2023-05-14"},{"id":268,"user":268,"plan":"basic","mrr":10.0,"start":"2023-05-16","end":"2024-03-01","channel":"referral","country":"US","signup":"2023-05-14"},{"id":269,"user":269,"plan":"pro","mrr":50.0,"start":"2023-05-22","end":"2023-11-16","channel":"organic","country":"KG","signup":"2023-05-15"},{"id":270,"user":270,"plan":"basic","mrr":10.0,"start":"2023-05-19","end":"2024-03-06","channel":"organic","country":"FR","signup":"2023-05-15"},{"id":271,"user":271,"plan":"basic","mrr":10.0,"start":"2023-05-17","end":"2023-11-28","channel":"referral","country":"FR","signup":"2023-05-16"},{"id":272,"user":272,"plan":"basic","mrr":10.0,"start":"2023-05-19","end":"2024-04-21","channel":"referral","country":"UK","signup":"2023-05-16"},{"id":273,"user":273,"plan":"basic","mrr":10.0,"start":"2023-05-20","end":"2023-12-02","channel":"referral","country":"KG","signup":"2023-05-17"},{"id":274,"user":274,"plan":"pro","mrr":50.0,"start":"2023-05-19","end":"2023-10-10","channel":"social","country":"DE","signup":"2023-05-17"},{"id":275,"user":275,"plan":"basic","mrr":10.0,"start":"2023-05-22","end":"2024-05-07","channel":"paid","country":"US","signup":"2023-05-18"},{"id":276,"user":276,"plan":"basic","mrr":10.0,"start":"2023-05-22","end":"2024-03-16","channel":"paid","country":"UK","signup":"2023-05-18"},{"id":277,"user":277,"plan":"pro","mrr":50.0,"start":"2023-05-23","end":null,"channel":"referral","country":"FR","signup":"2023-05-19"},{"id":278,"user":278,"plan":"pro","mrr":50.0,"start":"2023-05-23","end":"2024-03-30","channel":"paid","country":"DE","signup":"2023-05-19"},{"id":279,"user":279,"plan":"basic","mrr":10.0,"start":"2023-05-27","end":"2023-08-15","channel":"referral","country":"DE","signup":"2023-05-20"},{"id":280,"user":280,"plan":"pro","mrr":50.0,"start":"2023-05-26","end":null,"channel":"referral","country":"US","signup":"2023-05-20"},{"id":281,"user":281,"plan":"enterprise","mrr":200.0,"start":"2023-05-25","end":"2023-11-18","channel":"referral","country":"FR","signup":"2023-05-21"},{"id":282,"user":282,"plan":"basic","mrr":10.0,"start":"2023-05-21","end":null,"channel":"organic","country":"KG","signup":"2023-05-21"},{"id":283,"user":283,"plan":"pro","mrr":50.0,"start":"2023-05-26","end":"2023-10-22","channel":"organic","country":"DE","signup":"2023-05-22"},{"id":284,"user":284,"plan":"pro","mrr":50.0,"start":"2023-05-29","end":"2024-03-10","channel":"organic","country":"US","signup":"2023-05-22"},{"id":285,"user":285,"plan":"basic","mrr":10.0,"start":"2023-05-27","end":"2024-05-20","channel":"paid","country":"KG","signup":"2023-05-23"},{"id":286,"user":286,"plan":"basic","mrr":10.0,"start":"2023-05-29","end":"2024-04-04","channel":"organic","country":"FR","signup":"2023-05-23"},{"id":287,"user":287,"plan":"basic","mrr":10.0,"start":"2023-05-25","end":"2024-02-18","channel":"paid","country":"DE","signup":"2023-05-24"},{"id":288,"user":288,"plan":"enterprise","mrr":200.0,"start":"2023-05-29","end":null,"channel":"paid","country":"KG","signup":"2023-05-24"},{"id":289,"user":289,"plan":"enterprise","mrr":200.0,"start":"2023-05-26","end":null,"channel":"organic","country":"KG","signup":"2023-05-25"},{"id":290,"user":290,"plan":"pro","mrr":50.0,"start":"2023-05-30","end":"2024-04-07","channel":"paid","country":"KG","signup":"2023-05-25"},{"id":291,"user":291,"plan":"basic","mrr":10.0,"start":"2023-05-30","end":"2024-02-19","channel":"organic","country":"DE","signup":"2023-05-26"},{"id":292,"user":292,"plan":"pro","mrr":50.0,"start":"2023-05-26","end":"2024-01-02","channel":"organic","country":"DE","signup":"2023-05-26"},{"id":293,"user":293,"plan":"pro","mrr":50.0,"start":"2023-05-31","end":"2024-02-21","channel":"referral","country":"UK","signup":"2023-05-27"},{"id":294,"user":294,"plan":"basic","mrr":10.0,"start":"2023-05-27","end":"2024-04-28","channel":"organic","country":"FR","signup":"2023-05-27"},{"id":295,"user":295,"plan":"basic","mrr":10.0,"start":"2023-06-04","end":"2023-11-07","channel":"organic","country":"US","signup":"2023-05-28"},{"id":296,"user":296,"plan":"pro","mrr":50.0,"start":"2023-06-02","end":null,"channel":"paid","country":"KG","signup":"2023-05-28"},{"id":297,"user":297,"plan":"basic","mrr":10.0,"start":"2023-06-05","end":"2023-08-30","channel":"referral","country":"UK","signup":"2023-05-29"},{"id":298,"user":298,"plan":"pro","mrr":50.0,"start":"2023-06-01","end":"2023-10-06","channel":"organic","country":"US","signup":"2023-05-29"},{"id":299,"user":299,"plan":"basic","mrr":10.0,"start":"2023-06-03","end":"2024-04-06","channel":"paid","country":"UK","signup":"2023-05-30"},{"id":300,"user":300,"plan":"basic","mrr":10.0,"start":"2023-05-31","end":"2024-06-16","channel":"organic","country":"DE","signup":"2023-05-30"},{"id":301,"user":301,"plan":"basic","mrr":10.0,"start":"2023-06-03","end":"2024-01-08","channel":"organic","country":"KG","signup":"2023-05-31"},{"id":302,"user":302,"plan":"basic","mrr":10.0,"start":"2023-05-31","end":"2023-09-15","channel":"paid","country":"US","signup":"2023-05-31"},{"id":303,"user":303,"plan":"enterprise","mrr":200.0,"start":"2023-06-04","end":null,"channel":"paid","country":"US","signup":"2023-06-01"},{"id":304,"user":304,"plan":"basic","mrr":10.0,"start":"2023-06-02","end":"2023-09-30","channel":"paid","country":"US","signup":"2023-06-01"},{"id":305,"user":305,"plan":"enterprise","mrr":200.0,"start":"2023-06-04","end":null,"channel":"referral","country":"US","signup":"2023-06-02"},{"id":306,"user":306,"plan":"pro","mrr":50.0,"start":"2023-06-06","end":"2023-12-22","channel":"social","country":"US","signup":"2023-06-02"},{"id":307,"user":307,"plan":"pro","mrr":50.0,"start":"2023-06-09","end":null,"channel":"paid","country":"UK","signup":"2023-06-03"},{"id":308,"user":308,"plan":"basic","mrr":10.0,"start":"2023-06-10","end":"2024-05-17","channel":"organic","country":"KG","signup":"2023-06-03"},{"id":309,"user":309,"plan":"pro","mrr":50.0,"start":"2023-06-06","end":"2024-06-06","channel":"referral","country":"DE","signup":"2023-06-04"},{"id":310,"user":310,"plan":"pro","mrr":50.0,"start":"2023-06-06","end":null,"channel":"organic","country":"DE","signup":"2023-06-04"},{"id":311,"user":311,"plan":"basic","mrr":10.0,"start":"2023-06-09","end":"2024-03-07","channel":"paid","country":"DE","signup":"2023-06-05"},{"id":312,"user":312,"plan":"basic","mrr":10.0,"start":"2023-06-10","end":"2024-04-24","channel":"organic","country":"DE","signup":"2023-06-05"},{"id":313,"user":313,"plan":"enterprise","mrr":200.0,"start":"2023-06-10","end":null,"channel":"organic","country":"UK","signup":"2023-06-06"},{"id":314,"user":314,"plan":"enterprise","mrr":200.0,"start":"2023-06-10","end":null,"channel":"social","country":"FR","signup":"2023-06-06"},{"id":315,"user":315,"plan":"basic","mrr":10.0,"start":"2023-06-14","end":"2024-03-28","channel":"referral","country":"KG","signup":"2023-06-07"},{"id":316,"user":316,"plan":"pro","mrr":50.0,"start":"2023-06-14","end":"2024-05-21","channel":"paid","country":"US","signup":"2023-06-07"},{"id":317,"user":317,"plan":"enterprise","mrr":200.0,"start":"2023-06-14","end":null,"channel":"paid","country":"FR","signup":"2023-06-08"},{"id":318,"user":318,"plan":"enterprise","mrr":200.0,"start":"2023-06-13","end":null,"channel":"organic","country":"DE","signup":"2023-06-08"},{"id":319,"user":319,"plan":"enterprise","mrr":200.0,"start":"2023-06-12","end":null,"channel":"organic","country":"FR","signup":"2023-06-09"},{"id":320,"user":320,"plan":"pro","mrr":50.0,"start":"2023-06-12","end":null,"channel":"organic","country":"KG","signup":"2023-06-09"},{"id":321,"user":321,"plan":"basic","mrr":10.0,"start":"2023-06-16","end":"2024-04-13","channel":"paid","country":"US","signup":"2023-06-10"},{"id":322,"user":322,"plan":"basic","mrr":10.0,"start":"2023-06-16","end":"2024-07-19","channel":"referral","country":"US","signup":"2023-06-10"},{"id":323,"user":323,"plan":"basic","mrr":10.0,"start":"2023-06-13","end":"2023-08-30","channel":"paid","country":"KG","signup":"2023-06-11"},{"id":324,"user":324,"plan":"pro","mrr":50.0,"start":"2023-06-13","end":"2024-06-09","channel":"organic","country":"KG","signup":"2023-06-11"},{"id":325,"user":325,"plan":"pro","mrr":50.0,"start":"2023-06-17","end":null,"channel":"social","country":"DE","signup":"2023-06-12"},{"id":326,"user":326,"plan":"basic","mrr":10.0,"start":"2023-06-19","end":"2024-04-07","channel":"referral","country":"US","signup":"2023-06-12"},{"id":327,"user":327,"plan":"enterprise","mrr":200.0,"start":"2023-06-13","end":null,"channel":"paid","country":"FR","signup":"2023-06-13"},{"id":328,"user":328,"plan":"pro","mrr":50.0,"start":"2023-06-19","end":null,"channel":"paid","country":"UK","signup":"2023-06-13"},{"id":329,"user":329,"plan":"pro","mrr":50.0,"start":"2023-06-16","end":"2023-12-28","channel":"paid","country":"UK","signup":"2023-06-14"},{"id":330,"user":330,"plan":"basic","mrr":10.0,"start":"2023-06-19","end":"2024-03-08","channel":"organic","country":"KG","signup":"2023-06-14"},{"id":331,"user":331,"plan":"pro","mrr":50.0,"start":"2023-06-16","end":null,"channel":"organic","country":"DE","signup":"2023-06-15"},{"id":332,"user":332,"plan":"basic","mrr":10.0,"start":"2023-06-21","end":"2024-07-05","channel":"referral","country":"UK","signup":"2023-06-15"},{"id":333,"user":333,"plan":"basic","mrr":10.0,"start":"2023-06-23","end":"2023-09-09","channel":"organic","country":"US","signup":"2023-06-16"},{"id":334,"user":334,"plan":"basic","mrr":10.0,"start":"2023-06-17","end":"2024-01-10","channel":"organic","country":"KG","signup":"2023-06-16"},{"id":335,"user":335,"plan":"basic","mrr":10.0,"start":"2023-06-20","end":"2024-03-28","channel":"organic","country":"FR","signup":"2023-06-17"},{"id":336,"user":336,"plan":"basic","mrr":10.0,"start":"2023-06-18","end":"2023-10-07","channel":"organic","country":"KG","signup":"2023-06-17"},{"id":337,"user":337,"plan":"pro","mrr":50.0,"start":"2023-06-25","end":"2024-01-24","channel":"referral","country":"FR","signup":"2023-06-18"},{"id":338,"user":338,"plan":"basic","mrr":10.0,"start":"2023-06-18","end":"2023-09-14","channel":"referral","country":"KG","signup":"2023-06-18"},{"id":339,"user":339,"plan":"pro","mrr":50.0,"start":"2023-06-23","end":"2024-03-29","channel":"paid","country":"KG","signup":"2023-06-19"},{"id":340,"user":340,"plan":"basic","mrr":10.0,"start":"2023-06-21","end":"2024-03-17","channel":"organic","country":"KG","signup":"2023-06-19"},{"id":341,"user":341,"plan":"enterprise","mrr":200.0,"start":"2023-06-22","end":"2023-09-30","channel":"paid","country":"FR","signup":"2023-06-20"},{"id":342,"user":342,"plan":"enterprise","mrr":200.0,"start":"2023-06-26","end":null,"channel":"paid","country":"FR","signup":"2023-06-20"},{"id":343,"user":343,"plan":"basic","mrr":10.0,"start":"2023-06-24","end":"2024-06-16","channel":"organic","country":"KG","signup":"2023-06-21"},{"id":344,"user":344,"plan":"basic","mrr":10.0,"start":"2023-06-23","end":"2024-07-13","channel":"paid","country":"UK","signup":"2023-06-21"},{"id":345,"user":345,"plan":"basic","mrr":10.0,"start":"2023-06-26","end":"2023-08-29","channel":"organic","country":"DE","signup":"2023-06-22"},{"id":346,"user":346,"plan":"pro","mrr":50.0,"start":"2023-06-29","end":null,"channel":"paid","country":"DE","signup":"2023-06-22"},{"id":347,"user":347,"plan":"pro","mrr":50.0,"start":"2023-06-25","end":"2024-02-16","channel":"paid","country":"DE","signup":"2023-06-23"},{"id":348,"user":348,"plan":"basic","mrr":10.0,"start":"2023-06-27","end":"2024-03-30","channel":"organic","country":"FR","signup":"2023-06-23"},{"id":349,"user":349,"plan":"pro","mrr":50.0,"start":"2023-06-28","end":"2024-01-28","channel":"organic","country":"FR","signup":"2023-06-24"},{"id":350,"user":350,"plan":"basic","mrr":10.0,"start":"2023-06-27","end":null,"channel":"paid","country":"UK","signup":"2023-06-24"},{"id":351,"user":351,"plan":"basic","mrr":10.0,"start":"2023-07-02","end":"2024-03-13","channel":"paid","country":"DE","signup":"2023-06-25"},{"id":352,"user":352,"plan":"pro","mrr":50.0,"start":"2023-06-30","end":"2024-01-27","channel":"referral","country":"DE","signup":"2023-06-25"},{"id":353,"user":353,"plan":"basic","mrr":10.0,"start":"2023-06-26","end":null,"channel":"paid","country":"KG","signup":"2023-06-26"},{"id":354,"user":354,"plan":"pro","mrr":50.0,"start":"2023-07-02","end":"2024-06-15","channel":"organic","country":"FR","signup":"2023-06-26"},{"id":355,"user":355,"plan":"basic","mrr":10.0,"start":"2023-06-27","end":"2024-05-06","channel":"organic","country":"DE","signup":"2023-06-27"},{"id":356,"user":356,"plan":"enterprise","mrr":200.0,"start":"2023-07-01","end":null,"channel":"paid","country":"UK","signup":"2023-06-27"},{"id":357,"user":357,"plan":"basic","mrr":10.0,"start":"2023-07-01","end":"2024-02-26","channel":"organic","country":"UK","signup":"2023-06-28"},{"id":358,"user":358,"plan":"basic","mrr":10.0,"start":"2023-07-01","end":"2024-07-12","channel":"paid","country":"DE","signup":"2023-06-28"},{"id":359,"user":359,"plan":"pro","mrr":50.0,"start":"2023-07-03","end":null,"channel":"social","country":"FR","signup":"2023-06-29"},{"id":360,"user":360,"plan":"basic","mrr":10.0,"start":"2023-07-01","end":"2024-07-16","channel":"paid","country":"UK","signup":"2023-06-29"},{"id":361,"user":361,"plan":"enterprise","mrr":200.0,"start":"2023-06-30","end":null,"channel":"organic","country":"KG","signup":"2023-06-30"},{"id":362,"user":362,"plan":"pro","mrr":50.0,"start":"2023-07-07","end":"2024-03-09","channel":"paid","country":"UK","signup":"2023-06-30"},{"id":363,"user":363,"plan":"pro","mrr":50.0,"start":"2023-07-03","end":"2024-01-30","channel":"paid","country":"US","signup":"2023-07-01"},{"id":364,"user":364,"plan":"pro","mrr":50.0,"start":"2023-07-06","end":null,"channel":"paid","country":"US","signup":"2023-07-01"},{"id":365,"user":365,"plan":"enterprise","mrr":200.0,"start":"2023-07-04","end":"2024-06-04","channel":"social","country":"FR","signup":"2023-07-02"},{"id":366,"user":366,"plan":"enterprise","mrr":200.0,"start":"2023-07-07","end":null,"channel":"organic","country":"DE","signup":"2023-07-02"},{"id":367,"user":367,"plan":"pro","mrr":50.0,"start":"2023-07-07","end":null,"channel":"social","country":"FR","signup":"2023-07-03"},{"id":368,"user":368,"plan":"pro","mrr":50.0,"start":"2023-07-07","end":null,"channel":"social","country":"FR","signup":"2023-07-03"},{"id":369,"user":369,"plan":"basic","mrr":10.0,"start":"2023-07-11","end":null,"channel":"organic","country":"FR","signup":"2023-07-04"},{"id":370,"user":370,"plan":"basic","mrr":10.0,"start":"2023-07-08","end":"2024-02-26","channel":"organic","country":"FR","signup":"2023-07-04"},{"id":371,"user":371,"plan":"pro","mrr":50.0,"start":"2023-07-06","end":"2023-10-12","channel":"organic","country":"KG","signup":"2023-07-05"},{"id":372,"user":372,"plan":"basic","mrr":10.0,"start":"2023-07-07","end":"2023-12-29","channel":"organic","country":"KG","signup":"2023-07-05"},{"id":373,"user":373,"plan":"basic","mrr":10.0,"start":"2023-07-12","end":null,"channel":"organic","country":"UK","signup":"2023-07-06"},{"id":374,"user":374,"plan":"basic","mrr":10.0,"start":"2023-07-11","end":"2024-03-29","channel":"paid","country":"US","signup":"2023-07-06"},{"id":375,"user":375,"plan":"basic","mrr":10.0,"start":"2023-07-07","end":"2023-11-07","channel":"organic","country":"FR","signup":"2023-07-07"},{"id":376,"user":376,"plan":"pro","mrr":50.0,"start":"2023-07-14","end":"2024-01-24","channel":"organic","country":"UK","signup":"2023-07-07"},{"id":377,"user":377,"plan":"enterprise","mrr":200.0,"start":"2023-07-14","end":null,"channel":"referral","country":"US","signup":"2023-07-08"},{"id":378,"user":378,"plan":"basic","mrr":10.0,"start":"2023-07-13","end":"2024-01-08","channel":"organic","country":"DE","signup":"2023-07-08"},{"id":379,"user":379,"plan":"pro","mrr":50.0,"start":"2023-07-16","end":"2024-06-27","channel":"referral","country":"KG","signup":"2023-07-09"},{"id":380,"user":380,"plan":"enterprise","mrr":200.0,"start":"2023-07-14","end":null,"channel":"organic","country":"US","signup":"2023-07-09"},{"id":381,"user":381,"plan":"basic","mrr":10.0,"start":"2023-07-13","end":"2024-08-01","channel":"organic","country":"DE","signup":"2023-07-10"},{"id":382,"user":382,"plan":"pro","mrr":50.0,"start":"2023-07-17","end":null,"channel":"paid","country":"US","signup":"2023-07-10"},{"id":383,"user":383,"plan":"basic","mrr":10.0,"start":"2023-07-15","end":"2023-11-11","channel":"paid","country":"KG","signup":"2023-07-11"},{"id":384,"user":384,"plan":"basic","mrr":10.0,"start":"2023-07-13","end":"2023-09-30","channel":"referral","country":"KG","signup":"2023-07-11"},{"id":385,"user":385,"plan":"enterprise","mrr":200.0,"start":"2023-07-16","end":null,"channel":"referral","country":"UK","signup":"2023-07-12"},{"id":386,"user":386,"plan":"basic","mrr":10.0,"start":"2023-07-13","end":"2024-06-12","channel":"referral","country":"FR","signup":"2023-07-12"},{"id":387,"user":387,"plan":"pro","mrr":50.0,"start":"2023-07-15","end":"2024-03-20","channel":"organic","country":"US","signup":"2023-07-13"},{"id":388,"user":388,"plan":"pro","mrr":50.0,"start":"2023-07-19","end":"2023-12-05","channel":"organic","country":"US","signup":"2023-07-13"},{"id":389,"user":389,"plan":"basic","mrr":10.0,"start":"2023-07-20","end":"2024-05-25","channel":"referral","country":"DE","signup":"2023-07-14"},{"id":390,"user":390,"plan":"pro","mrr":50.0,"start":"2023-07-20","end":null,"channel":"referral","country":"KG","signup":"2023-07-14"},{"id":391,"user":391,"plan":"enterprise","mrr":200.0,"start":"2023-07-19","end":"2024-03-24","channel":"social","country":"US","signup":"2023-07-15"},{"id":392,"user":392,"plan":"basic","mrr":10.0,"start":"2023-07-18","end":"2024-01-14","channel":"paid","country":"KG","signup":"2023-07-15"},{"id":393,"user":393,"plan":"enterprise","mrr":200.0,"start":"2023-07-21","end":"2024-03-25","channel":"organic","country":"US","signup":"2023-07-16"},{"id":394,"user":394,"plan":"pro","mrr":50.0,"start":"2023-07-21","end":"2024-02-07","channel":"referral","country":"UK","signup":"2023-07-16"},{"id":395,"user":395,"plan":"pro","mrr":50.0,"start":"2023-07-20","end":null,"channel":"organic","country":"FR","signup":"2023-07-17"},{"id":396,"user":396,"plan":"pro","mrr":50.0,"start":"2023-07-24","end":"2024-01-08","channel":"social","country":"US","signup":"2023-07-17"},{"id":397,"user":397,"plan":"basic","mrr":10.0,"start":"2023-07-18","end":"2024-03-04","channel":"referral","country":"KG","signup":"2023-07-18"},{"id":398,"user":398,"plan":"enterprise","mrr":200.0,"start":"2023-07-21","end":null,"channel":"paid","country":"UK","signup":"2023-07-18"},{"id":399,"user":399,"plan":"enterprise","mrr":200.0,"start":"2023-07-22","end":"2024-06-29","channel":"referral","country":"US","signup":"2023-07-19"},{"id":400,"user":400,"plan":"pro","mrr":50.0,"start":"2023-07-22","end":"2024-01-17","channel":"referral","country":"DE","signup":"2023-07-19"},{"id":401,"user":401,"plan":"pro","mrr":50.0,"start":"2023-07-25","end":null,"channel":"organic","country":"FR","signup":"2023-07-20"},{"id":402,"user":402,"plan":"pro","mrr":50.0,"start":"2023-07-20","end":"2023-12-01","channel":"social","country":"US","signup":"2023-07-20"},{"id":403,"user":403,"plan":"basic","mrr":10.0,"start":"2023-07-23","end":"2023-12-19","channel":"paid","country":"UK","signup":"2023-07-21"},{"id":404,"user":404,"plan":"pro","mrr":50.0,"start":"2023-07-22","end":null,"channel":"referral","country":"DE","signup":"2023-07-21"},{"id":405,"user":405,"plan":"pro","mrr":50.0,"start":"2023-07-22","end":"2024-03-21","channel":"organic","country":"UK","signup":"2023-07-22"},{"id":406,"user":406,"plan":"pro","mrr":50.0,"start":"2023-07-25","end":"2023-10-01","channel":"referral","country":"UK","signup":"2023-07-22"},{"id":407,"user":407,"plan":"pro","mrr":50.0,"start":"2023-07-25","end":"2023-11-26","channel":"organic","country":"DE","signup":"2023-07-23"},{"id":408,"user":408,"plan":"basic","mrr":10.0,"start":"2023-07-29","end":"2023-10-29","channel":"organic","country":"UK","signup":"2023-07-23"},{"id":409,"user":409,"plan":"basic","mrr":10.0,"start":"2023-07-31","end":"2024-04-01","channel":"social","country":"DE","signup":"2023-07-24"},{"id":410,"user":410,"plan":"basic","mrr":10.0,"start":"2023-07-25","end":"2024-01-14","channel":"organic","country":"US","signup":"2023-07-24"},{"id":411,"user":411,"plan":"basic","mrr":10.0,"start":"2023-07-25","end":"2024-08-25","channel":"organic","country":"DE","signup":"2023-07-25"},{"id":412,"user":412,"plan":"pro","mrr":50.0,"start":"2023-07-29","end":"2023-10-12","channel":"social","country":"DE","signup":"2023-07-25"},{"id":413,"user":413,"plan":"pro","mrr":50.0,"start":"2023-07-26","end":null,"channel":"social","country":"FR","signup":"2023-07-26"},{"id":414,"user":414,"plan":"pro","mrr":50.0,"start":"2023-08-01","end":"2023-11-24","channel":"paid","country":"DE","signup":"2023-07-26"},{"id":415,"user":415,"plan":"basic","mrr":10.0,"start":"2023-08-03","end":"2024-05-16","channel":"paid","country":"DE","signup":"2023-07-27"},{"id":416,"user":416,"plan":"pro","mrr":50.0,"start":"2023-07-28","end":null,"channel":"paid","country":"US","signup":"2023-07-27"},{"id":417,"user":417,"plan":"basic","mrr":10.0,"start":"2023-08-02","end":"2023-11-03","channel":"organic","country":"FR","signup":"2023-07-28"},{"id":418,"user":418,"plan":"basic","mrr":10.0,"start":"2023-07-30","end":"2024-08-17","channel":"organic","country":"KG","signup":"2023-07-28"},{"id":419,"user":419,"plan":"pro","mrr":50.0,"start":"2023-08-03","end":"2024-08-02","channel":"paid","country":"US","signup":"2023-07-29"},{"id":420,"user":420,"plan":"enterprise","mrr":200.0,"start":"2023-08-02","end":null,"channel":"referral","country":"US","signup":"2023-07-29"},{"id":421,"user":421,"plan":"basic","mrr":10.0,"start":"2023-08-05","end":"2023-12-01","channel":"referral","country":"KG","signup":"2023-07-30"},{"id":422,"user":422,"plan":"basic","mrr":10.0,"start":"2023-08-02","end":"2024-01-25","channel":"referral","country":"DE","signup":"2023-07-30"},{"id":423,"user":423,"plan":"basic","mrr":10.0,"start":"2023-08-06","end":"2024-05-24","channel":"organic","country":"UK","signup":"2023-07-31"},{"id":424,"user":424,"plan":"basic","mrr":10.0,"start":"2023-08-06","end":"2023-11-22","channel":"paid","country":"FR","signup":"2023-07-31"},{"id":425,"user":425,"plan":"pro","mrr":50.0,"start":"2023-08-06","end":"2024-09-09","channel":"organic","country":"UK","signup":"2023-08-01"},{"id":426,"user":426,"plan":"basic","mrr":10.0,"start":"2023-08-05","end":"2023-12-21","channel":"paid","country":"KG","signup":"2023-08-01"},{"id":427,"user":427,"plan":"pro","mrr":50.0,"start":"2023-08-09","end":"2023-11-20","channel":"paid","country":"US","signup":"2023-08-02"},{"id":428,"user":428,"plan":"basic","mrr":10.0,"start":"2023-08-03","end":"2024-04-09","channel":"referral","country":"US","signup":"2023-08-02"},{"id":429,"user":429,"plan":"basic","mrr":10.0,"start":"2023-08-05","end":"2024-07-30","channel":"organic","country":"FR","signup":"2023-08-03"},{"id":430,"user":430,"plan":"basic","mrr":10.0,"start":"2023-08-08","end":"2024-05-04","channel":"organic","country":"US","signup":"2023-08-03"},{"id":431,"user":431,"plan":"basic","mrr":10.0,"start":"2023-08-09","end":"2024-05-11","channel":"organic","country":"US","signup":"2023-08-04"},{"id":432,"user":432,"plan":"basic","mrr":10.0,"start":"2023-08-04","end":null,"channel":"referral","country":"FR","signup":"2023-08-04"},{"id":433,"user":433,"plan":"basic","mrr":10.0,"start":"2023-08-09","end":"2024-07-29","channel":"paid","country":"FR","signup":"2023-08-05"},{"id":434,"user":434,"plan":"pro","mrr":50.0,"start":"2023-08-08","end":"2024-06-09","channel":"organic","country":"KG","signup":"2023-08-05"},{"id":435,"user":435,"plan":"basic","mrr":10.0,"start":"2023-08-09","end":"2024-04-04","channel":"organic","country":"US","signup":"2023-08-06"},{"id":436,"user":436,"plan":"enterprise","mrr":200.0,"start":"2023-08-11","end":"2024-02-29","channel":"referral","country":"US","signup":"2023-08-06"},{"id":437,"user":437,"plan":"basic","mrr":10.0,"start":"2023-08-10","end":"2024-07-22","channel":"organic","country":"KG","signup":"2023-08-07"},{"id":438,"user":438,"plan":"pro","mrr":50.0,"start":"2023-08-07","end":null,"channel":"referral","country":"DE","signup":"2023-08-07"},{"id":439,"user":439,"plan":"pro","mrr":50.0,"start":"2023-08-12","end":"2024-02-27","channel":"referral","country":"DE","signup":"2023-08-08"},{"id":440,"user":440,"plan":"pro","mrr":50.0,"start":"2023-08-12","end":null,"channel":"organic","country":"DE","signup":"2023-08-08"},{"id":441,"user":441,"plan":"pro","mrr":50.0,"start":"2023-08-14","end":"2023-12-25","channel":"organic","country":"KG","signup":"2023-08-09"},{"id":442,"user":442,"plan":"pro","mrr":50.0,"start":"2023-08-15","end":"2024-09-02","channel":"social","country":"US","signup":"2023-08-09"},{"id":443,"user":443,"plan":"pro","mrr":50.0,"start":"2023-08-10","end":"2024-07-06","channel":"organic","country":"KG","signup":"2023-08-10"},{"id":444,"user":444,"plan":"pro","mrr":50.0,"start":"2023-08-13","end":"2024-05-31","channel":"organic","country":"KG","signup":"2023-08-10"},{"id":445,"user":445,"plan":"pro","mrr":50.0,"start":"2023-08-16","end":"2024-03-22","channel":"referral","country":"DE","signup":"2023-08-11"},{"id":446,"user":446,"plan":"basic","mrr":10.0,"start":"2023-08-16","end":"2024-07-31","channel":"social","country":"UK","signup":"2023-08-11"},{"id":447,"user":447,"plan":"basic","mrr":10.0,"start":"2023-08-13","end":"2023-12-30","channel":"social","country":"US","signup":"2023-08-12"},{"id":448,"user":448,"plan":"pro","mrr":50.0,"start":"2023-08-14","end":null,"channel":"referral","country":"DE","signup":"2023-08-12"},{"id":449,"user":449,"plan":"pro","mrr":50.0,"start":"2023-08-13","end":null,"channel":"organic","country":"UK","signup":"2023-08-13"},{"id":450,"user":450,"plan":"pro","mrr":50.0,"start":"2023-08-17","end":"2024-05-20","channel":"organic","country":"UK","signup":"2023-08-13"},{"id":451,"user":451,"plan":"pro","mrr":50.0,"start":"2023-08-21","end":null,"channel":"referral","country":"FR","signup":"2023-08-14"},{"id":452,"user":452,"plan":"enterprise","mrr":200.0,"start":"2023-08-20","end":null,"channel":"paid","country":"US","signup":"2023-08-14"},{"id":453,"user":453,"plan":"basic","mrr":10.0,"start":"2023-08-16","end":"2023-12-10","channel":"paid","country":"UK","signup":"2023-08-15"},{"id":454,"user":454,"plan":"basic","mrr":10.0,"start":"2023-08-19","end":"2024-08-16","channel":"social","country":"DE","signup":"2023-08-15"},{"id":455,"user":455,"plan":"basic","mrr":10.0,"start":"2023-08-23","end":"2024-03-27","channel":"organic","country":"FR","signup":"2023-08-16"},{"id":456,"user":456,"plan":"basic","mrr":10.0,"start":"2023-08-16","end":"2024-08-16","channel":"paid","country":"US","signup":"2023-08-16"},{"id":457,"user":457,"plan":"pro","mrr":50.0,"start":"2023-08-17","end":"2024-03-18","channel":"organic","country":"KG","signup":"2023-08-17"},{"id":458,"user":458,"plan":"basic","mrr":10.0,"start":"2023-08-20","end":"2024-02-26","channel":"paid","country":"DE","signup":"2023-08-17"},{"id":459,"user":459,"plan":"pro","mrr":50.0,"start":"2023-08-22","end":"2023-10-24","channel":"organic","country":"UK","signup":"2023-08-18"},{"id":460,"user":460,"plan":"basic","mrr":10.0,"start":"2023-08-25","end":"2024-01-21","channel":"organic","country":"UK","signup":"2023-08-18"},{"id":461,"user":461,"plan":"pro","mrr":50.0,"start":"2023-08-21","end":"2024-02-14","channel":"organic","country":"DE","signup":"2023-08-19"},{"id":462,"user":462,"plan":"pro","mrr":50.0,"start":"2023-08-24","end":"2023-11-13","channel":"paid","country":"UK","signup":"2023-08-19"},{"id":463,"user":463,"plan":"basic","mrr":10.0,"start":"2023-08-26","end":"2023-12-03","channel":"referral","country":"FR","signup":"2023-08-20"},{"id":464,"user":464,"plan":"pro","mrr":50.0,"start":"2023-08-25","end":"2024-08-12","channel":"paid","country":"US","signup":"2023-08-20"},{"id":465,"user":465,"plan":"basic","mrr":10.0,"start":"2023-08-27","end":"2024-05-26","channel":"social","country":"FR","signup":"2023-08-21"},{"id":466,"user":466,"plan":"basic","mrr":10.0,"start":"2023-08-25","end":"2023-11-03","channel":"organic","country":"UK","signup":"2023-08-21"},{"id":467,"user":467,"plan":"basic","mrr":10.0,"start":"2023-08-27","end":"2024-09-06","channel":"organic","country":"KG","signup":"2023-08-22"},{"id":468,"user":468,"plan":"basic","mrr":10.0,"start":"2023-08-29","end":"2024-04-30","channel":"referral","country":"US","signup":"2023-08-22"},{"id":469,"user":469,"plan":"basic","mrr":10.0,"start":"2023-08-24","end":"2023-12-16","channel":"organic","country":"US","signup":"2023-08-23"},{"id":470,"user":470,"plan":"pro","mrr":50.0,"start":"2023-08-26","end":"2024-05-17","channel":"social","country":"DE","signup":"2023-08-23"},{"id":471,"user":471,"plan":"pro","mrr":50.0,"start":"2023-08-25","end":"2024-03-30","channel":"organic","country":"DE","signup":"2023-08-24"},{"id":472,"user":472,"plan":"pro","mrr":50.0,"start":"2023-08-29","end":"2024-01-22","channel":"social","country":"KG","signup":"2023-08-24"},{"id":473,"user":473,"plan":"basic","mrr":10.0,"start":"2023-08-26","end":"2023-12-22","channel":"organic","country":"US","signup":"2023-08-25"},{"id":474,"user":474,"plan":"pro","mrr":50.0,"start":"2023-08-28","end":null,"channel":"referral","country":"KG","signup":"2023-08-25"},{"id":475,"user":475,"plan":"basic","mrr":10.0,"start":"2023-08-31","end":"2024-09-24","channel":"paid","country":"DE","signup":"2023-08-26"},{"id":476,"user":476,"plan":"basic","mrr":10.0,"start":"2023-08-28","end":"2024-01-09","channel":"social","country":"DE","signup":"2023-08-26"},{"id":477,"user":477,"plan":"enterprise","mrr":200.0,"start":"2023-08-31","end":"2024-09-02","channel":"organic","country":"US","signup":"2023-08-27"},{"id":478,"user":478,"plan":"basic","mrr":10.0,"start":"2023-08-29","end":"2024-09-27","channel":"paid","country":"FR","signup":"2023-08-27"},{"id":479,"user":479,"plan":"pro","mrr":50.0,"start":"2023-08-29","end":"2024-09-13","channel":"social","country":"UK","signup":"2023-08-28"},{"id":480,"user":480,"plan":"pro","mrr":50.0,"start":"2023-09-04","end":"2024-08-17","channel":"paid","country":"DE","signup":"2023-08-28"},{"id":481,"user":481,"plan":"basic","mrr":10.0,"start":"2023-09-05","end":"2024-08-19","channel":"paid","country":"DE","signup":"2023-08-29"},{"id":482,"user":482,"plan":"basic","mrr":10.0,"start":"2023-09-03","end":"2024-09-18","channel":"paid","country":"FR","signup":"2023-08-29"},{"id":483,"user":483,"plan":"basic","mrr":10.0,"start":"2023-09-04","end":"2023-12-07","channel":"paid","country":"FR","signup":"2023-08-30"},{"id":484,"user":484,"plan":"enterprise","mrr":200.0,"start":"2023-09-06","end":null,"channel":"paid","country":"KG","signup":"2023-08-30"},{"id":485,"user":485,"plan":"basic","mrr":10.0,"start":"2023-09-04","end":"2024-08-31","channel":"paid","country":"KG","signup":"2023-08-31"},{"id":486,"user":486,"plan":"basic","mrr":10.0,"start":"2023-08-31","end":"2023-12-06","channel":"social","country":"UK","signup":"2023-08-31"},{"id":487,"user":487,"plan":"basic","mrr":10.0,"start":"2023-09-05","end":"2023-11-23","channel":"organic","country":"UK","signup":"2023-09-01"},{"id":488,"user":488,"plan":"pro","mrr":50.0,"start":"2023-09-01","end":"2024-03-25","channel":"organic","country":"US","signup":"2023-09-01"},{"id":489,"user":489,"plan":"basic","mrr":10.0,"start":"2023-09-03","end":"2023-12-18","channel":"social","country":"KG","signup":"2023-09-02"},{"id":490,"user":490,"plan":"basic","mrr":10.0,"start":"2023-09-08","end":"2024-08-16","channel":"referral","country":"DE","signup":"2023-09-02"},{"id":491,"user":491,"plan":"pro","mrr":50.0,"start":"2023-09-03","end":"2024-08-20","channel":"paid","country":"KG","signup":"2023-09-03"},{"id":492,"user":492,"plan":"enterprise","mrr":200.0,"start":"2023-09-06","end":null,"channel":"paid","country":"DE","signup":"2023-09-03"},{"id":493,"user":493,"plan":"basic","mrr":10.0,"start":"2023-09-11","end":"2023-12-11","channel":"organic","country":"FR","signup":"2023-09-04"},{"id":494,"user":494,"plan":"basic","mrr":10.0,"start":"2023-09-11","end":"2024-05-03","channel":"organic","country":"KG","signup":"2023-09-04"},{"id":495,"user":495,"plan":"basic","mrr":10.0,"start":"2023-09-06","end":"2024-02-01","channel":"paid","country":"FR","signup":"2023-09-05"},{"id":496,"user":496,"plan":"pro","mrr":50.0,"start":"2023-09-05","end":"2024-06-15","channel":"organic","country":"UK","signup":"2023-09-05"},{"id":497,"user":497,"plan":"basic","mrr":10.0,"start":"2023-09-13","end":"2024-09-19","channel":"paid","country":"UK","signup":"2023-09-06"},{"id":498,"user":498,"plan":"pro","mrr":50.0,"start":"2023-09-08","end":"2024-03-30","channel":"organic","country":"US","signup":"2023-09-06"},{"id":499,"user":499,"plan":"pro","mrr":50.0,"start":"2023-09-13","end":"2024-05-03","channel":"social","country":"KG","signup":"2023-09-07"},{"id":500,"user":500,"plan":"pro","mrr":50.0,"start":"2023-09-07","end":null,"channel":"social","country":"FR","signup":"2023-09-07"}],"mrr_monthly":[{"month":"2023-01-01","plan":"basic","active":28,"mrr":280.0,"new":28,"churned":0},{"month":"2023-01-01","plan":"enterprise","active":7,"mrr":1400.0,"new":7,"churned":0},{"month":"2023-01-01","plan":"pro","active":21,"mrr":1050.0,"new":21,"churned":0},{"month":"2023-02-01","plan":"basic","active":53,"mrr":530.0,"new":25,"churned":0},{"month":"2023-02-01","plan":"enterprise","active":15,"mrr":3000.0,"new":8,"churned":0},{"month":"2023-02-01","plan":"pro","active":46,"mrr":2300.0,"new":25,"churned":0},{"month":"2023-03-01","plan":"basic","active":84,"mrr":840.0,"new":32,"churned":1},{"month":"2023-03-01","plan":"enterprise","active":21,"mrr":4200.0,"new":6,"churned":0},{"month":"2023-03-01","plan":"pro","active":63,"mrr":3150.0,"new":17,"churned":0},{"month":"2023-04-01","plan":"basic","active":109,"mrr":1090.0,"new":28,"churned":3},{"month":"2023-04-01","plan":"enterprise","active":35,"mrr":7000.0,"new":16,"churned":2},{"month":"2023-04-01","plan":"pro","active":81,"mrr":4050.0,"new":21,"churned":3},{"month":"2023-05-01","plan":"basic","active":131,"mrr":1310.0,"new":33,"churned":11},{"month":"2023-05-01","plan":"enterprise","active":46,"mrr":9200.0,"new":11,"churned":0},{"month":"2023-05-01","plan":"pro","active":96,"mrr":4800.0,"new":18,"churned":3},{"month":"2023-06-01","plan":"basic","active":152,"mrr":1520.0,"new":28,"churned":7},{"month":"2023-06-01","plan":"enterprise","active":57,"mrr":11400.0,"new":11,"churned":0},{"month":"2023-06-01","plan":"pro","active":110,"mrr":5500.0,"new":19,"churned":5},{"month":"2023-07-01","plan":"basic","active":170,"mrr":1700.0,"new":24,"churned":6},{"month":"2023-07-01","plan":"enterprise","active":64,"mrr":12800.0,"new":10,"churned":3},{"month":"2023-07-01","plan":"pro","active":133,"mrr":6650.0,"new":27,"churned":4},{"month":"2023-08-01","plan":"basic","active":186,"mrr":1860.0,"new":34,"churned":18},{"month":"2023-08-01","plan":"enterprise","active":67,"mrr":13400.0,"new":4,"churned":1},{"month":"2023-08-01","plan":"pro","active":158,"mrr":7900.0,"new":27,"churned":2},{"month":"2023-09-01","plan":"basic","active":177,"mrr":1770.0,"new":11,"churned":20},{"month":"2023-09-01","plan":"enterprise","active":67,"mrr":13400.0,"new":2,"churned":2},{"month":"2023-09-01","plan":"pro","active":161,"mrr":8050.0,"new":7,"churned":4},{"month":"2023-10-01","plan":"basic","active":167,"mrr":1670.0,"new":0,"churned":10},{"month":"2023-10-01","plan":"enterprise","active":66,"mrr":13200.0,"new":0,"churned":1},{"month":"2023-10-01","plan":"pro","active":149,"mrr":7450.0,"new":0,"churned":12},{"month":"2023-11-01","plan":"basic","active":151,"mrr":1510.0,"new":0,"churned":16},{"month":"2023-11-01","plan":"enterprise","active":63,"mrr":12600.0,"new":0,"churned":3},{"month":"2023-11-01","plan":"pro","active":139,"mrr":6950.0,"new":0,"churned":10},{"month":"2023-12-01","plan":"basic","active":127,"mrr":1270.0,"new":0,"churned":24},{"month":"2023-12-01","plan":"enterprise","active":62,"mrr":12400.0,"new":0,"churned":1},{"month":"2023-12-01","plan":"pro","active":127,"mrr":6350.0,"new":0,"churned":12},{"month":"2024-01-01","plan":"basic","active":103,"mrr":1030.0,"new":0,"churned":24},{"month":"2024-01-01","plan":"enterprise","active":61,"mrr":12200.0,"new":0,"churned":1},{"month":"2024-01-01","plan":"pro","active":112,"mrr":5600.0,"new":0,"churned":15},{"month":"2024-02-01","plan":"basic","active":90,"mrr":900.0,"new":0,"churned":13},{"month":"2024-02-01","plan":"enterprise","active":60,"mrr":12000.0,"new":0,"churned":1},{"month":"2024-02-01","plan":"pro","active":100,"mrr":5000.0,"new":0,"churned":12},{"month":"2024-03-01","plan":"basic","active":71,"mrr":710.0,"new":0,"churned":19},{"month":"2024-03-01","plan":"enterprise","active":58,"mrr":11600.0,"new":0,"churned":2},{"month":"2024-03-01","plan":"pro","active":88,"mrr":4400.0,"new":0,"churned":12},{"month":"2024-04-01","plan":"basic","active":54,"mrr":540.0,"new":0,"churned":17},{"month":"2024-04-01","plan":"enterprise","active":58,"mrr":11600.0,"new":0,"churned":0},{"month":"2024-04-01","plan":"pro","active":84,"mrr":4200.0,"new":0,"churned":4},{"month":"2024-05-01","plan":"basic","active":39,"mrr":390.0,"new":0,"churned":15},{"month":"2024-05-01","plan":"enterprise","active":58,"mrr":11600.0,"new":0,"churned":0},{"month":"2024-05-01","plan":"pro","active":79,"mrr":3950.0,"new":0,"churned":5},{"month":"2024-06-01","plan":"basic","active":36,"mrr":360.0,"new":0,"churned":3},{"month":"2024-06-01","plan":"enterprise","active":56,"mrr":11200.0,"new":0,"churned":2},{"month":"2024-06-01","plan":"pro","active":73,"mrr":3650.0,"new":0,"churned":6},{"month":"2024-07-01","plan":"basic","active":27,"mrr":270.0,"new":0,"churned":9},{"month":"2024-07-01","plan":"enterprise","active":56,"mrr":11200.0,"new":0,"churned":0},{"month":"2024-07-01","plan":"pro","active":72,"mrr":3600.0,"new":0,"churned":1},{"month":"2024-08-01","plan":"basic","active":19,"mrr":190.0,"new":0,"churned":8},{"month":"2024-08-01","plan":"enterprise","active":56,"mrr":11200.0,"new":0,"churned":0},{"month":"2024-08-01","plan":"pro","active":68,"mrr":3400.0,"new":0,"churned":4},{"month":"2024-09-01","plan":"basic","active":14,"mrr":140.0,"new":0,"churned":5},{"month":"2024-09-01","plan":"enterprise","active":55,"mrr":11000.0,"new":0,"churned":1},{"month":"2024-09-01","plan":"pro","active":65,"mrr":3250.0,"new":0,"churned":3}],"cohorts":[{"cohort":"2023-01-01","k":0,"size":56,"active":56,"pct":100.0},{"cohort":"2023-01-01","k":1,"size":56,"active":56,"pct":100.0},{"cohort":"2023-01-01","k":2,"size":56,"active":56,"pct":100.0},{"cohort":"2023-01-01","k":3,"size":56,"active":55,"pct":98.21},{"cohort":"2023-01-01","k":4,"size":56,"active":49,"pct":87.5},{"cohort":"2023-01-01","k":5,"size":56,"active":45,"pct":80.36},{"cohort":"2023-01-01","k":6,"size":56,"active":38,"pct":67.86},{"cohort":"2023-01-01","k":7,"size":56,"active":36,"pct":64.29},{"cohort":"2023-01-01","k":8,"size":56,"active":31,"pct":55.36},{"cohort":"2023-01-01","k":9,"size":56,"active":27,"pct":48.21},{"cohort":"2023-01-01","k":10,"size":56,"active":25,"pct":44.64},{"cohort":"2023-01-01","k":11,"size":56,"active":20,"pct":35.71},{"cohort":"2023-01-01","k":12,"size":56,"active":18,"pct":32.14},{"cohort":"2023-02-01","k":0,"size":58,"active":58,"pct":100.0},{"cohort":"2023-02-01","k":1,"size":58,"active":58,"pct":100.0},{"cohort":"2023-02-01","k":2,"size":58,"active":58,"pct":100.0},{"cohort":"2023-02-01","k":3,"size":58,"active":56,"pct":96.55},{"cohort":"2023-02-01","k":4,"size":58,"active":50,"pct":86.21},{"cohort":"2023-02-01","k":5,"size":58,"active":49,"pct":84.48},{"cohort":"2023-02-01","k":6,"size":58,"active":44,"pct":75.86},{"cohort":"2023-02-01","k":7,"size":58,"active":41,"pct":70.69},{"cohort":"2023-02-01","k":8,"size":58,"active":36,"pct":62.07},{"cohort":"2023-02-01","k":9,"size":58,"active":35,"pct":60.34},{"cohort":"2023-02-01","k":10,"size":58,"active":33,"pct":56.9},{"cohort":"2023-02-01","k":11,"size":58,"active":28,"pct":48.28},{"cohort":"2023-02-01","k":12,"size":58,"active":24,"pct":41.38},{"cohort":"2023-03-01","k":0,"size":55,"active":55,"pct":100.0},{"cohort":"2023-03-01","k":1,"size":55,"active":55,"pct":100.0},{"cohort":"2023-03-01","k":2,"size":55,"active":55,"pct":100.0},{"cohort":"2023-03-01","k":3,"size":55,"active":51,"pct":92.73},{"cohort":"2023-03-01","k":4,"size":55,"active":48,"pct":87.27},{"cohort":"2023-03-01","k":5,"size":55,"active":45,"pct":81.82},{"cohort":"2023-03-01","k":6,"size":55,"active":41,"pct":74.55},{"cohort":"2023-03-01","k":7,"size":55,"active":33,"pct":60.0},{"cohort":"2023-03-01","k":8,"size":55,"active":30,"pct":54.55},{"cohort":"2023-03-01","k":9,"size":55,"active":29,"pct":52.73},{"cohort":"2023-03-01","k":10,"size":55,"active":24,"pct":43.64},{"cohort":"2023-03-01","k":11,"size":55,"active":19,"pct":34.55},{"cohort":"2023-03-01","k":12,"size":55,"active":15,"pct":27.27},{"cohort":"2023-04-01","k":0,"size":65,"active":65,"pct":100.0},{"cohort":"2023-04-01","k":1,"size":65,"active":65,"pct":100.0},{"cohort":"2023-04-01","k":2,"size":65,"active":65,"pct":100.0},{"cohort":"2023-04-01","k":3,"size":65,"active":64,"pct":98.46},{"cohort":"2023-04-01","k":4,"size":65,"active":63,"pct":96.92},{"cohort":"2023-04-01","k":5,"size":65,"active":63,"pct":96.92},{"cohort":"2023-04-01","k":6,"size":65,"active":60,"pct":92.31},{"cohort":"2023-04-01","k":7,"size":65,"active":54,"pct":83.08},{"cohort":"2023-04-01","k":8,"size":65,"active":49,"pct":75.38},{"cohort":"2023-04-01","k":9,"size":65,"active":44,"pct":67.69},{"cohort":"2023-04-01","k":10,"size":65,"active":34,"pct":52.31},{"cohort":"2023-04-01","k":11,"size":65,"active":29,"pct":44.62},{"cohort":"2023-04-01","k":12,"size":65,"active":25,"pct":38.46},{"cohort":"2023-05-01","k":0,"size":62,"active":62,"pct":100.0},{"cohort":"2023-05-01","k":1,"size":62,"active":62,"pct":100.0},{"cohort":"2023-05-01","k":2,"size":62,"active":62,"pct":100.0},{"cohort":"2023-05-01","k":3,"size":62,"active":60,"pct":96.77},{"cohort":"2023-05-01","k":4,"size":62,"active":54,"pct":87.1},{"cohort":"2023-05-01","k":5,"size":62,"active":53,"pct":85.48},{"cohort":"2023-05-01","k":6,"size":62,"active":49,"pct":79.03},{"cohort":"2023-05-01","k":7,"size":62,"active":44,"pct":70.97},{"cohort":"2023-05-01","k":8,"size":62,"active":42,"pct":67.74},{"cohort":"2023-05-01","k":9,"size":62,"active":39,"pct":62.9},{"cohort":"2023-05-01","k":10,"size":62,"active":35,"pct":56.45},{"cohort":"2023-05-01","k":11,"size":62,"active":27,"pct":43.55},{"cohort":"2023-05-01","k":12,"size":62,"active":19,"pct":30.65},{"cohort":"2023-06-01","k":0,"size":58,"active":58,"pct":100.0},{"cohort":"2023-06-01","k":1,"size":58,"active":58,"pct":100.0},{"cohort":"2023-06-01","k":2,"size":58,"active":58,"pct":100.0},{"cohort":"2023-06-01","k":3,"size":58,"active":55,"pct":94.83},{"cohort":"2023-06-01","k":4,"size":58,"active":51,"pct":87.93},{"cohort":"2023-06-01","k":5,"size":58,"active":49,"pct":84.48},{"cohort":"2023-06-01","k":6,"size":58,"active":48,"pct":82.76},{"cohort":"2023-06-01","k":7,"size":58,"active":46,"pct":79.31},{"cohort":"2023-06-01","k":8,"size":58,"active":41,"pct":70.69},{"cohort":"2023-06-01","k":9,"size":58,"active":40,"pct":68.97},{"cohort":"2023-06-01","k":10,"size":58,"active":33,"pct":56.9},{"cohort":"2023-06-01","k":11,"size":58,"active":29,"pct":50.0},{"cohort":"2023-06-01","k":12,"size":58,"active":26,"pct":44.83},{"cohort":"2023-07-01","k":0,"size":61,"active":61,"pct":100.0},{"cohort":"2023-07-01","k":1,"size":61,"active":61,"pct":100.0},{"cohort":"2023-07-01","k":2,"size":61,"active":61,"pct":100.0},{"cohort":"2023-07-01","k":3,"size":61,"active":60,"pct":98.36},{"cohort":"2023-07-01","k":4,"size":61,"active":56,"pct":91.8},{"cohort":"2023-07-01","k":5,"size":61,"active":53,"pct":86.89},{"cohort":"2023-07-01","k":6,"size":61,"active":49,"pct":80.33},{"cohort":"2023-07-01","k":7,"size":61,"active":42,"pct":68.85},{"cohort":"2023-07-01","k":8,"size":61,"active":39,"pct":63.93},{"cohort":"2023-07-01","k":9,"size":61,"active":31,"pct":50.82},{"cohort":"2023-07-01","k":10,"size":61,"active":30,"pct":49.18},{"cohort":"2023-07-01","k":11,"size":61,"active":29,"pct":47.54},{"cohort":"2023-07-01","k":12,"size":61,"active":24,"pct":39.34},{"cohort":"2023-08-01","k":0,"size":65,"active":65,"pct":100.0},{"cohort":"2023-08-01","k":1,"size":65,"active":65,"pct":100.0},{"cohort":"2023-08-01","k":2,"size":65,"active":65,"pct":100.0},{"cohort":"2023-08-01","k":3,"size":65,"active":64,"pct":98.46},{"cohort":"2023-08-01","k":4,"size":65,"active":58,"pct":89.23},{"cohort":"2023-08-01","k":5,"size":65,"active":49,"pct":75.38},{"cohort":"2023-08-01","k":6,"size":65,"active":45,"pct":69.23},{"cohort":"2023-08-01","k":7,"size":65,"active":41,"pct":63.08},{"cohort":"2023-08-01","k":8,"size":65,"active":37,"pct":56.92},{"cohort":"2023-08-01","k":9,"size":65,"active":34,"pct":52.31},{"cohort":"2023-08-01","k":10,"size":65,"active":26,"pct":40.0},{"cohort":"2023-08-01","k":11,"size":65,"active":25,"pct":38.46},{"cohort":"2023-08-01","k":12,"size":65,"active":20,"pct":30.77},{"cohort":"2023-09-01","k":0,"size":20,"active":20,"pct":100.0},{"cohort":"2023-09-01","k":1,"size":20,"active":20,"pct":100.0},{"cohort":"2023-09-01","k":2,"size":20,"active":20,"pct":100.0},{"cohort":"2023-09-01","k":3,"size":20,"active":19,"pct":95.0},{"cohort":"2023-09-01","k":4,"size":20,"active":16,"pct":80.0},{"cohort":"2023-09-01","k":5,"size":20,"active":16,"pct":80.0},{"cohort":"2023-09-01","k":6,"size":20,"active":15,"pct":75.0},{"cohort":"2023-09-01","k":7,"size":20,"active":13,"pct":65.0},{"cohort":"2023-09-01","k":8,"size":20,"active":13,"pct":65.0},{"cohort":"2023-09-01","k":9,"size":20,"active":11,"pct":55.0},{"cohort":"2023-09-01","k":10,"size":20,"active":10,"pct":50.0},{"cohort":"2023-09-01","k":11,"size":20,"active":10,"pct":50.0},{"cohort":"2023-09-01","k":12,"size":20,"active":5,"pct":25.0}],"ltv":[{"plan":"enterprise","subscribers":75,"avg_mrr":200.0,"avg_lifetime_months":16.71,"avg_historical_ltv":3341.33,"predictive_ltv":10000.0},{"plan":"pro","subscribers":182,"avg_mrr":50.0,"avg_lifetime_months":12.2,"avg_historical_ltv":609.89,"predictive_ltv":1000.0},{"plan":"basic","subscribers":243,"avg_mrr":10.0,"avg_lifetime_months":8.35,"avg_historical_ltv":83.54,"predictive_ltv":125.0}],"rfm":[{"segment":"Loyal","n":198},{"segment":"Others","n":120},{"segment":"Champions","n":116},{"segment":"At Risk","n":66}],"quality":{"last_build":{"invocation_id":"f0eccac4-868e-438f-8b4b-e45204eabeaf","started_at":"2026-09-05 18:57:09","command":"build","pass":25,"warn":0,"fail":0,"error":0},"tests":[{"model":"dim_subscribers","name":"accepted_values_dim_subscribers_plan__basic__pro__enterprise","short":"accepted_values","column":"plan","type":"dbt_test","status":"pass"},{"model":"dim_subscribers","name":"not_null_dim_subscribers_email","short":"not_null","column":"email","type":"dbt_test","status":"pass"},{"model":"dim_subscribers","name":"not_null_dim_subscribers_mrr","short":"not_null","column":"mrr","type":"dbt_test","status":"pass"},{"model":"dim_subscribers","name":"not_null_dim_subscribers_user_id","short":"not_null","column":"user_id","type":"dbt_test","status":"pass"},{"model":"dim_subscribers","name":"unique_dim_subscribers_user_id","short":"unique","column":"user_id","type":"dbt_test","status":"pass"},{"model":"fct_subscriptions","name":"accepted_values_fct_subscriptions_plan__basic__pro__enterprise","short":"accepted_values","column":"plan","type":"dbt_test","status":"pass"},{"model":"fct_subscriptions","name":"assert_churn_rate_valid","short":"assert_churn_rate_valid","column":null,"type":"dbt_test","status":"pass"},{"model":"fct_subscriptions","name":"assert_no_negative_mrr","short":"assert_no_negative_mrr","column":null,"type":"dbt_test","status":"pass"},{"model":"fct_subscriptions","name":"not_null_fct_subscriptions_mrr","short":"not_null","column":"mrr","type":"dbt_test","status":"pass"},{"model":"fct_subscriptions","name":"not_null_fct_subscriptions_subscription_id","short":"not_null","column":"subscription_id","type":"dbt_test","status":"pass"},{"model":"fct_subscriptions","name":"not_null_fct_subscriptions_user_id","short":"not_null","column":"user_id","type":"dbt_test","status":"pass"},{"model":"fct_subscriptions","name":"unique_fct_subscriptions_subscription_id","short":"unique","column":"subscription_id","type":"dbt_test","status":"pass"},{"model":"mart_cohort_retention","name":"assert_retention_monotonic","short":"assert_retention_monotonic","column":null,"type":"dbt_test","status":"pass"},{"model":"mart_cohort_retention","name":"dbt_utils_accepted_range_mart_cohort_retention_retention_pct__100__0","short":"accepted_range","column":"retention_pct","type":"dbt_test","status":"pass"},{"model":"mart_cohort_retention","name":"not_null_mart_cohort_retention_active_subs","short":"not_null","column":"active_subs","type":"dbt_test","status":"pass"},{"model":"mart_cohort_retention","name":"not_null_mart_cohort_retention_cohort_month","short":"not_null","column":"cohort_month","type":"dbt_test","status":"pass"},{"model":"mart_cohort_retention","name":"not_null_mart_cohort_retention_retention_pct","short":"not_null","column":"retention_pct","type":"dbt_test","status":"pass"},{"model":"mart_ltv","name":"not_null_mart_ltv_plan","short":"not_null","column":"plan","type":"dbt_test","status":"pass"},{"model":"mart_ltv","name":"unique_mart_ltv_plan","short":"unique","column":"plan","type":"dbt_test","status":"pass"},{"model":"mart_mrr_monthly","name":"accepted_values_mart_mrr_monthly_plan__basic__pro__enterprise","short":"accepted_values","column":"plan","type":"dbt_test","status":"pass"},{"model":"mart_mrr_monthly","name":"dbt_utils_accepted_range_mart_mrr_monthly_mrr__0","short":"accepted_range","column":"mrr","type":"dbt_test","status":"pass"},{"model":"mart_mrr_monthly","name":"dbt_utils_unique_combination_of_columns_mart_mrr_monthly_month__plan","short":"unique_combination_of_columns","column":null,"type":"dbt_test","status":"pass"},{"model":"mart_mrr_monthly","name":"not_null_mart_mrr_monthly_active_subs","short":"not_null","column":"active_subs","type":"dbt_test","status":"pass"},{"model":"mart_mrr_monthly","name":"not_null_mart_mrr_monthly_month","short":"not_null","column":"month","type":"dbt_test","status":"pass"},{"model":"mart_mrr_monthly","name":"not_null_mart_mrr_monthly_mrr","short":"not_null","column":"mrr","type":"dbt_test","status":"pass"}],"history":[{"date":"2026-08-12","pass":462,"fail":0},{"date":"2026-08-13","pass":165,"fail":0},{"date":"2026-09-05","pass":45,"fail":0}]},"lineage":{"nodes":[{"id":"model.stg_saas_users","name":"stg_saas_users","layer":"staging","tests":0},{"id":"source.saas_raw.raw_saas_users","name":"raw_saas_users","layer":"source","tests":0},{"id":"model.stg_subscriptions","name":"stg_subscriptions","layer":"staging","tests":0},{"id":"source.saas_raw.raw_subscriptions","name":"raw_subscriptions","layer":"source","tests":0},{"id":"model.dim_subscribers","name":"dim_subscribers","layer":"core","tests":5},{"id":"model.mart_mrr_monthly","name":"mart_mrr_monthly","layer":"mart","tests":6},{"id":"model.fct_subscriptions","name":"fct_subscriptions","layer":"core","tests":7},{"id":"model.mart_cohort_retention","name":"mart_cohort_retention","layer":"mart","tests":5},{"id":"model.mart_rfm_segments","name":"mart_rfm_segments","layer":"mart","tests":0},{"id":"model.mart_ltv","name":"mart_ltv","layer":"mart","tests":2}],"edges":[["model.fct_subscriptions","model.mart_cohort_retention"],["model.fct_subscriptions","model.mart_ltv"],["model.fct_subscriptions","model.mart_mrr_monthly"],["model.fct_subscriptions","model.mart_rfm_segments"],["model.stg_saas_users","model.dim_subscribers"],["model.stg_subscriptions","model.dim_subscribers"],["model.stg_subscriptions","model.fct_subscriptions"],["source.saas_raw.raw_saas_users","model.stg_saas_users"],["source.saas_raw.raw_subscriptions","model.stg_subscriptions"]]},"charts":{"kpi":"fct_subscriptions","mrr":"mart_mrr_monthly","cohort":"mart_cohort_retention","plan":"fct_subscriptions","channel":"dim_subscribers","ltv":"mart_ltv","rfm":"mart_rfm_segments"}}</script>
 <script>
-const D = {
-  kpi:{mrr_active:29880,users_active:338,users_total:500,churn_pct:"25,3",arpu:50},
-  mrr:[{m:"Январь",mrr:7560,subs:149},{m:"Февраль",mrr:7780,subs:135},{m:"Март",mrr:7450,subs:148},
-       {m:"Апрель",mrr:7850,subs:144},{m:"Май",mrr:7500,subs:149},{m:"Июнь",mrr:3320,subs:75,partial:true}],
-  plans:[{plan:"pro",total:295,churned:87,rate:29.49},{plan:"enterprise",total:114,churned:32,rate:28.07},
-         {plan:"basic",total:391,churned:83,rate:21.23}],
-  channels:[{ch:"social",users:52,rate:40.4},{ch:"referral",users:95,rate:37.9},
-            {ch:"organic",users:152,rate:30.3},{ch:"paid",users:201,rate:29.4}],
-  mix:[{plan:"enterprise",n:82,mrr:16400},{plan:"pro",n:208,mrr:10400},{plan:"basic",n:308,mrr:3080}]
-};
-const C={s1:"#1C7C54",s2:"#C08519",s3:"#A32E3E",ink:"#0F1412",ink2:"#525A56",ink3:"#858C88",
-         rule:"#E2E5E0",rule2:"#CDD1CB",surface:"#FFFFFF"};
-const PLAN_COLOR={enterprise:C.s1,pro:C.s2,basic:C.s3};
-const nf = n => n.toLocaleString("ru-RU");
-const pc = n => String(n).replace(".",",")+"%";
-const CHEV='<svg class="chev" viewBox="0 0 8 10" fill="none" aria-hidden="true"><path d="M1.5 1L6 5l-4.5 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
-const hl = s => esc(s)
-  .replace(/\b(select|from|where|group by|order by|case|when|then|else|end|is|null|not|and|as)\b/gi, m=>`<span class="kw">${m}</span>`)
-  .replace(/\b(sum|count|avg|round|date_trunc)\b/gi, m=>`<span class="fn">${m}</span>`);
-const prov = (src,sql) => `<details class="prov" data-sql><summary>${CHEV}<span>${src}</span></summary><pre>${hl(sql)}</pre></details>`;
+const D = JSON.parse(document.getElementById('data').textContent);
 
-const tip=document.getElementById("tip");
-function bind(el,html){
-  el.addEventListener("pointerenter",()=>{tip.innerHTML=html;tip.classList.add("on")});
-  el.addEventListener("pointermove",e=>{
-    const w=tip.offsetWidth,x=Math.min(e.clientX+16,innerWidth-w-10);
-    tip.style.left=x+"px";tip.style.top=(e.clientY-40)+"px";
+/* ─────────────────────────── i18n ─────────────────────────── */
+const T = {
+ru:{
+  eyebrow:"Витрина подписочных метрик · портфолио Analytics Engineer",
+  title:"500 подписок, 21 месяц, и у каждой цифры есть модель",
+  lede:"Отчёт собран из dbt-витрин, а не из таблиц под графики. <b>Каждый показатель ведёт к модели, её тестам и дате последнего прогона</b> — включая то, что показывает неудобное.",
+  author_name:"Дияр Махмудов", author_role:"Analytics Engineer (Junior)",
+  l_repo:"Репозиторий →", l_docs:"dbt docs →", l_cv:"Резюме →",
+  nav:"Разделы", filters:"Фильтры", view:"Вид", reset:"Сбросить фильтры",
+  show_sql:"Показать SQL", sql_hint:"Раскрывает запрос под каждым блоком — страницу можно читать как отчёт или как сборник запросов.",
+  all_rows:"все 500 подписок", of_rows:(n)=>`${n} из 500 подписок`, filter:"Фильтр",
+  sec:{kpi:"Ключевые цифры",mrr:"MRR по месяцам",cohort:"Когортное удержание",plan:"Отток по тарифам",channel:"Отток по каналам",
+       ltv:"LTV по тарифам",rfm:"RFM-сегменты",lineage:"Происхождение",quality:"Качество данных",limits:"Границы данных",improve:"Что бы я улучшил"},
+  model:"модель",
+  kpi:{mrr:"MRR на конец периода",mrr_n:(a,t)=>`${a} из ${t} подписок активны в сентябре 2024`,active:"Активных подписок",active_n:"без даты закрытия",
+       churn:"Отток за период",churn_n:"доля закрытых с января 2023",arpu:"Средний чек",arpu_n:"по активным, в месяц"},
+  mrr:{title:"MRR как остаток на конец месяца",sub:"Подписка входит в месяц, если началась до его последнего дня и не закрылась к нему. Так MRR становится балансом, а не «выручкой подписок, начавшихся в месяце». Набор новых подписок закончился в сентябре 2023 — дальше только отток.",
+       new:"новые", churned:"ушли", active:"активных", total:"итого",
+       take:"Пик 23 220 $ в сентябре 2023, затем 12 месяцев без притока: MRR теряет 38 %, но enterprise держит 76 % остатка при 11 % подписок."},
+  cohort:{title:"Доля подписок, доживших до k-го месяца",sub:"Когорта — месяц старта. Строка читается слева направо: 100 % на старте, дальше только вниз. Это кривая выживания, и в dbt она защищена тестом: удержание не может расти.",
+       cohort:"Когорта", month:"мес.", take:"Первые два месяца когорты не теряют почти никого, ощутимый отток начинается с четвёртого. К году доживает 28–43 % — разброс между когортами больше, чем тренд по времени."},
+  plan:{title:"Отток по тарифным планам",sub:"Доля подписок с датой закрытия за весь период наблюдения.",of:"из",
+       take:"Basic теряет 94 % подписок, enterprise — 27 %. Разрыв в 67 пунктов на 500 строках — не шум. Дешёвый тариф работает как пробный период."},
+  channel:{title:"Отток по каналу привлечения",sub:"Доля ушедших среди пользователей, пришедших из канала. Шкала начинается с 60 %, чтобы разрыв читался.",users:"польз.",
+       take:"Каналы почти неразличимы: 71,7–74,5 %. Разрыв в 2,8 пункта на выборках по 55–207 человек статистически ничего не значит — резать бюджет канала по этим данным нельзя."},
+  ltv:{title:"Реализованный и предсказанный LTV",sub:"Historical LTV — сколько тариф уже принёс в среднем на подписку. Predictive — MRR ÷ месячный отток, оценка сверху.",
+       h:["Тариф","Подписок","MRR, $","Жизнь, мес.","Historical LTV, $","Predictive LTV, $"],
+       take:"Enterprise живёт вдвое дольше basic и приносит в 40 раз больше за жизнь. Predictive завышен втрое против historical на всех тарифах — формула не учитывает, что отток растёт с возрастом подписки."},
+  rfm:{title:"Сегменты по давности, частоте и сумме",sub:"RFM по событиям пользователей: recency от последнего события, frequency — число событий, monetary — MRR. Фильтры на этот блок не действуют: сегменты считаются по всем 500 пользователям.",
+       take:"Champions и Loyal — 63 % базы, но сегмент считает активность, а не платежи: у части «лояльных» подписка уже закрыта. Это ограничение RFM на событиях, а не ошибка модели."},
+  lineage:{title:"Откуда берётся каждая цифра",sub:"Наведите на любой раздел выше — подсветится его путь от источника до витрины. Клик по узлу открывает модель в dbt docs.",
+       cols:{source:"источник",staging:"staging",core:"ядро",mart:"витрина"}, tests:(n)=>`${n} тест.`,
+       note:"Графики пересчитываются в браузере по строкам fct_subscriptions тем же правилом, что и витрина, — поэтому фильтры честные. Без фильтров цифры совпадают с витриной побайтно; это проверяет тест сборщика."},
+  quality:{title:"Последний прогон dbt build",sub:"Результаты читаются из таблиц Elementary в том же хранилище, а не переписаны руками.",
+       tests_n:"тестов", started:"начат", target:"target", pass:"прошли", fail:"упали", warn:"предупр.",
+       hist:"История прогонов", hist_sub:"тестов пройдено за день",
+       take:"Тесты трёх видов: схема (unique, not_null, accepted_values), диапазоны (dbt_utils.accepted_range) и правила бизнеса — MRR не отрицателен, отток в [0; 1], удержание не растёт."},
+  limits:{a_l:"Синтетика",
+       a:"Данные сгенерированы: 500 пользователей, по одной подписке на каждого, страны и каналы распределены равномерно. Все выводы выше — про свойства генератора, а не про бизнес.",
+       b_l:"Дефект, который остался в другой базе",
+       b:"В учебной базе на 800 подписок дата старта подписки не связана с датой регистрации: пересчёт когорт давал удержание, которое <b>растёт</b> (11 → 32 → 51 → 71). По ней когортные метрики не считаются, и дашборд v1 их не показывал. Здесь другой источник — dbt-сиды, где `start_date ≥ signup_date` во всех 500 строках.",
+       c_l:"Дефект модели — исправлен 06.09.2026",
+       c:"Витрина `mart_cohort_retention` считала номер месяца от даты старта самой подписки, поэтому у каждой когорты была ровно одна строка — месяц 0, 100 %. Тест `not_null` это пропускал. Модель переписана как кривая выживания, добавлен тест `assert_retention_monotonic`."},
+  improve:[
+   ["Генератор с моделью выживания","Отток сейчас равномерен по возрасту подписки (16–40 закрытий на каждый месяц жизни). Реальный hazard растёт в начале и выравнивается — без этого LTV по формуле всегда будет завышен."],
+   ["MRR-движения, а не только остаток","Витрина даёт new и churned, но не expansion/contraction: тариф в данных не меняется. Полная бридж-таблица MRR требует истории плана — snapshot `snap_subscribers` уже есть, нужна модель поверх него."],
+   ["Тест на связь дат в источнике","`start_date ≥ signup_date` как source-тест поймал бы дефект базы на 800 строк при первом прогоне. Одно правило вместо расследования."],
+   ["Инкрементальность `mart_mrr_monthly`","Сейчас витрина пересчитывает все 21 месяц. На реальном объёме — `incremental` с партицией по месяцу и `delete+insert`, как в production pipeline."]
+  ],
+  foot:(g)=>`Данные: dbt-витрины проекта, DuckDB. <span class="mono">data.json</span> собран ${g} скриптом <a href="https://github.com/Seinokojii/analytics-engineer-roadmap/blob/main/docs/build_dashboard.py">build_dashboard.py</a>. Графики — инлайновый SVG без библиотек.`,
+  tbl:"Таблица значений", month_names:["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"],
+  tip_mrr:(m,rows,tot,act)=>`<b>${m}</b><br>${rows}<span class="mono">итого ${tot} $ · ${act} акт.</span>`,
+  tip_cell:(c,k,a,s,p)=>`<b>${c} · +${k} мес.</b><br><span class="mono">${a} из ${s} · ${p}%</span>`,
+  tip_flow:(m,n,c)=>`<b>${m}</b><br><span class="mono">+${n} новых · −${c} ушли</span>`,
+},
+en:{
+  eyebrow:"Subscription metrics · Analytics Engineer portfolio",
+  title:"500 subscriptions, 21 months, and every number has a model behind it",
+  lede:"Built from dbt marts, not from tables made for charts. <b>Every figure leads to its model, its tests and the date of the last run</b> — including the inconvenient parts.",
+  author_name:"Diyar Mahmudov", author_role:"Analytics Engineer (Junior)",
+  l_repo:"Repository →", l_docs:"dbt docs →", l_cv:"CV →",
+  nav:"Sections", filters:"Filters", view:"View", reset:"Reset filters",
+  show_sql:"Show SQL", sql_hint:"Expands the query under every block — read the page as a report or as a query book.",
+  all_rows:"all 500 subscriptions", of_rows:(n)=>`${n} of 500 subscriptions`, filter:"Filter",
+  sec:{kpi:"Key figures",mrr:"MRR by month",cohort:"Cohort retention",plan:"Churn by plan",channel:"Churn by channel",
+       ltv:"LTV by plan",rfm:"RFM segments",lineage:"Lineage",quality:"Data quality",limits:"Data boundaries",improve:"What I would improve"},
+  model:"model",
+  kpi:{mrr:"MRR at period end",mrr_n:(a,t)=>`${a} of ${t} subscriptions active in Sep 2024`,active:"Active subscriptions",active_n:"no end date",
+       churn:"Churn over the period",churn_n:"share closed since Jan 2023",arpu:"Average ticket",arpu_n:"active subscriptions, per month"},
+  mrr:{title:"MRR as a month-end balance",sub:"A subscription counts in a month if it started by the last day and had not ended by then. That makes MRR a balance, not “revenue of subscriptions that started this month”. New subscriptions stop in September 2023 — after that, only churn.",
+       new:"new", churned:"churned", active:"active", total:"total",
+       take:"Peak of $23,220 in September 2023, then twelve months without inflow: MRR loses 38 %, yet enterprise holds 76 % of the balance with 11 % of subscriptions."},
+  cohort:{title:"Share of subscriptions alive at month k",sub:"Cohort = start month. Read each row left to right: 100 % at start, then only down. It is a survival curve, and in dbt a test guards it: retention cannot rise.",
+       cohort:"Cohort", month:"mo.", take:"Cohorts lose almost nobody in the first two months; real churn starts at month four. 28–43 % survive a year — the spread between cohorts is larger than any trend over time."},
+  plan:{title:"Churn by plan",sub:"Share of subscriptions with an end date over the whole observation window.",of:"of",
+       take:"Basic loses 94 % of subscriptions, enterprise 27 %. A 67-point gap on 500 rows is not noise: the cheap plan behaves like a trial period."},
+  channel:{title:"Churn by acquisition channel",sub:"Share of churned users among those acquired through the channel. The scale starts at 60 % so the gap is readable.",users:"users",
+       take:"Channels are nearly indistinguishable: 71.7–74.5 %. A 2.8-point gap on samples of 55–207 users means nothing statistically — no channel budget should be cut on this evidence."},
+  ltv:{title:"Realised and predicted LTV",sub:"Historical LTV — what a plan has already earned per subscription on average. Predictive — MRR ÷ monthly churn, an upper estimate.",
+       h:["Plan","Subscriptions","MRR, $","Lifetime, mo.","Historical LTV, $","Predictive LTV, $"],
+       take:"Enterprise lives twice as long as basic and earns 40× more over a lifetime. Predictive overshoots historical threefold on every plan — the formula ignores that churn rises with subscription age."},
+  rfm:{title:"Segments by recency, frequency and monetary value",sub:"RFM over user events: recency from the last event, frequency = event count, monetary = MRR. Filters do not apply here — segments are computed over all 500 users.",
+       take:"Champions and Loyal are 63 % of the base, but the segment measures activity, not payment: some “loyal” users already closed their subscription. That is a limit of event-based RFM, not a model bug."},
+  lineage:{title:"Where every number comes from",sub:"Hover any section above to light up its path from source to mart. Click a node to open the model in dbt docs.",
+       cols:{source:"source",staging:"staging",core:"core",mart:"mart"}, tests:(n)=>`${n} tests`,
+       note:"Charts are recomputed in the browser from fct_subscriptions rows with the same rule as the mart, which is what makes the filters honest. With no filters the numbers match the mart exactly; the build script's test checks that."},
+  quality:{title:"Latest dbt build",sub:"Results are read from Elementary's tables in the same warehouse, not typed in by hand.",
+       tests_n:"tests", started:"started", target:"target", pass:"passed", fail:"failed", warn:"warnings",
+       hist:"Run history", hist_sub:"tests passed per day",
+       take:"Three kinds of tests: schema (unique, not_null, accepted_values), ranges (dbt_utils.accepted_range) and business rules — MRR never negative, churn within [0; 1], retention never rising."},
+  limits:{a_l:"Synthetic",
+       a:"Generated data: 500 users, one subscription each, countries and channels spread evenly. Every conclusion above is about the generator, not a business.",
+       b_l:"A defect that lives in another database",
+       b:"In the 800-subscription teaching database the subscription start date is generated independently of the signup date: recomputing cohorts produced retention that <b>grows</b> (11 → 32 → 51 → 71). Cohort metrics cannot be computed there, and dashboard v1 did not show them. This page uses a different source — the dbt seeds, where `start_date ≥ signup_date` holds in all 500 rows.",
+       c_l:"A model defect — fixed 2026-09-06",
+       c:"`mart_cohort_retention` measured the month number from the subscription's own start date, so every cohort had exactly one row — month 0, 100 %. A `not_null` test let it through. The model is rewritten as a survival curve and guarded by `assert_retention_monotonic`."},
+  improve:[
+   ["A generator with a survival model","Churn is currently uniform over subscription age (16–40 closures per month of life). A real hazard rises early and flattens — without it formula-based LTV will always overshoot."],
+   ["MRR movements, not only the balance","The mart yields new and churned but not expansion/contraction: plans never change in the data. A full MRR bridge needs plan history — `snap_subscribers` already exists; a model on top of it is missing."],
+   ["A source test on date order","`start_date ≥ signup_date` as a source test would have caught the 800-row defect on the first run. One rule instead of an investigation."],
+   ["Incremental `mart_mrr_monthly`","The mart currently rebuilds all 21 months. At real volume: `incremental`, partitioned by month with `delete+insert`, as in the production pipeline."]
+  ],
+  foot:(g)=>`Data: the project's dbt marts, DuckDB. <span class="mono">data.json</span> built ${g} by <a href="https://github.com/Seinokojii/analytics-engineer-roadmap/blob/main/docs/build_dashboard.py">build_dashboard.py</a>. Charts are inline SVG, no libraries.`,
+  tbl:"Table view", month_names:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+  tip_mrr:(m,rows,tot,act)=>`<b>${m}</b><br>${rows}<span class="mono">total $${tot} · ${act} active</span>`,
+  tip_cell:(c,k,a,s,p)=>`<b>${c} · +${k} mo.</b><br><span class="mono">${a} of ${s} · ${p}%</span>`,
+  tip_flow:(m,n,c)=>`<b>${m}</b><br><span class="mono">+${n} new · −${c} churned</span>`,
+}};
+let lang = 'ru';
+try{ lang = localStorage.getItem('dash-lang') || 'ru'; }catch(e){}
+const t = () => T[lang];
+const nf = n => Math.round(n).toLocaleString(lang==='ru'?'ru-RU':'en-US');
+const pf = (n,d=1) => (lang==='ru' ? n.toFixed(d).replace('.',',') : n.toFixed(d)) + '%';
+const money = n => lang==='ru' ? nf(n)+' $' : '$'+nf(n);
+const monthLabel = iso => { const [y,m]=iso.split('-'); return t().month_names[+m-1]+' '+y.slice(2); };
+const monthLong = iso => { const [y,m]=iso.split('-'); return t().month_names[+m-1]+' '+y; };
+
+/* ─────────────────────────── palette ─────────────────────────── */
+const C={s1:"#1C7C54",s2:"#C08519",s3:"#A32E3E",ink:"#0F1412",ink2:"#525A56",ink3:"#858C88",rule:"#E2E5E0",rule2:"#CDD1CB",surface:"#FFFFFF"};
+const PLANS=["enterprise","pro","basic"];           // fixed categorical order, never cycled
+const PLAN_COLOR={enterprise:C.s1,pro:C.s2,basic:C.s3};
+const CHANNELS=["organic","paid","referral","social"];
+const COUNTRIES=["US","DE","KG","UK","FR"];
+const CHEV='<svg class="chev" viewBox="0 0 8 10" fill="none" aria-hidden="true"><path d="M1.5 1L6 5l-4.5 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const hl = s => esc(s)
+  .replace(/(--.*)$/gm, m=>`<span class="cm">${m}</span>`)
+  .replace(/\b(with|select|from|where|group by|order by|case|when|then|else|end|is|null|not|and|or|as|left join|join|on|cross join|filter|over|partition by|distinct|interval|month|between)\b/gi, m=>`<span class="kw">${m}</span>`)
+  .replace(/\b(sum|count|avg|round|date_trunc|last_day|coalesce|unnest|range|generate_series|lag|min|max)\b/gi, m=>`<span class="fn">${m}</span>`);
+
+/* ─────────────────────────── state & filters ─────────────────────────── */
+const F={plan:new Set(),channel:new Set(),country:new Set()};
+const filtered = () => D.subs.filter(s=>(!F.plan.size||F.plan.has(s.plan))&&(!F.channel.size||F.channel.has(s.channel))&&(!F.country.size||F.country.has(s.country)));
+
+/* date helpers on ISO strings: 'YYYY-MM-DD' compares lexicographically */
+const MONTHS=[...new Set(D.mrr_monthly.map(r=>r.month))];   // 21 months from the mart
+const lastDay = iso => { const y=+iso.slice(0,4), m=+iso.slice(5,7); const d=new Date(Date.UTC(y,m,0)); return d.toISOString().slice(0,10); };
+const addMonths = (iso,k) => { const y=+iso.slice(0,4), m=+iso.slice(5,7)-1+k; const d=new Date(Date.UTC(y+Math.floor(m/12),((m%12)+12)%12,1)); return d.toISOString().slice(0,10); };
+const monthOf = iso => iso.slice(0,7)+'-01';
+
+/* ─────────────────────────── computations (same rules as the marts) ─────────────────────────── */
+function calcKpi(rows){
+  const act=rows.filter(s=>s.end===null);
+  const mrr=act.reduce((a,s)=>a+s.mrr,0);
+  return {total:rows.length,active:act.length,mrr,churn:rows.length?(rows.length-act.length)/rows.length*100:0,arpu:act.length?mrr/act.length:0};
+}
+function calcMrr(rows){
+  return MONTHS.map(m=>{
+    const me=lastDay(m), out={month:m,total:0,active:0,newN:0,churned:0,byPlan:{}};
+    PLANS.forEach(p=>out.byPlan[p]={mrr:0,active:0});
+    rows.forEach(s=>{
+      if(s.start<=me && (s.end===null||s.end>me)){out.byPlan[s.plan].mrr+=s.mrr;out.byPlan[s.plan].active++;out.total+=s.mrr;out.active++;}
+      if(monthOf(s.start)===m) out.newN++;
+      if(s.end!==null && monthOf(s.end)===m) out.churned++;
+    });
+    return out;
   });
-  el.addEventListener("pointerleave",()=>tip.classList.remove("on"));
+}
+function calcCohorts(rows){
+  const cohorts=[...new Set(rows.map(s=>monthOf(s.start)))].sort();
+  return cohorts.map(c=>{
+    const members=rows.filter(s=>monthOf(s.start)===c);
+    const ks=[];
+    for(let k=0;k<=12;k++){const at=addMonths(c,k);const alive=members.filter(s=>s.end===null||s.end>=at).length;ks.push({k,alive,size:members.length,pct:members.length?alive/members.length*100:0});}
+    return {cohort:c,size:members.length,ks};
+  });
+}
+function calcBy(rows,key,order){
+  return order.map(v=>{const g=rows.filter(s=>s[key]===v);const ch=g.filter(s=>s.end!==null).length;return {key:v,total:g.length,churned:ch,rate:g.length?ch/g.length*100:0};}).filter(g=>g.total>0);
 }
 
-/* ─── ключевые цифры ─── */
-document.getElementById("kpis").innerHTML=[
-  {lab:"MRR активных подписок",val:nf(D.kpi.mrr_active),u:"$",note:"598 из 800 подписок без даты закрытия"},
-  {lab:"Активные пользователи",val:D.kpi.users_active,u:"",note:`из ${D.kpi.users_total} зарегистрированных`},
-  {lab:"Отток подписок",val:D.kpi.churn_pct,u:"%",note:"доля закрытых за весь период"},
-  {lab:"Средний чек подписки",val:D.kpi.arpu,u:"$",note:"по активным, в месяц"}
-].map(k=>`<div class="kpi"><p class="lab">${k.lab}</p>
-  <p class="val">${k.val}<span class="u">${k.u}</span></p><p class="note">${k.note}</p></div>`).join("");
-document.getElementById("kpiSql").innerHTML=hl(`select round(sum(mrr))    as mrr_active,
-       count(*)             as subs_active,
-       round(avg(mrr), 1)   as arpu
-from subscriptions
-where end_date is null;
+/* ─────────────────────────── tooltip ─────────────────────────── */
+const tip=document.getElementById("tip");
+function bindTips(root){
+  root.querySelectorAll("[data-tip]").forEach(el=>{
+    el.addEventListener("pointerenter",()=>{tip.innerHTML=el.getAttribute("data-tip");tip.classList.add("on")});
+    el.addEventListener("pointermove",e=>{const w=tip.offsetWidth,h=tip.offsetHeight;
+      tip.style.left=Math.min(e.clientX+16,innerWidth-w-10)+"px";tip.style.top=Math.max(8,e.clientY-h-14)+"px";});
+    el.addEventListener("pointerleave",()=>tip.classList.remove("on"));
+  });
+}
 
-select count(*)                                            as users_total,
-       sum(case when status = 'active' then 1 else 0 end)   as users_active
-from user_metrics;`);
-
-/* ─── каркас графика ─── */
-function fig(o){
-  return `<section class="sec" id="${o.id}">
-    <div class="sec-head"><h2>${o.kicker}</h2><span class="line"></span></div>
+/* ─────────────────────────── building blocks ─────────────────────────── */
+const W=860, PL=96, PR=30;
+function figure(o){
+  return `<section class="sec" id="s-${o.id}" data-chart="${o.id}">
+    <div class="sec-head"><h2>${t().sec[o.id]}</h2><span class="line"></span><span class="model">${t().model} <b>${D.charts[o.id]}</b></span></div>
     <figure>
-      <figcaption>
-        <h3 class="fig-title">${o.title}</h3>
-        <p class="fig-sub">${o.sub}</p>
-      </figcaption>
-      <div class="chart">${o.svg}</div>
-      <p class="scroll-hint">график прокручивается вбок →</p>
+      <figcaption><h3>${o.title}</h3><p class="sub">${o.sub}</p></figcaption>
+      ${o.body}
       ${o.legend||""}
-      <div class="take"><span class="tag">Вывод</span><p>${o.take}</p></div>
-      ${o.table}
+      <div class="take"><span class="tag">${lang==='ru'?'Вывод':'Takeaway'}</span><p>${o.take}</p></div>
+      ${o.table||""}
       ${prov(o.src,o.sql)}
     </figure></section>`;
 }
-function table(head,rows){
-  return `<details class="tbl"><summary>Таблица значений</summary><table><thead><tr>${
-    head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${
-    rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></details>`;
+const prov=(src,sql)=>`<details class="prov" data-sql><summary>${CHEV}<span class="mono">${src}</span></summary><pre>${hl(sql)}</pre></details>`;
+function table(head,rows,numCols=[]){
+  return `<details class="tbl"><summary>${CHEV}<span>${t().tbl}</span></summary><div class="tblwrap"><table><thead><tr>${
+    head.map((h,i)=>`<th class="${numCols.includes(i)?'num':''}">${h}</th>`).join("")}</tr></thead><tbody>${
+    rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${numCols.includes(i)?'num':''}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div></details>`;
+}
+const legendPlans=()=>`<div class="legend">${PLANS.map(p=>`<span><i style="background:${PLAN_COLOR[p]}"></i>${p}</span>`).join("")}</div>`;
+const scrollHint=()=>`<p class="scroll-hint">${lang==='ru'?'график прокручивается вбок →':'chart scrolls sideways →'}</p>`;
+
+/* ─────────────────────────── SQL shown under blocks ─────────────────────────── */
+const SQL={
+kpi:`select round(sum(mrr) filter (where end_date is null))      as mrr_active,
+       count(*) filter (where end_date is null)              as active_subs,
+       count(*)                                              as total_subs,
+       round(avg(mrr) filter (where end_date is null), 1)    as arpu
+from fct_subscriptions`,
+mrr:`-- mart_mrr_monthly: month-end balance, not "started this month"
+with months as (
+    select unnest(generate_series(date '2023-01-01', date '2024-09-01', interval 1 month))::date as month
+),
+grid as (select m.month, p.plan, last_day(m.month) as month_end
+         from months m cross join (select distinct plan from fct_subscriptions) p)
+select g.month, g.plan,
+       count(s.subscription_id) filter (where s.start_date <= g.month_end
+             and (s.end_date is null or s.end_date > g.month_end))          as active_subs,
+       coalesce(sum(s.mrr) filter (where s.start_date <= g.month_end
+             and (s.end_date is null or s.end_date > g.month_end)), 0)      as mrr,
+       count(s.subscription_id) filter (where date_trunc('month', s.start_date) = g.month) as new_subs,
+       count(s.subscription_id) filter (where date_trunc('month', s.end_date) = g.month)   as churned_subs
+from grid g left join fct_subscriptions s on s.plan = g.plan
+group by 1, 2 order by 1, 2`,
+cohort:`-- mart_cohort_retention: survival by start-month cohort
+with subs as (select date_trunc('month', start_date)::date as cohort_month, start_date, end_date
+              from fct_subscriptions),
+k as (select unnest(range(0, 13)) as month_num),
+grid as (select s.cohort_month, k.month_num,
+                s.cohort_month + (k.month_num * interval 1 month) as at_month, s.end_date
+         from subs s cross join k)
+select cohort_month, month_num, count(*) as cohort_size,
+       count(*) filter (where end_date is null or end_date >= at_month) as active_subs,
+       round(active_subs * 100.0 / cohort_size, 2) as retention_pct
+from grid group by 1, 2 order by 1, 2
+
+-- tests/assert_retention_monotonic.sql: rows returned = failure
+select * from (select cohort_month, month_num, retention_pct,
+       lag(retention_pct) over (partition by cohort_month order by month_num) as prev_pct
+  from mart_cohort_retention)
+where prev_pct is not null and retention_pct > prev_pct`,
+plan:`select plan,
+       count(*)                                        as total_subs,
+       count(*) filter (where is_churned)              as churned_subs,
+       round(100.0 * count(*) filter (where is_churned) / count(*), 1) as churn_pct
+from fct_subscriptions
+group by 1 order by churn_pct desc`,
+channel:`select channel,
+       count(*)                                                as users,
+       count(*) filter (where sub_status = 'churned')          as churned,
+       round(100.0 * count(*) filter (where sub_status = 'churned') / count(*), 1) as churn_pct
+from dim_subscribers
+group by 1 order by churn_pct desc`,
+ltv:`-- mart_ltv
+select plan, count(*) as subscribers, avg(mrr) as avg_mrr,
+       avg(lifetime_months) as avg_lifetime_months,
+       avg(realized_ltv)    as avg_historical_ltv,
+       avg(mrr) / (count(*) filter (where is_churned) * 1.0 / sum(lifetime_months)) as predictive_ltv
+from fct_subscriptions group by 1`,
+rfm:`-- mart_rfm_segments (per user), then counted per segment
+select segment, count(*) as users
+from mart_rfm_segments
+group by 1 order by 2 desc`
+};
+
+/* ─────────────────────────── charts ─────────────────────────── */
+function chartKpi(rows){
+  const k=calcKpi(rows), L=t().kpi;
+  const cards=[
+    {lab:L.mrr,val:nf(k.mrr),u:"$",note:L.mrr_n(k.active,k.total)},
+    {lab:L.active,val:nf(k.active),u:"",note:L.active_n},
+    {lab:L.churn,val:pf(k.churn).replace('%',''),u:"%",note:L.churn_n},
+    {lab:L.arpu,val:nf(k.arpu),u:"$",note:L.arpu_n},
+  ];
+  return `<section class="sec" id="s-kpi" data-chart="kpi">
+    <div class="sec-head"><h2>${t().sec.kpi}</h2><span class="line"></span><span class="model">${t().model} <b>${D.charts.kpi}</b></span></div>
+    <div class="kpis">${cards.map(c=>`<div class="kpi"><p class="lab">${c.lab}</p><p class="val">${c.val}<span class="u">${c.u}</span></p><p class="note">${c.note}</p></div>`).join("")}</div>
+    <div class="kpi-foot">${prov("fct_subscriptions · mrr, end_date",SQL.kpi)}</div>
+  </section>`;
 }
 
-/* общая геометрия: одинаковый левый край у всех графиков */
-const W=860, PL=96, PR=30;
-
-function chartMrr(){
-  const H=306,PT=18,PB=42,d=D.mrr,iw=W-PL-PR,ih=H-PT-PB,max=8600;
-  const x=i=>PL+(iw/(d.length-1))*i, y=v=>PT+ih-(v/max)*ih;
+function chartMrr(rows){
+  const d=calcMrr(rows), L=t().mrr;
+  const H=330,PT=16,PB=40,iw=W-PL-PR,ih=H-PT-PB;
+  const max=Math.max(24000,Math.ceil(Math.max(...d.map(m=>m.total))/4000)*4000);
+  const bw=iw/d.length, barW=Math.min(26,bw*0.62);
+  const x=i=>PL+bw*i+(bw-barW)/2, y=v=>PT+ih-(v/max)*ih;
   let g="";
-  [0,2000,4000,6000,8000].forEach(v=>{
-    g+=`<line x1="${PL}" x2="${W-PR}" y1="${y(v)}" y2="${y(v)}" stroke="${C.rule}" stroke-width="1"/>
-        <text x="${PL-14}" y="${y(v)+4}" text-anchor="end" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">${v?v/1000+" к":"0"}</text>`;
+  for(let v=0;v<=max;v+=4000){g+=`<line x1="${PL}" x2="${W-PR}" y1="${y(v)}" y2="${y(v)}" stroke="${C.rule}"/>
+    <text x="${PL-14}" y="${y(v)+4}" text-anchor="end" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">${v?nf(v/1000)+"k":"0"}</text>`;}
+  let bars="";
+  d.forEach((m,i)=>{
+    let acc=0; const order=[...PLANS].reverse(); // basic at the bottom, enterprise on top
+    const tipRows=PLANS.map(p=>`<span style="color:${PLAN_COLOR[p]}">■</span> ${p} <span class="mono">${nf(m.byPlan[p].mrr)}</span><br>`).join("");
+    const tipHtml=t().tip_mrr(monthLong(m.month),tipRows,nf(m.total),m.active);
+    order.forEach(p=>{const v=m.byPlan[p].mrr; if(!v) return; const top=y(acc+v), bot=y(acc);
+      bars+=`<rect x="${x(i)}" y="${top}" width="${barW}" height="${Math.max(0,bot-top-2)}" rx="${acc?0:0}" fill="${PLAN_COLOR[p]}"/>`; acc+=v;});
+    bars+=`<rect x="${PL+bw*i}" y="${PT}" width="${bw}" height="${ih}" fill="transparent" data-tip="${esc(tipHtml).replace(/"/g,'&quot;')}" style="cursor:crosshair"/>`;
+    if(i%3===0||i===d.length-1) g+=`<text x="${x(i)+barW/2}" y="${H-16}" text-anchor="middle" font-size="12" fill="${C.ink2}">${monthLabel(m.month)}</text>`;
   });
-  const line=d.slice(0,5).map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.mrr)}`).join(" ");
-  let marks="";
-  d.forEach((p,i)=>{
-    marks+=`<circle class="pt" data-i="${i}" cx="${x(i)}" cy="${y(p.mrr)}" r="6" fill="${p.partial?C.surface:C.s1}"
-      stroke="${p.partial?C.ink3:C.surface}" stroke-width="2.5"/>`;
-    g+=`<text x="${x(i)}" y="${H-16}" text-anchor="middle" font-size="12.5" fill="${p.partial?C.ink3:C.ink2}">${p.m}</text>`;
+  const peak=d.reduce((a,b)=>b.total>a.total?b:a,d[0]);
+  const pi=d.indexOf(peak);
+  const ann=peak.total?`<text x="${x(pi)+barW/2}" y="${y(peak.total)-8}" text-anchor="middle" font-size="12" font-family="IBM Plex Mono" fill="${C.ink}">${nf(peak.total)}</text>`:"";
+  const svg1=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${L.title}">${g}${bars}${ann}</svg>`;
+
+  /* flows: new above the axis, churned below */
+  const H2=170,P2=14,ih2=(H2-P2*2-20)/2, mid=P2+ih2+10;
+  const fmax=Math.max(10,Math.ceil(Math.max(...d.map(m=>Math.max(m.newN,m.churned)))/10)*10);
+  const fy=v=>(v/fmax)*ih2;
+  let fl=`<line x1="${PL}" x2="${W-PR}" y1="${mid}" y2="${mid}" stroke="${C.rule2}"/>
+    <text x="${PL-14}" y="${mid-ih2+4}" text-anchor="end" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">+${fmax}</text>
+    <text x="${PL-14}" y="${mid+ih2+4}" text-anchor="end" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">−${fmax}</text>
+    <text x="${W-PR}" y="${mid-ih2-2}" text-anchor="end" font-size="11" font-family="IBM Plex Mono" fill="${C.ink3}" letter-spacing="1.2">${L.new.toUpperCase()}</text>
+    <text x="${W-PR}" y="${mid+ih2+16}" text-anchor="end" font-size="11" font-family="IBM Plex Mono" fill="${C.ink3}" letter-spacing="1.2">${L.churned.toUpperCase()}</text>`;
+  d.forEach((m,i)=>{
+    fl+=`<rect x="${x(i)}" y="${mid-fy(m.newN)}" width="${barW}" height="${fy(m.newN)}" fill="${C.s1}"/>
+         <rect x="${x(i)}" y="${mid+1}" width="${barW}" height="${fy(m.churned)}" fill="${C.ink3}"/>
+         <rect x="${PL+bw*i}" y="${P2}" width="${bw}" height="${H2-P2*2}" fill="transparent" data-tip="${esc(t().tip_flow(monthLong(m.month),m.newN,m.churned)).replace(/"/g,'&quot;')}" style="cursor:crosshair"/>`;
   });
-  const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="MRR по месяцам, январь–июнь 2023">
-    ${g}
-    <path d="${line}" fill="none" stroke="${C.s1}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M${x(4)},${y(d[4].mrr)} L${x(5)},${y(d[5].mrr)}" fill="none" stroke="${C.ink3}" stroke-width="2"
-      stroke-dasharray="5 5" stroke-linecap="round"/>
-    ${marks}
-    <text x="${x(5)}" y="${y(d[5].mrr)+26}" text-anchor="end" font-size="12" fill="${C.ink3}">неполный месяц</text>
-  </svg>`;
-  return fig({id:"f-mrr",kicker:"MRR по месяцам",
-    title:"MRR подписок, начавшихся в месяце",
-    sub:"Сумма месячной выручки по подпискам с датой старта внутри месяца. Январь–май сопоставимы между собой; июнь оборван источником и показан пунктиром.",
-    svg,
-    take:"За пять полных месяцев MRR держится в коридоре 7 450–7 850 $ — разброс 5%. Приток новых подписок стабилен, роста нет.",
-    table:table(["Месяц","MRR, $","Подписок"],D.mrr.map(p=>[p.m+(p.partial?" (неполный)":""),nf(p.mrr),p.subs])),
-    src:"subscriptions · start_date, mrr",
-    sql:`select date_trunc('month', start_date) as month,
-       round(sum(mrr))                    as mrr,
-       count(*)                           as subs
-from subscriptions
-group by 1
-order by 1`});
+  const svg2=`<svg viewBox="0 0 ${W} ${H2}" role="img" aria-label="${L.new} / ${L.churned}">${fl}</svg>`;
+
+  return figure({id:"mrr",title:L.title,sub:L.sub,
+    body:`<div class="chart">${svg1}</div><div class="chart" style="margin-top:6px">${svg2}</div>${scrollHint()}`,
+    legend:legendPlans()+`<div class="legend"><span><i style="background:${C.s1}"></i>${L.new}</span><span><i style="background:${C.ink3}"></i>${L.churned}</span></div>`,
+    take:L.take,
+    table:table([lang==='ru'?'Месяц':'Month',...PLANS.map(p=>p+", $"),L.total+", $",L.active,L.new,L.churned],
+      d.map(m=>[monthLong(m.month),...PLANS.map(p=>nf(m.byPlan[p].mrr)),nf(m.total),m.active,m.newN,m.churned]),[1,2,3,4,5,6,7]),
+    src:"mart_mrr_monthly · month, plan, mrr, active_subs, new_subs, churned_subs",sql:SQL.mrr});
 }
 
-function chartPlans(){
-  const rowH=58,PT=10,PB=30,d=D.plans,H=PT+rowH*d.length+PB,iw=W-PL-190,max=35;
-  let g="",bars="";
-  [0,10,20,30].forEach(v=>{
-    const x=PL+(v/max)*iw;
-    g+=`<line x1="${x}" x2="${x}" y1="${PT}" y2="${PT+rowH*d.length}" stroke="${C.rule}" stroke-width="1"/>
-        <text x="${x}" y="${H-10}" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">${v}%</text>`;
+function chartCohort(rows){
+  const d=calcCohorts(rows), L=t().cohort;
+  const cols=13, cw=(W-PL-PR)/cols, rh=40, PT=34, H=PT+d.length*rh+16;
+  const col=p=>{ // sequential: one hue, light -> dark
+    const a=[0xE6,0xF1,0xEB], b=[0x0F,0x5A,0x3B], k=Math.max(0,Math.min(1,p/100));
+    const m=(i)=>Math.round(a[i]+(b[i]-a[i])*k); return `rgb(${m(0)},${m(1)},${m(2)})`; };
+  let g=`<text x="${PL-14}" y="${PT-14}" text-anchor="end" font-size="11" font-family="IBM Plex Mono" fill="${C.ink3}" letter-spacing="1.2">${L.cohort.toUpperCase()}</text>`;
+  for(let k=0;k<cols;k++) g+=`<text x="${PL+cw*k+cw/2}" y="${PT-12}" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">+${k}</text>`;
+  d.forEach((c,r)=>{
+    const y=PT+r*rh;
+    g+=`<text x="${PL-14}" y="${y+rh/2+4}" text-anchor="end" font-size="12.5" fill="${C.ink}">${monthLabel(c.cohort)}</text>
+        <text x="${PL-14}" y="${y+rh/2+17}" text-anchor="end" font-size="10.5" font-family="IBM Plex Mono" fill="${C.ink3}">n=${c.size}</text>`;
+    c.ks.forEach(kk=>{
+      const dark=kk.pct>58;
+      g+=`<rect x="${PL+cw*kk.k+1}" y="${y+1}" width="${cw-2}" height="${rh-2}" rx="3" fill="${col(kk.pct)}" data-tip="${esc(t().tip_cell(monthLong(c.cohort),kk.k,kk.alive,kk.size,pf(kk.pct,0).replace('%',''))).replace(/"/g,'&quot;')}"/>
+          <text x="${PL+cw*kk.k+cw/2}" y="${y+rh/2+4}" text-anchor="middle" font-size="12" font-family="IBM Plex Mono" fill="${dark?'#fff':C.ink}" pointer-events="none">${Math.round(kk.pct)}</text>`;
+    });
   });
-  d.forEach((p,i)=>{
-    const y=PT+i*rowH+14,w=(p.rate/max)*iw;
-    bars+=`<rect class="bar" data-i="${i}" x="${PL}" y="${y}" width="${w}" height="30" rx="4" fill="${C.s1}"/>
-      <text x="${PL-14}" y="${y+20}" text-anchor="end" font-size="14.5" fill="${C.ink}">${p.plan}</text>
-      <text x="${PL+w+14}" y="${y+20}" font-size="14" font-family="IBM Plex Mono" fill="${C.ink}">${pc(p.rate)}</text>
-      <text x="${PL+w+80}" y="${y+20}" font-size="12.5" fill="${C.ink3}">${p.churned} из ${p.total}</text>`;
-  });
-  return fig({id:"f-plans",kicker:"Отток по тарифам",
-    title:"Отток по тарифным планам",
-    sub:"Доля подписок с проставленной датой закрытия, за весь период наблюдения.",
-    svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Отток по тарифным планам">${g}${bars}</svg>`,
-    take:"Basic держится лучше платных планов: 21,2% против 29,5% у pro. Разрыв в 8 процентных пунктов на 391 подписке basic — не шум, и он противоречит обычному ожиданию, что дешёвый тариф уходит первым.",
-    table:table(["План","Подписок","Закрыто","Отток"],D.plans.map(p=>[p.plan,p.total,p.churned,pc(p.rate)])),
-    src:"subscriptions · plan, end_date",
-    sql:`select plan,
-       count(*)                                               as total_subscriptions,
-       sum(case when end_date is not null then 1 else 0 end)  as churned,
-       round(100.0 * sum(case when end_date is not null then 1 else 0 end)
-             / count(*), 2)                                   as churn_rate_pct
-from subscriptions
-group by plan
-order by churn_rate_pct desc`});
+  const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${L.title}">${g}</svg>`;
+  return figure({id:"cohort",title:L.title,sub:L.sub,body:`<div class="chart">${svg}</div>${scrollHint()}`,
+    legend:`<div class="legend"><span><i style="background:#E6F1EB;border:1px solid ${C.rule2}"></i>0 %</span><span><i style="background:#0F5A3B"></i>100 %</span><span style="color:${C.ink3}">${lang==='ru'?'значение в ячейке — % живых подписок':'cell value — % of subscriptions alive'}</span></div>`,
+    take:L.take,
+    table:table([L.cohort,"n",...Array.from({length:13},(_,k)=>"+"+k)],d.map(c=>[monthLong(c.cohort),c.size,...c.ks.map(k=>Math.round(k.pct))]),Array.from({length:14},(_,i)=>i+1)),
+    src:"mart_cohort_retention · cohort_month, month_num, retention_pct",sql:SQL.cohort});
 }
 
-function chartChannels(){
-  const rowH=52,PT=12,PB=30,d=D.channels,H=PT+rowH*d.length+PB,iw=W-PL-200,min=25,max=45;
-  const x=v=>PL+((v-min)/(max-min))*iw;
-  let g="",dots="";
-  [25,30,35,40,45].forEach(v=>{
-    g+=`<line x1="${x(v)}" x2="${x(v)}" y1="${PT}" y2="${PT+rowH*d.length}" stroke="${C.rule}" stroke-width="1"/>
-        <text x="${x(v)}" y="${H-10}" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">${v}%</text>`;
-  });
-  d.forEach((c,i)=>{
-    const y=PT+i*rowH+26;
-    dots+=`<line x1="${PL}" x2="${x(c.rate)}" y1="${y}" y2="${y}" stroke="${C.rule2}" stroke-width="1.5"/>
-      <circle class="dot" data-i="${i}" cx="${x(c.rate)}" cy="${y}" r="8" fill="${C.s1}" stroke="${C.surface}" stroke-width="2.5"/>
-      <text x="${PL-14}" y="${y+5}" text-anchor="end" font-size="14.5" fill="${C.ink}">${c.ch}</text>
-      <text x="${x(c.rate)+18}" y="${y+5}" font-size="14" font-family="IBM Plex Mono" fill="${C.ink}">${pc(c.rate)}</text>
-      <text x="${x(c.rate)+82}" y="${y+5}" font-size="12.5" fill="${C.ink3}">${c.users} польз.</text>`;
-  });
-  return fig({id:"f-chan",kicker:"Отток по каналам",
-    title:"Отток по каналу привлечения",
-    sub:"Доля пользователей со статусом churned внутри каждого канала. Шкала начинается с 25%, чтобы разрыв между каналами читался.",
-    svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Отток пользователей по каналу привлечения">${g}${dots}</svg>`,
-    take:"Social и referral теряют людей заметно быстрее платного трафика — 40,4% и 37,9% против 29,4%. Но за ними всего 52 и 95 пользователей, поэтому вывод стоит проверить на большей выборке прежде, чем резать бюджет канала.",
-    table:table(["Канал","Пользователей","Отток"],D.channels.map(c=>[c.ch,c.users,pc(c.rate)])),
-    src:"user_metrics · channel, status",
-    sql:`select channel,
-       count(*)                                              as users,
-       round(100.0 * sum(case when status = 'churned' then 1 else 0 end)
-             / count(*), 1)                                  as churn_pct
-from user_metrics
-group by channel
-order by users desc`});
+function chartPlan(rows){
+  const d=calcBy(rows,"plan",PLANS).sort((a,b)=>b.rate-a.rate), L=t().plan;
+  const rowH=56,PT=10,PB=30,H=PT+rowH*d.length+PB,iw=W-PL-200,max=100;
+  let g="";
+  [0,25,50,75,100].forEach(v=>{const x=PL+(v/max)*iw;
+    g+=`<line x1="${x}" x2="${x}" y1="${PT}" y2="${PT+rowH*d.length}" stroke="${C.rule}"/><text x="${x}" y="${H-10}" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">${v}%</text>`;});
+  d.forEach((p,i)=>{const y=PT+i*rowH+13,w=(p.rate/max)*iw;
+    g+=`<rect x="${PL}" y="${y}" width="${w}" height="30" rx="4" fill="${PLAN_COLOR[p.key]}" data-tip="<b>${p.key}</b><br>${p.churned} ${L.of} ${p.total}"/>
+        <text x="${PL-14}" y="${y+20}" text-anchor="end" font-size="14.5" fill="${C.ink}">${p.key}</text>
+        <text x="${PL+w+14}" y="${y+20}" font-size="14.5" font-family="IBM Plex Mono" fill="${C.ink}">${pf(p.rate)}</text>
+        <text x="${PL+w+14+(p.rate>=10?62:54)}" y="${y+20}" font-size="12" fill="${C.ink3}">${p.churned} ${L.of} ${p.total}</text>`;});
+  return figure({id:"plan",title:L.title,sub:L.sub,body:`<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${L.title}">${g}</svg></div>${scrollHint()}`,
+    take:L.take,table:table([lang==='ru'?'Тариф':'Plan',lang==='ru'?'Подписок':'Subscriptions',lang==='ru'?'Закрыто':'Churned',lang==='ru'?'Отток':'Churn'],d.map(p=>[p.key,p.total,p.churned,pf(p.rate)]),[1,2,3]),
+    src:"fct_subscriptions · plan, is_churned",sql:SQL.plan});
 }
 
-function chartMix(){
-  const H=150,PT=26,d=D.mix,iw=W-PL-PR,total=d.reduce((s,p)=>s+p.mrr,0);
-  let x=PL,seg="",lab="";
-  d.forEach((p,i)=>{
-    const w=(p.mrr/total)*iw-(i<d.length-1?3:0),share=100*p.mrr/total;
-    seg+=`<rect class="seg" data-i="${i}" x="${x}" y="${PT}" width="${w}" height="46" rx="4" fill="${PLAN_COLOR[p.plan]}"/>`;
-    if(share>8) lab+=`<text x="${x+w/2}" y="${PT+76}" text-anchor="middle" font-size="14" font-family="IBM Plex Mono" fill="${C.ink}">${pc(share.toFixed(1))}</text>
-      <text x="${x+w/2}" y="${PT+96}" text-anchor="middle" font-size="12.5" fill="${C.ink3}">${p.n} подписок</text>`;
-    x+=w+3;
-  });
-  return fig({id:"f-mix",kicker:"Структура MRR",
-    title:"Из чего складывается MRR",
-    sub:"Доля каждого плана в MRR активных подписок против доли в их количестве. Те же 598 подписок, что в первой плитке наверху.",
-    svg:`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Доля планов в MRR">${seg}${lab}</svg>`,
-    legend:`<div class="legend">${d.map(p=>`<span><i class="swatch" style="background:${PLAN_COLOR[p.plan]}"></i>${p.plan} — ${nf(p.mrr)} $</span>`).join("")}</div>`,
-    take:"82 подписки enterprise дают 55% выручки, а 308 подписок basic — 10%. Низкий отток basic из предыдущего графика при этом почти не влияет на деньги: удерживать нужно enterprise.",
-    table:table(["План","Подписок","MRR, $","Доля MRR"],D.mix.map(p=>{
-      const t=D.mix.reduce((s,q)=>s+q.mrr,0);
-      return [p.plan,p.n,nf(p.mrr),pc((100*p.mrr/t).toFixed(1))];})),
-    src:"subscriptions · plan, mrr",
-    sql:`select plan,
-       count(*)         as n,
-       round(sum(mrr))  as mrr
-from subscriptions
-where end_date is null
-group by plan
-order by mrr desc`});
+function chartChannel(rows){
+  const d=calcBy(rows,"channel",CHANNELS).sort((a,b)=>b.rate-a.rate), L=t().channel;
+  const rowH=50,PT=14,PB=30,H=PT+rowH*d.length+PB,iw=W-PL-170,lo=60,hi=80;
+  let g="";
+  [60,65,70,75,80].forEach(v=>{const x=PL+((v-lo)/(hi-lo))*iw;
+    g+=`<line x1="${x}" x2="${x}" y1="${PT}" y2="${PT+rowH*d.length}" stroke="${C.rule}"/><text x="${x}" y="${H-10}" text-anchor="middle" font-size="11.5" font-family="IBM Plex Mono" fill="${C.ink3}">${v}%</text>`;});
+  d.forEach((c,i)=>{const y=PT+i*rowH+rowH/2,x=PL+((Math.max(lo,c.rate)-lo)/(hi-lo))*iw;
+    g+=`<line x1="${PL}" x2="${x}" y1="${y}" y2="${y}" stroke="${C.rule2}" stroke-dasharray="2 4"/>
+        <circle cx="${x}" cy="${y}" r="7" fill="${C.s1}" stroke="#fff" stroke-width="2" data-tip="<b>${c.key}</b><br>${c.churned} / ${c.total}"/>
+        <text x="${PL-14}" y="${y+5}" text-anchor="end" font-size="14.5" fill="${C.ink}">${c.key}</text>
+        <text x="${x+16}" y="${y+5}" font-size="14.5" font-family="IBM Plex Mono" fill="${C.ink}">${pf(c.rate)}</text>
+        <text x="${x+76}" y="${y+5}" font-size="12" fill="${C.ink3}">${c.total} ${L.users}</text>`;});
+  return figure({id:"channel",title:L.title,sub:L.sub,body:`<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${L.title}">${g}</svg></div>${scrollHint()}`,
+    take:L.take,table:table([lang==='ru'?'Канал':'Channel',lang==='ru'?'Пользователей':'Users',lang==='ru'?'Ушли':'Churned',lang==='ru'?'Отток':'Churn'],d.map(c=>[c.key,c.total,c.churned,pf(c.rate)]),[1,2,3]),
+    src:"dim_subscribers · channel, sub_status",sql:SQL.channel});
 }
 
-document.getElementById("figs").innerHTML=chartMrr()+chartPlans()+chartChannels()+chartMix();
+function chartLtv(){
+  const L=t().ltv, d=[...D.ltv].sort((a,b)=>PLANS.indexOf(a.plan)-PLANS.indexOf(b.plan));
+  const max=Math.max(...d.map(r=>r.predictive_ltv));
+  const rowH=64,PT=8,H=PT+rowH*d.length+8,x0=PL+40,iw=W-x0-PR;
+  let g="";
+  d.forEach((r,i)=>{const y=PT+i*rowH, dim=F.plan.size&&!F.plan.has(r.plan)?0.3:1;
+    const wh=(r.avg_historical_ltv/max)*iw, wp=(r.predictive_ltv/max)*iw;
+    g+=`<g opacity="${dim}">
+      <text x="${PL-14}" y="${y+22}" text-anchor="end" font-size="14.5" fill="${C.ink}">${r.plan}</text>
+      <text x="${PL-14}" y="${y+40}" text-anchor="end" font-size="11" font-family="IBM Plex Mono" fill="${C.ink3}">n=${r.subscribers}</text>
+      <rect x="${x0}" y="${y+10}" width="${wp}" height="14" rx="3" fill="${PLAN_COLOR[r.plan]}" opacity="0.28" data-tip="<b>${r.plan}</b> predictive<br><span class='mono'>${money(r.predictive_ltv)}</span>"/>
+      <rect x="${x0}" y="${y+28}" width="${wh}" height="14" rx="3" fill="${PLAN_COLOR[r.plan]}" data-tip="<b>${r.plan}</b> historical<br><span class='mono'>${money(r.avg_historical_ltv)}</span>"/>
+      <text x="${x0+wp+10}" y="${y+21}" font-size="12" font-family="IBM Plex Mono" fill="${C.ink3}">${nf(r.predictive_ltv)}</text>
+      <text x="${x0+wh+10}" y="${y+40}" font-size="12.5" font-family="IBM Plex Mono" fill="${C.ink}">${nf(r.avg_historical_ltv)}</text>
+    </g>`;});
+  return figure({id:"ltv",title:L.title,sub:L.sub,body:`<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${L.title}">${g}</svg></div>${scrollHint()}`,
+    legend:`<div class="legend"><span><i style="background:${C.ink2}"></i>historical LTV</span><span><i style="background:${C.ink2};opacity:.28"></i>predictive LTV</span></div>`,
+    take:L.take,
+    table:table(L.h,d.map(r=>[r.plan,r.subscribers,nf(r.avg_mrr),r.avg_lifetime_months.toFixed(1),nf(r.avg_historical_ltv),nf(r.predictive_ltv)]),[1,2,3,4,5]),
+    src:"mart_ltv · plan, avg_historical_ltv, predictive_ltv",sql:SQL.ltv});
+}
 
-document.querySelectorAll(".pt").forEach(el=>{const p=D.mrr[+el.dataset.i];
-  bind(el,`${p.m}${p.partial?" (неполный)":""}<br>MRR ${nf(p.mrr)} $ · ${p.subs} подписок`)});
-document.querySelectorAll(".bar").forEach(el=>{const p=D.plans[+el.dataset.i];
-  bind(el,`${p.plan}<br>отток ${pc(p.rate)} · ${p.churned} из ${p.total}`)});
-document.querySelectorAll(".dot").forEach(el=>{const c=D.channels[+el.dataset.i];
-  bind(el,`${c.ch}<br>отток ${pc(c.rate)} · ${c.users} пользователей`)});
-document.querySelectorAll(".seg").forEach(el=>{const p=D.mix[+el.dataset.i],
-  t=D.mix.reduce((s,q)=>s+q.mrr,0);
-  bind(el,`${p.plan}<br>${nf(p.mrr)} $ · ${pc((100*p.mrr/t).toFixed(1))} MRR · ${p.n} подписок`)});
+function chartRfm(){
+  const L=t().rfm, d=D.rfm, max=Math.max(...d.map(r=>r.n)), total=d.reduce((a,r)=>a+r.n,0);
+  const rowH=46,PT=8,PB=8,H=PT+rowH*d.length+PB,x0=PL+40,iw=W-x0-140;
+  let g="";
+  d.forEach((r,i)=>{const y=PT+i*rowH+9,w=(r.n/max)*iw;
+    g+=`<rect x="${x0}" y="${y}" width="${w}" height="26" rx="4" fill="${C.ink2}" data-tip="<b>${r.segment}</b><br>${r.n} · ${pf(r.n/total*100)}"/>
+        <text x="${x0-14}" y="${y+18}" text-anchor="end" font-size="14.5" fill="${C.ink}">${r.segment}</text>
+        <text x="${x0+w+12}" y="${y+18}" font-size="14" font-family="IBM Plex Mono" fill="${C.ink}">${r.n}</text>
+        <text x="${x0+w+52}" y="${y+18}" font-size="12" fill="${C.ink3}">${pf(r.n/total*100)}</text>`;});
+  return figure({id:"rfm",title:L.title,sub:L.sub,body:`<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${L.title}">${g}</svg></div>${scrollHint()}`,
+    take:L.take,table:table([lang==='ru'?'Сегмент':'Segment',lang==='ru'?'Пользователей':'Users',lang==='ru'?'Доля':'Share'],d.map(r=>[r.segment,r.n,pf(r.n/total*100)]),[1,2]),
+    src:"mart_rfm_segments · segment",sql:SQL.rfm});
+}
 
-/* ─── общий переключатель SQL ─── */
-const sqlAll=document.getElementById("sqlAll");
-const allProv=()=>[...document.querySelectorAll("details[data-sql]")];
-sqlAll.addEventListener("change",()=>{allProv().forEach(d=>{d.open=sqlAll.checked})});
-allProv().forEach(d=>d.addEventListener("toggle",()=>{
-  const all=allProv(),open=all.filter(x=>x.open).length;
-  sqlAll.checked = open===all.length;
-  sqlAll.indeterminate = open>0 && open<all.length;
-}));
-
-/* ─── подсветка активного раздела ─── */
-const links=[...document.querySelectorAll("#nav a")];
-const secs=links.map(a=>document.querySelector(a.getAttribute("href"))).filter(Boolean);
-const spy=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(!e.isIntersecting) return;
-    links.forEach(a=>a.classList.toggle("on", a.getAttribute("href")==="#"+e.target.id));
+/* ─────────────────────────── lineage ─────────────────────────── */
+function lineageSection(){
+  const L=t().lineage, layers=["source","staging","core","mart"];
+  const nodes=D.lineage.nodes, edges=D.lineage.edges;
+  const byLayer={}; layers.forEach(l=>byLayer[l]=nodes.filter(n=>n.layer===l).sort((a,b)=>a.name.localeCompare(b.name)));
+  const colW=(W-40)/4, nodeW=176, nodeH=44, gapY=18, PT=44;
+  const rowsMax=Math.max(...layers.map(l=>byLayer[l].length));
+  const H=PT+rowsMax*(nodeH+gapY)+10;
+  const pos={};
+  layers.forEach((l,ci)=>{const list=byLayer[l]; const totalH=list.length*nodeH+(list.length-1)*gapY; const y0=PT+(rowsMax*(nodeH+gapY)-gapY-totalH)/2;
+    list.forEach((n,ri)=>pos[n.id]={x:20+ci*colW+(colW-nodeW)/2,y:y0+ri*(nodeH+gapY),n});});
+  let g=layers.map((l,ci)=>`<text class="colhead" x="${20+ci*colW+colW/2}" y="20" text-anchor="middle">${L.cols[l].toUpperCase()}</text>`).join("");
+  edges.forEach(([a,b])=>{const A=pos[a],B=pos[b]; if(!A||!B) return; const x1=A.x+nodeW,y1=A.y+nodeH/2,x2=B.x,y2=B.y+nodeH/2,mx=(x1+x2)/2;
+    g+=`<path class="edge" data-a="${a}" data-b="${b}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`;});
+  Object.values(pos).forEach(({x,y,n})=>{
+    const href=n.layer==="source"?`./dbt/#!/source/source.analytics_project.saas_raw.${n.name}`:`./dbt/#!/model/model.analytics_project.${n.name}`;
+    g+=`<a class="node" data-id="${n.id}" href="${href}" target="_blank" rel="noopener"><rect x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6"/>
+        <text x="${x+12}" y="${y+19}">${n.name}</text>
+        <text class="lay" x="${x+12}" y="${y+34}">${n.layer==="source"?"SEED / SOURCE":n.layer==="staging"?"VIEW":"TABLE"}${n.tests?` · ${L.tests(n.tests).toUpperCase()}`:""}</text></a>`;});
+  return `<section class="sec" id="s-lineage">
+    <div class="sec-head"><h2>${t().sec.lineage}</h2><span class="line"></span><span class="model">dbt manifest.json</span></div>
+    <figure><figcaption><h3>${L.title}</h3><p class="sub">${L.sub}</p></figcaption>
+      <div class="chart"><svg class="lin" id="lin" viewBox="0 0 ${W} ${H}" role="img" aria-label="${L.title}">${g}</svg></div>${scrollHint()}
+      <p class="lin-note">${L.note}</p>
+    </figure></section>`;
+}
+function upstream(model){
+  const target="model."+model, seen=new Set([target]), q=[target];
+  while(q.length){const cur=q.shift(); D.lineage.edges.forEach(([a,b])=>{if(b===cur&&!seen.has(a)){seen.add(a);q.push(a);}});}
+  return seen;
+}
+function wireLineage(){
+  const lin=document.getElementById("lin"); if(!lin) return;
+  const clear=()=>{lin.classList.remove("focus");lin.querySelectorAll(".lit").forEach(e=>e.classList.remove("lit"));};
+  const focus=model=>{clear(); const set=upstream(model); lin.classList.add("focus");
+    lin.querySelectorAll(".node").forEach(n=>{if(set.has(n.dataset.id)) n.classList.add("lit");});
+    lin.querySelectorAll(".edge").forEach(e=>{if(set.has(e.dataset.a)&&set.has(e.dataset.b)) e.classList.add("lit");});};
+  document.querySelectorAll(".sec[data-chart]").forEach(sec=>{
+    const model=D.charts[sec.dataset.chart]; if(!model) return;
+    sec.addEventListener("pointerenter",()=>focus(model)); sec.addEventListener("pointerleave",clear);
+    sec.addEventListener("focusin",()=>focus(model)); sec.addEventListener("focusout",clear);
   });
-},{rootMargin:"-12% 0px -72% 0px",threshold:0});
-secs.forEach(sec=>spy.observe(sec));
+  lin.querySelectorAll(".node").forEach(n=>{n.addEventListener("pointerenter",()=>{const id=n.dataset.id; if(id.startsWith("model.")) focus(id.slice(6));}); n.addEventListener("pointerleave",clear);});
+}
+
+/* ─────────────────────────── quality ─────────────────────────── */
+function qualitySection(){
+  const L=t().quality, Q=D.quality, lb=Q.last_build;
+  const groups={}; Q.tests.forEach(x=>{(groups[x.model]=groups[x.model]||[]).push(x);});
+  const order=["stg_saas_users","stg_subscriptions","dim_subscribers","fct_subscriptions","mart_mrr_monthly","mart_cohort_retention","mart_ltv","mart_rfm_segments"];
+  const models=Object.keys(groups).sort((a,b)=>(order.indexOf(a)+99*(order.indexOf(a)<0))-(order.indexOf(b)+99*(order.indexOf(b)<0)));
+  const label=x=>{const s=(x.short||x.name).replace(/^dbt_utils_/,"").replace(/^elementary_/,""); return x.column?`${s} <span class="mono">&#8239;${x.column}</span>`:s;};
+  const tests=models.map(m=>`<div class="grp"><div class="mname">${m}<span>${groups[m].length} ${L.tests_n}</span></div><ul>${
+    groups[m].map(x=>`<li><span class="dot ${x.status==='pass'?'pass':x.status==='warn'?'warn':'fail'}"></span>${label(x)}</li>`).join("")}</ul></div>`).join("");
+  const hist=Q.history, hw=W, hh=70, bw=Math.min(28,(hw-PL-PR)/Math.max(hist.length,1)*0.7), hmax=Math.max(...hist.map(h=>h.pass+h.fail));
+  let hs=""; hist.forEach((h,i)=>{const x=PL+i*((hw-PL-PR)/hist.length), hgt=(h.pass/hmax)*44, fh=(h.fail/hmax)*44;
+    hs+=`<rect x="${x}" y="${50-hgt}" width="${bw}" height="${hgt}" rx="3" fill="${C.s1}" data-tip="<b>${h.date}</b><br>${h.pass} ${L.pass}${h.fail?` · ${h.fail} ${L.fail}`:''}"/>${fh?`<rect x="${x}" y="${50-hgt-fh}" width="${bw}" height="${fh}" fill="${C.s3}"/>`:""}
+         <text x="${x+bw/2}" y="${66}" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="${C.ink3}">${h.date.slice(5)}</text>
+         <text x="${x+bw/2}" y="${46-hgt}" text-anchor="middle" font-size="11" font-family="IBM Plex Mono" fill="${C.ink2}">${h.pass}</text>`;});
+  return `<section class="sec" id="s-quality">
+    <div class="sec-head"><h2>${t().sec.quality}</h2><span class="line"></span><span class="model">elementary · dbt_invocations, elementary_test_results</span></div>
+    <figure><figcaption><h3>${L.title}</h3><p class="sub">${L.sub}</p></figcaption>
+      <div class="qgrid">
+        <div class="qcard">
+          <div class="mono" style="font-size:11px;letter-spacing:.14em;color:var(--ink-3)">DBT BUILD · ${lb.pass+lb.warn+lb.fail+lb.error} ${L.tests_n.toUpperCase()}</div>
+          <div class="big">${lb.pass}<small>${L.pass}</small></div>
+          <div class="row"><span>${L.fail}</span><span class="mono">${lb.fail+lb.error}</span></div>
+          <div class="row"><span>${L.warn}</span><span class="mono">${lb.warn}</span></div>
+          <div class="row"><span>${L.started}</span><span class="mono">${lb.started_at.slice(0,16)} UTC</span></div>
+          <div class="row"><span>${L.target}</span><span class="mono">dev · duckdb</span></div>
+          <div class="row"><span>invocation</span><span class="mono" title="${lb.invocation_id}">${lb.invocation_id.slice(0,8)}</span></div>
+        </div>
+        <div class="tests">${tests}</div>
+      </div>
+      <div class="hist"><div class="mono" style="font-size:11px;letter-spacing:.14em;color:var(--ink-3);margin:22px 0 4px">${L.hist.toUpperCase()} · ${L.hist_sub}</div>
+        <div class="chart"><svg viewBox="0 0 ${hw} ${hh}" role="img" aria-label="${L.hist}">${hs}</svg></div></div>
+      <div class="take"><span class="tag">${lang==='ru'?'Что проверяется':'What is tested'}</span><p>${L.take}</p></div>
+    </figure></section>`;
+}
+
+/* ─────────────────────────── limits & improve ─────────────────────────── */
+const md = s => s.replace(/`([^`]+)`/g,'<span class="mono">$1</span>');
+function limitsSection(){const L=t().limits;
+  return `<section class="sec" id="s-limits"><div class="sec-head"><h2>${t().sec.limits}</h2><span class="line"></span></div>
+    <div class="note-card"><span class="lbl">${L.a_l}</span><p>${md(L.a)}</p></div>
+    <div class="note-card"><span class="lbl">${L.b_l}</span><p>${md(L.b)}</p></div>
+    <div class="note-card fixed"><span class="lbl">${L.c_l}</span><p>${md(L.c)}</p></div></section>`;}
+function improveSection(){
+  return `<section class="sec" id="s-improve"><div class="sec-head"><h2>${t().sec.improve}</h2><span class="line"></span></div>
+    <div class="improve">${t().improve.map(([h,p])=>`<div class="it"><b>${md(h)}</b><p>${md(p)}</p></div>`).join("")}</div></section>`;}
+
+/* ─────────────────────────── render ─────────────────────────── */
+function renderStatic(){
+  document.documentElement.lang=lang;
+  document.querySelectorAll("[data-i]").forEach(el=>{el.innerHTML=t()[el.dataset.i];});
+  document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lang===lang)));
+  document.getElementById("toc").innerHTML=Object.keys(t().sec).map(k=>`<li><a href="#s-${k}">${t().sec[k]}</a></li>`).join("");
+  const chips=(id,key,vals,swatch)=>{document.getElementById(id).innerHTML=vals.map(v=>`<button type="button" class="chip" data-k="${key}" data-v="${v}" aria-pressed="${F[key].has(v)}">${swatch?`<span class="sw" style="background:${PLAN_COLOR[v]}"></span>`:""}${v}</button>`).join("");};
+  chips("chips-plan","plan",PLANS,true); chips("chips-channel","channel",CHANNELS,false); chips("chips-country","country",COUNTRIES,false);
+  document.getElementById("foot").innerHTML=t().foot(D.generated_at.slice(0,10));
+}
+function render(){
+  const rows=filtered();
+  const active=[...F.plan,...F.channel,...F.country];
+  document.getElementById("fstate").innerHTML=active.length
+    ?`<span class="tag">${t().filter}</span>${active.map(a=>`<span>${a}</span>`).join(" · ")}<span class="n">${t().of_rows(rows.length)}</span>`
+    :`<span class="n">${t().all_rows}</span>`;
+  document.getElementById("reset").classList.toggle("show",active.length>0);
+  document.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",String(F[b.dataset.k].has(b.dataset.v))));
+  const sqlOpen=document.getElementById("sqlToggle").getAttribute("aria-pressed")==="true";
+  const host=document.getElementById("sections");
+  host.innerHTML=[chartKpi(rows),chartMrr(rows),chartCohort(rows),chartPlan(rows),chartChannel(rows),chartLtv(),chartRfm(),lineageSection(),qualitySection(),limitsSection(),improveSection()].join("");
+  host.querySelectorAll("details[data-sql]").forEach(d=>d.open=sqlOpen);
+  bindTips(host); wireLineage(); observe();
+}
+let io;
+function observe(){
+  if(io) io.disconnect();
+  const links=[...document.querySelectorAll(".toc a")];
+  io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle("on",l.getAttribute("href")==="#"+e.target.id));}});},{rootMargin:"-10% 0px -70% 0px"});
+  document.querySelectorAll(".sec").forEach(s=>io.observe(s));
+}
+document.addEventListener("click",e=>{
+  const chip=e.target.closest(".chip"); if(chip){const k=chip.dataset.k,v=chip.dataset.v; F[k].has(v)?F[k].delete(v):F[k].add(v); render(); return;}
+  if(e.target.closest("#reset")){Object.values(F).forEach(s=>s.clear()); render(); return;}
+  const lb=e.target.closest(".lang button"); if(lb){lang=lb.dataset.lang; try{localStorage.setItem('dash-lang',lang);}catch(err){} renderStatic(); render(); return;}
+  const sw=e.target.closest("#sqlToggle"); if(sw){const on=sw.getAttribute("aria-pressed")!=="true"; sw.setAttribute("aria-pressed",String(on)); document.querySelectorAll("details[data-sql]").forEach(d=>d.open=on); return;}
+});
+renderStatic(); render();
 </script>
 </body>
 </html>

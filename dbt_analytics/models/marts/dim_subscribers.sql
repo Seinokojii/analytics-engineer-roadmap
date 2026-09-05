@@ -1,4 +1,4 @@
-{{ config(materialized='table') }}
+{{ config(materialized='table', tags=['saas']) }}
 SELECT
     u.user_id,
     u.email,

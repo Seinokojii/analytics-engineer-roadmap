@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diyar Mahmudov — CV</title>
+<meta name="description" content="CV of Diyar Mahmudov, Analytics Engineer (Junior). PDF in English and Russian.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--head:#10231C;--head-ink:#EAF0EC;--head-mute:#9DB3A7;--paper:#F4F5F2;--surface:#fff;
+  --ink:#0F1412;--ink-2:#525A56;--ink-3:#858C88;--rule:#E2E5E0;--s1:#1C7C54;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --display:"Archivo","IBM Plex Sans",system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+a{color:inherit}
+header{background:var(--head);color:var(--head-ink);position:relative;padding:52px 0 46px}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:linear-gradient(90deg,#1C7C54 0 34%,#C08519 34% 67%,#A32E3E 67% 100%)}
+.wrap{max-width:720px;margin:0 auto;padding:0 28px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--head-mute);margin:0 0 14px}
+h1{font-family:var(--display);font-variation-settings:"wdth" 112;font-weight:700;font-size:clamp(32px,6vw,46px);
+  line-height:1.02;letter-spacing:-.025em;margin:0 0 12px}
+.role{margin:0;color:#C9D6CE;font-size:16px}
+main{padding:36px 0 60px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 26px}
+.card{display:block;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:20px 22px;
+  text-decoration:none;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--s1);transform:translateY(-1px)}
+.card b{display:block;font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:-.012em;margin-bottom:4px}
+.card span{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.card .go{display:block;margin-top:12px;font-size:13.5px;color:var(--s1)}
+p.note{color:var(--ink-2);margin:0 0 20px}
+.more{border-top:1px solid var(--rule);padding-top:18px;display:flex;gap:22px;flex-wrap:wrap;font-size:14px}
+.more a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--rule)}
+.more a:hover{color:var(--ink);border-color:var(--ink-3)}
+@media (max-width:620px){.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <p class="eyebrow">Curriculum vitae</p>
+  <h1>Diyar Mahmudov</h1>
+  <p class="role">Analytics Engineer (Junior) · Bishkek, UTC+6 · looking for an internship or part-time, remote</p>
+</div></header>
+
+<main class="wrap">
+  <p class="note">Two versions of the same CV. The English one is the default for international roles; the Russian one matches the CIS job boards.</p>
+  <div class="cards">
+    <a class="card" href="./Diyar_Mahmudov_CV_en.pdf">
+      <b>CV — English</b><span>PDF · A4 · 2 pages</span><span class="go">Open →</span>
+    </a>
+    <a class="card" href="./Diyar_Mahmudov_CV_ru.pdf">
+      <b>Резюме — русский</b><span>PDF · A4 · 2 страницы</span><span class="go">Открыть →</span>
+    </a>
+  </div>
+  <div class="more">
+    <a href="../">Dashboard with lineage</a>
+    <a href="../dbt/">dbt docs</a>
+    <a href="https://github.com/Seinokojii/analytics-engineer-roadmap">Repository</a>
+    <a href="mailto:mahmudovadyl40@gmail.com">mahmudovadyl40@gmail.com</a>
+  </div>
+</main>
+</body>
+</html>

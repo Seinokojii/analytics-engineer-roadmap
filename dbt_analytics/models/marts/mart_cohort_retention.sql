@@ -1,28 +1,32 @@
-{{ config(materialized='table') }}
-WITH first_sub AS (
-    SELECT user_id,
-           DATE_TRUNC('month', MIN(start_date)) AS cohort_month
-    FROM {{ ref('stg_subscriptions') }} GROUP BY user_id
+{{ config(materialized='table', tags=['saas']) }}
+-- Cohort = month the subscription started. A subscription is "alive" at
+-- month k if it had not ended before cohort_month + k months.
+-- One subscription per user in this dataset, so this is a survival curve.
+--
+-- Previous version measured month_num from the subscription's own
+-- start_date, so every cohort produced exactly one row (month 0, 100 %).
+with subs as (
+    select date_trunc('month', start_date)::date as cohort_month,
+           start_date, end_date
+    from {{ ref('fct_subscriptions') }}
 ),
-activity AS (
-    SELECT s.user_id, f.cohort_month,
-           DATEDIFF('month', f.cohort_month,
-               DATE_TRUNC('month', s.start_date)) AS month_num
-    FROM {{ ref('stg_subscriptions') }} s
-    JOIN first_sub f ON s.user_id = f.user_id
+k as (
+    select unnest(range(0, 13)) as month_num
 ),
-agg AS (
-    SELECT cohort_month, month_num,
-           COUNT(DISTINCT user_id) AS active_users
-    FROM activity GROUP BY cohort_month, month_num
+grid as (
+    select s.cohort_month, k.month_num,
+           s.cohort_month + (k.month_num * interval 1 month) as at_month,
+           s.end_date
+    from subs s cross join k
+),
+agg as (
+    select cohort_month, month_num,
+           count(*) as cohort_size,
+           count(*) filter (where end_date is null or end_date >= at_month) as active_subs
+    from grid
+    group by 1, 2
 )
-SELECT cohort_month, month_num, active_users,
-    FIRST_VALUE(active_users) OVER (
-        PARTITION BY cohort_month ORDER BY month_num
-    ) AS cohort_size,
-    ROUND(active_users * 100.0 /
-        FIRST_VALUE(active_users) OVER (
-            PARTITION BY cohort_month ORDER BY month_num
-        ), 2) AS retention_pct
-FROM agg WHERE month_num <= 12
-ORDER BY cohort_month, month_num
+select cohort_month, month_num, cohort_size, active_subs,
+       round(active_subs * 100.0 / cohort_size, 2) as retention_pct
+from agg
+order by cohort_month, month_num

@@ -1,4 +1,4 @@
-{{ config(materialized='table') }}
+{{ config(materialized='table', tags=['saas']) }}
 WITH metrics AS (
     SELECT user_id,
            COUNT(DISTINCT subscription_id)                     AS frequency,
