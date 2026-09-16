@@ -1,0 +1,3 @@
+layout,groups_read,groups_total,pct_read,median_ms,rows_matched
+clustered (ORDER BY order_date),1,50,2.0,2.84,62500
+unclustered (случайный порядок),50,50,100.0,10.78,62500

@@ -241,3 +241,6 @@ dbt_analytics/ci_analytics.duckdb
 *_credentials*
 *_secret*
 secrets.*
+
+# Days 97-98: демо-данные для замеров pruning, генерируются lesson97_98.py
+snowflake_setup/perf_demo/
