@@ -940,7 +940,10 @@ def step8_mv_vs_incremental(con) -> list:
 
 def write_csv(path: Path, rows: list) -> Path:
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        # lineterminator обязателен: по умолчанию csv.writer пишет CRLF
+        # даже на Linux, и git каждый раз ругается на конец строки.
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()),
+                                lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     print(f"  OK  {path.relative_to(PROJECT_ROOT)}  ({len(rows)} строк)")
