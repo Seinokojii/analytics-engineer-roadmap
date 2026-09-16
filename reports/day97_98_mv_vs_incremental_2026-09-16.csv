@@ -1,0 +1,3 @@
+strategy,seconds,rows_scanned
+full refresh,0.036,5250001
+incremental (delete+insert),0.004,50000

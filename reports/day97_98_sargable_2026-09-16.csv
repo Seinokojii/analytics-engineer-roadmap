@@ -1,0 +1,3 @@
+variant,median_ms,rows
+"колонка слева, чистая",1.59,12500
+strftime(order_date),2.22,12500

@@ -1,0 +1,2 @@
+lookup_before_ms,lookup_after_ms,index_build_s,insert_no_index_s,insert_with_index_s
+15.16,0.6,6.9,1.06,1.58
