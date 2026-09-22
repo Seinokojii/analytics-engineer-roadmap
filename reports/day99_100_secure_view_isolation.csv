@@ -1,0 +1,4 @@
+consumer_account,rows_visible,rows_owned,verdict,foreign_rows_leaked
+ACME_RETAIL,1000000,1000000,OK,0
+GLOBEX_LOGISTICS,1000000,1000000,OK,
+INITECH_BANK,1000000,1000000,OK,

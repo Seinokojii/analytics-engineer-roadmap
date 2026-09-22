@@ -1,0 +1,6 @@
+statement,outcome
+INSERT через share,CatalogException
+UPDATE через share,BinderException
+DELETE через share,BinderException
+INSERT в листинг,InvalidInputException
+CREATE TABLE в листинге,InvalidInputException
