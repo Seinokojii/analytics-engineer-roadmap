@@ -16,13 +16,59 @@ dispatch:
   - macro_namespace: elementary
     search_order: ['analytics_project', 'elementary']
 
+# Days 101-104: Medallion Architecture.
+# Papki ostayutsya dbt-sloyami (staging / marts), skhemy stanovyatsya
+# Medallion-sloyami. Svyaz papka -> skhema zadana tolko zdes, v odnom meste:
+#   Bronze = seeds + sources + snapshots  -> skhema zagruzchika, dbt ee ne perestraivaet
+#   Silver = staging                      -> <target>_silver (prod: SILVER)
+#   Gold   = marts + metrics              -> <target>_gold   (prod: GOLD)
+# Imya skhemy sobiraet macros/generate_schema_name.sql.
 models:
   analytics_project:
     staging:
       +materialized: view
+      +schema: silver
+      +tags: ['silver']
+      stg_airbyte_orders:
+        +enabled: "{{ target.type == 'snowflake' }}"
+      stg_airbyte_github_commits:
+        +enabled: "{{ target.type == 'snowflake' }}"
     marts:
       +materialized: table
+      +schema: gold
+      +tags: ['gold']
+      # Snowflake-only modeli dney 76-80. Na DuckDB oni ne sobiralis
+      # i do perestroyki - 5 ERROR na polnom dbt run. Tri padayut na
+      # dialekte (dateadd, _airbyte_data:path), dve - na nesovpadenii
+      # kolonok so stg_orders / stg_users: ikh nado chinit do vklyucheniya.
+      fct_orders_incremental:
+        +enabled: "{{ target.type == 'snowflake' }}"
+      fct_orders_append:
+        +enabled: "{{ target.type == 'snowflake' }}"
+      dim_customers_clustered:
+        +enabled: "{{ target.type == 'snowflake' }}"
+    metrics:
+      +schema: gold
+      +tags: ['gold']
 
   # Day 86-88: sluzhebnye modeli Elementary v otdelnoy sheme
   elementary:
     +schema: elementary
+
+seeds:
+  analytics_project:
+    +tags: ['bronze']
+
+# Snapshot - istoriya, kotoruyu ne peresobrat. snap_customers i
+# snap_orders_status snimayut syrye tablitsy -> Bronze.
+# snap_subscribers snimaet Gold-vitrinu dim_subscribers: eto istoriya
+# vitriny, a ne istochnika. Kontrakt schitaet ego Gold, inache
+# rebro gold -> bronze vyglyadit kak potok protiv techeniya.
+snapshots:
+  analytics_project:
+    snap_customers:
+      +tags: ['bronze']
+    snap_orders_status:
+      +tags: ['bronze']
+    snap_subscribers:
+      +tags: ['gold']

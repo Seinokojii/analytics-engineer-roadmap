@@ -6,11 +6,15 @@ WITH metrics AS (
            DATEDIFF('day', MAX(start_date), DATE '2025-01-01') AS recency_days
     FROM {{ ref('fct_subscriptions') }} GROUP BY user_id
 ),
+-- Days 101-104: user_id - tie-breaker. Bez nego NTILE na povtoryayushchikhsya
+-- znacheniyakh (frequency pochti u vsekh = 1) razdaet kvartili v
+-- proizvolnom poryadke, i segment klienta menyalsya ot sborki k sborke
+-- pri netronutom Bronze. Poymano proverkoy "snesti Gold i peresobrat".
 scored AS (
     SELECT *,
-        NTILE(4) OVER (ORDER BY recency_days ASC)  AS r,
-        NTILE(4) OVER (ORDER BY frequency DESC)    AS f,
-        NTILE(4) OVER (ORDER BY monetary DESC)     AS m
+        NTILE(4) OVER (ORDER BY recency_days ASC, user_id)  AS r,
+        NTILE(4) OVER (ORDER BY frequency DESC, user_id)    AS f,
+        NTILE(4) OVER (ORDER BY monetary DESC, user_id)     AS m
     FROM metrics
 )
 SELECT *, r+f+m AS rfm_score,

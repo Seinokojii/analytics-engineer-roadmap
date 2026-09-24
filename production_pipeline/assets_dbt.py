@@ -52,7 +52,21 @@ class PipelineDbtTranslator(DagsterDbtTranslator):
             if source_name == "gh_raw":
                 # sovpadaet s key= u asseta airbyte_raw_gh_events
                 return AssetKey(["raw", name])
+        if resource_type == "model":
+            # Days 101-104: posle +schema: silver / gold bazovyy translator
+            # dobavil by skhemu v klyuch: ["gold", "mart_daily_events"].
+            # Novyy klyuch = novyy asset, istoriya materializatsiy ostalas by
+            # u starogo. Klyuch pinim po imeni, a sloy pokazyvaem gruppoy.
+            return AssetKey([name])
         return super().get_asset_key(dbt_resource_props)
+
+    def get_group_name(self, dbt_resource_props: Mapping[str, Any]) -> str | None:
+        # Medallion-sloy iz tegov dbt_project.yml -> gruppa v Dagster UI
+        tags = dbt_resource_props.get("tags", [])
+        for layer in ("bronze", "silver", "gold"):
+            if layer in tags:
+                return layer
+        return super().get_group_name(dbt_resource_props)
 
 
 @dbt_assets(
