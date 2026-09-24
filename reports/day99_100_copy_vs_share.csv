@@ -1,0 +1,8 @@
+metric,copy,share,unit
+creation_time,1.254,0.0051,s
+consumer_storage,14.51,0.26,MB
+rows_visible_before,1000000,1000000,rows
+rows_visible_after_insert,1000000,1050000,rows
+staleness_after_insert,50000,0,rows
+share_grant_time,,392.5,ms
+share_metadata_growth,,768,KB

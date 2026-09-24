@@ -34,3 +34,18 @@ exposures:
     owner:
       name: Finance Team
       email: finance@company.com
+
+  # Days 101-104: API chitaet Gold-tablitsy po imeni skhemy, mimo ref().
+  # Poka exposure ne bylo, perenos marts iz main v Gold nichego by
+  # ne pokazal v lineage - a API tikho chital by protukhshie kopii.
+  - name: metrics_api
+    type: application
+    maturity: medium
+    url: http://localhost:8000/docs
+    description: FastAPI metrics_api/main.py — /metrics/summary, /by-city, /ltv-report.
+    depends_on:
+      - ref('fct_orders')
+      - ref('dim_customers')
+    owner:
+      name: Analytics Team
+      email: analytics@company.com

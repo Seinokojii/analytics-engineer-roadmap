@@ -21,6 +21,11 @@ app.add_middleware(
 
 DB_PATH = Path(__file__).parent.parent / 'dbt_analytics' / 'dev.duckdb'
 
+# Days 101-104: marts pereekhali iz main v Gold-skhemu (Medallion).
+# Imya sobiraet dbt macro generate_schema_name: <target.schema>_gold v dev,
+# GOLD v prod. API chitaet tolko Gold - Silver i Bronze emu ne nuzhny.
+GOLD_SCHEMA = 'main_gold'
+
 
 def get_con():
     if not DB_PATH.exists():
@@ -79,7 +84,7 @@ def summary(
         'ROUND(SUM(amount)/NULLIF(COUNT(DISTINCT order_id),0),2) AS average_order_value, '
         'ROUND(SUM(amount)/NULLIF(COUNT(DISTINCT user_id),0),2) AS revenue_per_customer, '
         'ROUND(SUM(amount)/NULLIF(COUNT(DISTINCT user_id),0)/0.05,2) AS ltv_simple '
-        'FROM main.fct_orders WHERE 1=1 '
+        f'FROM {GOLD_SCHEMA}.fct_orders WHERE 1=1 '
     ) + date_filter
     try:
         r = con.execute(q).fetchone()
@@ -109,7 +114,7 @@ def by_city(limit: int = Query(10, ge=1, le=100)):
         'COUNT(DISTINCT order_id) AS order_count, '
         'COUNT(DISTINCT user_id) AS customer_count, '
         'ROUND(SUM(amount)/NULLIF(COUNT(DISTINCT order_id),0),2) AS average_order_value '
-        'FROM main.fct_orders WHERE city IS NOT NULL '
+        f'FROM {GOLD_SCHEMA}.fct_orders WHERE city IS NOT NULL '
         'GROUP BY city ORDER BY total_revenue DESC '
         f'LIMIT {limit}'
     )
@@ -138,9 +143,9 @@ def revenue_trend(
         'COUNT(DISTINCT order_id) AS orders, '
         f"ROUND(SUM(SUM(amount)) OVER (ORDER BY DATE_TRUNC('{granularity}', order_date)),2) "
         'AS cumulative_revenue '
-        'FROM main.fct_orders '
+        f'FROM {GOLD_SCHEMA}.fct_orders '
         f"WHERE order_date >= (SELECT MAX(order_date) - INTERVAL '{periods} {granularity}s' "
-        'FROM main.fct_orders) '
+        f'FROM {GOLD_SCHEMA}.fct_orders) '
         f"GROUP BY DATE_TRUNC('{granularity}', order_date) ORDER BY period"
     )
     try:
@@ -165,7 +170,7 @@ def ltv_report():
         'ROUND(AVG(total_spent),2) AS avg_historical_ltv, '
         'ROUND(AVG(avg_order_value),2) AS avg_order_value, '
         'ROUND(AVG(total_spent/0.05),2) AS avg_predictive_ltv '
-        'FROM main.dim_customers '
+        f'FROM {GOLD_SCHEMA}.dim_customers '
         'WHERE total_spent > 0 '
         'GROUP BY city ORDER BY avg_historical_ltv DESC LIMIT 10'
     )
