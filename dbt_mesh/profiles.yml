@@ -1,0 +1,20 @@
+# Days 105-107: dbt Mesh.
+# Oba proekta pishut v odin fail - kak dva proekta v odnom Snowflake-akkaunte:
+# obshchiy sklad, raznye skhemy, raznye vladeltsy.
+# Put zadaet lesson105_107.py cherez MESH_DB_PATH: urok stroit skhemu
+# v odnoraznom faile i ne trogaet dbt_analytics/analytics.duckdb.
+platform:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('MESH_DB_PATH') }}"
+      schema: main
+
+finance:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('MESH_DB_PATH') }}"
+      schema: main

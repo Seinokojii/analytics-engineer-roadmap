@@ -1,0 +1,9 @@
+version: 2
+
+# access: private rabotaet tolko vnutri gruppy. Gruppa - eto
+# "komanda-vladelets": ot nee zavisit, kto vprave ssylatsya na model.
+groups:
+  - name: platform_team
+    owner:
+      name: Platform Analytics
+      email: platform@example.com

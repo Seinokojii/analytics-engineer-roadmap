@@ -1,0 +1,30 @@
+version: 2
+
+# Exposure - downstream-potrebitel, kotorogo dbt ne sobiraet, no dolzhen
+# znat. dbt ls --select +exposure:finance_board pokazyvaet vsyu tsepochku
+# vplot do modeley platform: komu pozvonit, esli ona upadet.
+exposures:
+  - name: finance_board
+    label: Finance Board (Lightdash)
+    type: dashboard
+    maturity: high
+    url: http://localhost:8080/projects/finance/dashboards/board
+    description: "Weekly board: MRR balance, LTV by plan, cohort retention."
+    owner:
+      name: Finance Analytics
+      email: finance@example.com
+    depends_on:
+      - ref('mart_mrr_monthly')
+      - ref('mart_ltv')
+      - ref('mart_cohort_retention')
+
+  - name: revenue_export
+    label: Monthly revenue export to accounting
+    type: application
+    maturity: medium
+    description: "CSV export for accounting, reads the pivot."
+    owner:
+      name: Finance Analytics
+      email: finance@example.com
+    depends_on:
+      - ref('monthly_revenue_pivot')

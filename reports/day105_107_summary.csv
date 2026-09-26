@@ -1,0 +1,18 @@
+metric,value
+cross_project_edges,5
+interface_holes_fixed,1
+platform_public_models,3
+platform_protected_models,1
+platform_private_models,4
+platform_build,PASS=23 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=23
+finance_build,PASS=13 WARN=0 ERROR=0 SKIP=0 NO-OP=2 TOTAL=15
+platform_nodes_built_by_finance_mesh,0
+platform_nodes_built_by_finance_package,23
+protected_blocked_mesh,True
+protected_blocked_package,False
+governance_probes_caught,5/5
+finance_models_on_v1,2
+finance_models_on_v2,2
+v1_deprecation_warnings,2
+parity_models,5
+parity_diff_rows,0

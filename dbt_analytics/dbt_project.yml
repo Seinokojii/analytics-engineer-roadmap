@@ -29,24 +29,18 @@ models:
       +materialized: view
       +schema: silver
       +tags: ['silver']
-      stg_airbyte_orders:
-        +enabled: "{{ target.type == 'snowflake' }}"
-      stg_airbyte_github_commits:
-        +enabled: "{{ target.type == 'snowflake' }}"
     marts:
       +materialized: table
       +schema: gold
       +tags: ['gold']
-      # Snowflake-only modeli dney 76-80. Na DuckDB oni ne sobiralis
-      # i do perestroyki - 5 ERROR na polnom dbt run. Tri padayut na
-      # dialekte (dateadd, _airbyte_data:path), dve - na nesovpadenii
-      # kolonok so stg_orders / stg_users: ikh nado chinit do vklyucheniya.
-      fct_orders_incremental:
-        +enabled: "{{ target.type == 'snowflake' }}"
-      fct_orders_append:
-        +enabled: "{{ target.type == 'snowflake' }}"
-      dim_customers_clustered:
-        +enabled: "{{ target.type == 'snowflake' }}"
+      # Snowflake-only modeli dney 76-80 (stg_airbyte_*, fct_orders_incremental,
+      # fct_orders_append, dim_customers_clustered) vyklyucheny vne Snowflake
+      # v config() samoy modeli: enabled=target.type == 'snowflake'.
+      # Ne zdes: JSON-skhema dbt_project.yml (SchemaStore -> VS Code) zhdet
+      # u +enabled boolean, a ne Jinja-stroku, i podsvechivaet oshibku.
+      # Na DuckDB oni ne sobiralis i do perestroyki - 5 ERROR na polnom
+      # dbt run. Tri padayut na dialekte (dateadd, _airbyte_data:path), dve -
+      # na nesovpadenii kolonok so stg_orders / stg_users.
     metrics:
       +schema: gold
       +tags: ['gold']

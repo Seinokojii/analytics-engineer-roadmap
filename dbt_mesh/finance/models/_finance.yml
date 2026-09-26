@@ -1,0 +1,61 @@
+version: 2
+
+# Vitriny finansovoy komandy. SQL perenesen iz dbt_analytics/models/marts
+# bez izmeneniy logiki, krome ref(): teper eto ref('platform', ...).
+# Isklyuchenie - monthly_revenue_pivot, sm. kommentariy v fayle.
+groups:
+  - name: finance_team
+    owner:
+      name: Finance Analytics
+      email: finance@example.com
+
+models:
+  - name: mart_ltv
+    config:
+      group: finance_team
+      access: public
+    description: "LTV by plan. Pinned to fct_subscriptions v1: reads realized_ltv, removed in v2."
+    columns:
+      - name: plan
+        data_tests: [not_null, unique]
+
+  - name: mart_rfm_segments
+    config:
+      group: finance_team
+      access: public
+    description: "RFM segments. Pinned to fct_subscriptions v1: reads realized_ltv."
+    columns:
+      - name: user_id
+        data_tests: [not_null, unique]
+
+  - name: mart_mrr_monthly
+    config:
+      group: finance_team
+      access: public
+    description: "Month-end MRR balance per plan. Migrated to fct_subscriptions v2."
+    columns:
+      - name: month
+        data_tests: [not_null]
+
+  - name: mart_cohort_retention
+    config:
+      group: finance_team
+      access: public
+    description: "Survival-style cohort retention. Migrated to fct_subscriptions v2."
+    columns:
+      - name: cohort_month
+        data_tests: [not_null]
+
+  - name: monthly_revenue_pivot
+    config:
+      group: finance_team
+      access: public
+    description: "Revenue per user by calendar month. Reads platform.fct_orders."
+    columns:
+      - name: user_id
+        data_tests: [not_null, unique]
+
+  - name: mart_mrr_live
+    config:
+      group: finance_team
+    description: "Snowflake Dynamic Table: new MRR by month and plan, target_lag 15 min."

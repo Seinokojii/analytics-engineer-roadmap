@@ -1,0 +1,6 @@
+model,rows_monolith,rows_mesh,only_in_monolith,only_in_mesh
+mart_ltv,3,3,0,0
+mart_rfm_segments,500,500,0,0
+mart_mrr_monthly,63,63,0,0
+mart_cohort_retention,117,117,0,0
+monthly_revenue_pivot,96,96,0,0

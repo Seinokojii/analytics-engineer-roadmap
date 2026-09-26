@@ -244,3 +244,10 @@ secrets.*
 
 # Days 97-98: демо-данные для замеров pruning, генерируются lesson97_98.py
 snowflake_setup/perf_demo/
+
+# Days 105-107: dbt Mesh
+dbt_mesh/*/logs/
+dbt_mesh/*/dbt_packages/
+dbt_mesh/*/package-lock.yml
+# profiles.yml dbt_mesh bez sekretov: tolko duckdb + env_var('MESH_DB_PATH')
+!dbt_mesh/profiles.yml

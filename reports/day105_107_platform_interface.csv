@@ -1,0 +1,9 @@
+model,version,access,group,contract_enforced,relation
+dim_subscribers,,protected,platform_team,False,"""mesh"".""main_gold"".""dim_subscribers"""
+fct_orders,,public,platform_team,True,"""mesh"".""main_gold"".""fct_orders"""
+fct_subscriptions,1,public,platform_team,True,"""mesh"".""main_gold"".""fct_subscriptions_v1"""
+fct_subscriptions,2,public,platform_team,True,"""mesh"".""main_gold"".""fct_subscriptions_v2"""
+stg_orders,,private,platform_team,False,"""mesh"".""main_silver"".""stg_orders"""
+stg_saas_users,,private,platform_team,False,"""mesh"".""main_silver"".""stg_saas_users"""
+stg_subscriptions,,private,platform_team,False,"""mesh"".""main_silver"".""stg_subscriptions"""
+stg_users,,private,platform_team,False,"""mesh"".""main_silver"".""stg_users"""

@@ -1,0 +1,11 @@
+# dbt Core sam ne umeet ref('drugoy_proekt', 'model') - eto fitcha
+# dbt platform Enterprise (metadata service). dbt-loom - plagin dbt Core:
+# chitaet manifest.json upstream-proekta i vpryskivaet ego publichnye
+# modeli v graf kak vneshnie uzly. Kod platform syuda ne popadaet,
+# sobirat ego finance ne budet - tolko chitat gotovye tablitsy.
+# V prod put - na artefakt prod-deploya platform (S3 / GCS / dbt Cloud API).
+manifests:
+  - name: platform
+    type: file
+    config:
+      path: ../platform/target/manifest.json

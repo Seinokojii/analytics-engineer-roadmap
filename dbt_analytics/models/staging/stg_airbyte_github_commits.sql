@@ -2,7 +2,8 @@
 -- Day 80: GitHub commits cherez Airbyte
 
 {{
-    config(materialized='view', tags=['airbyte', 'github'])
+    config(materialized='view', tags=['airbyte', 'github'],
+           enabled=target.type == 'snowflake')
 }}
 
 SELECT

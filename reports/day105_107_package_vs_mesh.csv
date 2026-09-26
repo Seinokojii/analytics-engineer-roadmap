@@ -1,0 +1,7 @@
+metric,mesh_loom,package
+код platform внутри finance,"нет, только manifest","да, весь проект"
+узлов platform собрано finance'ом,0,23
+своих узлов finance,15,15
+"время build, с",7.6,15.0
+ref на protected-модель,отбит,прошёл
+копий fct_orders на складе,1,2

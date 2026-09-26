@@ -1,0 +1,36 @@
+# Days 105-107: upstream-proekt dbt Mesh.
+# Vladelets - platformennaya komanda. Otdaet naruzhu tolko Gold
+# s kontraktom; Silver - vnutrennyaya kukhnya (access: private).
+name: 'platform'
+version: '1.0.0'
+config-version: 2
+
+profile: 'platform'
+
+model-paths: ["models"]
+# Bronze ne kopiruetsya: te zhe CSV, chto u monolita. Syrye dannye
+# prinadlezhat zagruzchiku, a ne proektu, kotoryy ikh chitaet.
+# seeds/ - simlink na ../../dbt_analytics/data, a NE seed-paths s "../..":
+# dbt pishet skompilirovannyy seed v target/run/<proekt>/<seed-path>/<fayl>,
+# i put s vykhodom naverkh (ili absolyutnyy) uvodit etu zapis iz target/.
+# S absolyutnym putem dbt perezapisal iskhodnye CSV tekstom SQL -
+# poymano na Days 105-107, CSV vosstanovleny iz git.
+seed-paths: ["seeds"]
+
+seeds:
+  platform:
+    +tags: ['bronze']
+    # raw_events ne nuzhen ni odnoy modeli razreza
+    raw_events:
+      +enabled: false
+
+models:
+  platform:
+    silver:
+      +materialized: view
+      +schema: silver
+      +tags: ['silver']
+    gold:
+      +materialized: table
+      +schema: gold
+      +tags: ['gold']

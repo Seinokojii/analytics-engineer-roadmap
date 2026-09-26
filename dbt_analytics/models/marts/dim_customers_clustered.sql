@@ -3,6 +3,7 @@
 
 {{
     config(
+        enabled      = target.type == 'snowflake',
         materialized = 'table',
         cluster_by   = ['city'],
     )

@@ -3,7 +3,8 @@
 -- [[Airbyte]] [[Snowflake]]
 
 {{
-    config(materialized='view', tags=['airbyte', 'staging'])
+    config(materialized='view', tags=['airbyte', 'staging'],
+           enabled=target.type == 'snowflake')
 }}
 
 WITH raw AS (

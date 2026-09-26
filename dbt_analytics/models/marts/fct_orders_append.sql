@@ -3,6 +3,7 @@
 
 {{
     config(
+        enabled              = target.type == 'snowflake',
         materialized         = 'incremental',
         unique_key           = 'order_id',
         incremental_strategy = 'append',

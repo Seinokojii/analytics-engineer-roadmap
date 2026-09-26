@@ -1,0 +1,87 @@
+version: 2
+
+# Gold platformy - publichnyy interfeys dlya drugikh proektov.
+# Tri urovnya dostupa v odnom fayle:
+#   public    - fct_orders, fct_subscriptions: na nikh ssylaetsya finance
+#   protected - dim_subscribers: tolko vnutri proekta platform (i ego paketov)
+# contract.enforced: dbt sveryaet imena i tipy kolonok DO sozdaniya tablitsy.
+# Slomannyy kontrakt ne doezzhaet do sklada, a znachit i do potrebiteley.
+models:
+  - name: fct_orders
+    description: "Completed orders with user attributes. Public interface of platform."
+    config:
+      access: public
+      group: platform_team
+      contract:
+        enforced: true
+    columns:
+      - name: order_id
+        data_type: integer
+        constraints: [{type: not_null}]
+        data_tests: [unique]
+      - name: user_id
+        data_type: integer
+      - name: user_name
+        data_type: varchar
+      - name: city
+        data_type: varchar
+      - name: amount
+        data_type: integer
+      - name: order_date
+        data_type: timestamp
+
+  - name: fct_subscriptions
+    description: "Subscription facts: MRR, churn, LTV. Versioned public model."
+    # latest_version - to, chto poluchit ref() bez v=. v2 opublikovana,
+    # no poka ne "posledni": potrebitelyam dayut vremya pereekhat.
+    latest_version: 1
+    config:
+      access: public
+      group: platform_team
+      contract:
+        enforced: true
+    columns:
+      - name: subscription_id
+        data_type: integer
+        constraints: [{type: not_null}]
+        data_tests: [unique]
+      - name: user_id
+        data_type: integer
+      - name: plan
+        data_type: varchar
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [basic, pro, enterprise]
+      - name: mrr
+        data_type: float
+      - name: start_date
+        data_type: date
+      - name: end_date
+        data_type: date
+      - name: status
+        data_type: varchar
+      - name: is_churned
+        data_type: boolean
+      - name: lifetime_months
+        data_type: bigint
+      - name: realized_ltv
+        data_type: float
+    versions:
+      - v: 1
+        deprecation_date: "2026-12-31"
+      - v: 2
+        columns:
+          - include: all
+            exclude: [is_churned, realized_ltv]
+          - name: ltv_realized
+            data_type: float
+
+  - name: dim_subscribers
+    description: "Subscribers dimension. Internal to platform: snapshot and QA use it."
+    config:
+      access: protected
+      group: platform_team
+    columns:
+      - name: user_id
+        data_tests: [not_null, unique]

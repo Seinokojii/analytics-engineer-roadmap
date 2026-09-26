@@ -1,0 +1,6 @@
+probe,expected,result,how
+finance -> private stg_orders,ошибка,поймано,the referenced node is private to the 'platform_team' group
+finance -> protected dim_subscribers,ошибка,поймано,the referenced node is protected to the 'platform' package
+amount INTEGER -> VARCHAR в fct_orders,ошибка,поймано,"contract: модель VARCHAR, контракт INTEGER"
+удалить city из fct_orders (без версии),warning,поймано,"WARNING, сборка продолжается"
+удалить is_churned из fct_subscriptions v1,ошибка,поймано,Error: сделай новую версию

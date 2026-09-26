@@ -1,0 +1,18 @@
+# Days 105-107: downstream-proekt dbt Mesh.
+# Vladelets - finansovaya analitika. Svoikh syrykh dannykh net:
+# vse vkhody - publichnye modeli platform cherez ref('platform', ...).
+name: 'finance'
+version: '1.0.0'
+config-version: 2
+
+profile: 'finance'
+
+model-paths: ["models"]
+
+models:
+  finance:
+    +materialized: table
+    +schema: finance
+    +tags: ['gold', 'finance']
+    # mart_mrr_live (Dynamic Table) vyklyuchena vne Snowflake v svoem config():
+    # JSON-skhema dbt_project.yml zhdet u +enabled boolean, ne Jinja.

@@ -1,0 +1,29 @@
+version: 2
+
+# Silver - vnutrennyaya kukhnya platformy. access: private + group:
+# ref() na eti modeli razreshen tolko modelyam gruppy platform_team.
+# Drugoy proekt ne mozhet na nikh soslatsya dazhe cherez ref('platform', ...):
+# esli platforma pereimenuet kolonku v stg_orders, nikto snaruzhi ne slomaetsya.
+models:
+  - name: stg_orders
+    config:
+      access: private
+      group: platform_team
+    columns:
+      - name: order_id
+        data_tests: [not_null, unique]
+  - name: stg_users
+    config:
+      access: private
+      group: platform_team
+    columns:
+      - name: user_id
+        data_tests: [not_null, unique]
+  - name: stg_saas_users
+    config:
+      access: private
+      group: platform_team
+  - name: stg_subscriptions
+    config:
+      access: private
+      group: platform_team

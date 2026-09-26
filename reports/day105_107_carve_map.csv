@@ -1,0 +1,6 @@
+finance_model,monolith_dependency,layer,verdict
+mart_ltv,fct_subscriptions,gold,ok: Gold станет public
+mart_rfm_segments,fct_subscriptions,gold,ok: Gold станет public
+mart_mrr_monthly,fct_subscriptions,gold,ok: Gold станет public
+mart_cohort_retention,fct_subscriptions,gold,ok: Gold станет public
+monthly_revenue_pivot,stg_orders,silver,ДЫРА: читает чужой Silver
