@@ -6,7 +6,7 @@
         "~/.agents/skills": true,
         "~/.copilot/skills": true,
         "~/.claude/skills": true,
-        "~/.vscode/extensions/synapsevscode.synapse-1.25.0/copilot/skills": true
+        "~/.vscode/extensions/synapsevscode.synapse-1.26.0/copilot/skills": true
     },
 
     // Переезд на Kubuntu: venv теперь общий и лежит вне проекта —
@@ -23,7 +23,13 @@
     "python.analysis.extraPaths": [
         "${workspaceFolder}/production_pipeline",
         "${workspaceFolder}/dagster_dbt_pipeline",
-        "${workspaceFolder}/dagster_pipeline"
+        "${workspaceFolder}/dagster_pipeline",
+        // Days 108-110: коннектор source-open-meteo живёт в своём venv
+        // с airbyte-cdk (в ae его ставить нельзя — откатывает pandas).
+        // Без этого пути Pylance пишет reportMissingImports на airbyte_cdk.
+        // Стоит последним; пакеты, общие для двух venv, анализатор
+        // возьмёт отсюда — на запуск это не влияет.
+        "${userHome}/.venvs/airbyte-cdk/lib/python3.12/site-packages"
     ],
 
     // История Dagster-ранов и backfill переживает рестарт сервера.

@@ -1,0 +1,9 @@
+# Days 108-110. Без секретов: только duckdb + env_var.
+# Путь задаёт lesson108_110.py через OPEN_METEO_DB.
+open_meteo:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('OPEN_METEO_DB') }}"
+      schema: main

@@ -251,3 +251,8 @@ dbt_mesh/*/dbt_packages/
 dbt_mesh/*/package-lock.yml
 # profiles.yml dbt_mesh bez sekretov: tolko duckdb + env_var('MESH_DB_PATH')
 !dbt_mesh/profiles.yml
+
+# Days 108-110: Airbyte custom connector
+airbyte_setup/dbt_open_meteo/logs/
+# profiles.yml без секретов: только duckdb + env_var('OPEN_METEO_DB')
+!airbyte_setup/dbt_open_meteo/profiles.yml

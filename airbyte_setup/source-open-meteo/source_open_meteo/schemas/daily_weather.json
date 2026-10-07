@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "city": {"type": "string"},
+    "date": {"type": "string", "format": "date"},
+    "temperature_max_c": {"type": ["null", "number"]},
+    "temperature_min_c": {"type": ["null", "number"]},
+    "precipitation_mm": {"type": ["null", "number"]},
+    "wind_speed_max_kmh": {"type": ["null", "number"]}
+  }
+}

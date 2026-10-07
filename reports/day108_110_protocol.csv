@@ -1,0 +1,6 @@
+command,exit_code,result,details
+spec,0,SPEC,"required=['cities', 'start_date']"
+check,0,SUCCEEDED,
+check (плохой конфиг),0,FAILED,"""Город 'Zzzqqxx' не найден в geocoding API. Проверь название в конфиге."""
+discover,0,cities,modes=['full_refresh'] cursor=None pk=[['city']]
+discover,0,daily_weather,"modes=['full_refresh', 'incremental'] cursor=['date'] pk=[['city'], ['date']]"

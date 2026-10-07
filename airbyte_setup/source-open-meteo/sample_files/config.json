@@ -1,0 +1,5 @@
+{
+  "cities": ["Bishkek", "Almaty", "Oslo"],
+  "start_date": "2026-01-01",
+  "lookback_days": 5
+}

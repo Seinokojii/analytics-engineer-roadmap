@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "city": {"type": "string"},
+    "geoname_id": {"type": ["null", "integer"]},
+    "country_code": {"type": ["null", "string"]},
+    "country": {"type": ["null", "string"]},
+    "latitude": {"type": "number"},
+    "longitude": {"type": "number"},
+    "elevation_m": {"type": ["null", "number"]},
+    "timezone": {"type": ["null", "string"]},
+    "population": {"type": ["null", "integer"]}
+  }
+}

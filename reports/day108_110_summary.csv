@@ -1,0 +1,15 @@
+metric,value
+first_sync_records,246
+first_sync_slices,9
+incremental_records,45
+full_refresh_would_read,276
+noop_sync_records,15
+new_city_sync_records,107
+lookback0_stale_rows,6
+lookback5_stale_rows,0
+bronze_rows,413
+silver_rows,368
+duplicates_removed,45
+gold_rows,12
+dbt_nodes,19
+docker_image_mb,600

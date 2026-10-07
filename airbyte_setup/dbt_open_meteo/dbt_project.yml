@@ -1,0 +1,23 @@
+# Days 108-110: трансформация после Airbyte sync.
+# Маленький отдельный проект, а не модели в dbt_analytics: источник здесь —
+# таблица, которую пишет sync, а CI монолита собирается на чистой базе,
+# где этой таблицы нет.
+name: 'open_meteo'
+version: '1.0.0'
+config-version: 2
+
+profile: 'open_meteo'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+models:
+  open_meteo:
+    silver:
+      +materialized: view
+      +schema: silver
+      +tags: ['silver']
+    gold:
+      +materialized: table
+      +schema: gold
+      +tags: ['gold']

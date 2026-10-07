@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: stg_open_meteo__daily_weather
+    description: Дневная погода, дедуплицированная по city + date.
+    columns:
+      - name: weather_key
+        description: city|date. Уникальность этого ключа — проверка, что дедупликация сработала.
+        data_tests: [unique, not_null]
+      - name: city
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_open_meteo__cities')
+                field: city
+      - name: weather_date
+        data_tests: [not_null]
+
+  - name: stg_open_meteo__cities
+    description: Справочник городов из geocoding API.
+    columns:
+      - name: city
+        data_tests: [unique, not_null]
+      - name: latitude
+        data_tests: [not_null]
+
+  - name: mart_weather_monthly
+    description: Погода по городу и месяцу.
+    columns:
+      - name: city
+        data_tests: [not_null]
+      - name: days_loaded
+        data_tests: [not_null]

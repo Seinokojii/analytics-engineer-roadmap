@@ -1,0 +1,61 @@
+documentationUrl: https://open-meteo.com/en/docs/historical-weather-api
+connectionSpecification:
+  $schema: http://json-schema.org/draft-07/schema#
+  title: Open-Meteo Source Spec
+  type: object
+  required:
+    - cities
+    - start_date
+  additionalProperties: true
+  properties:
+    cities:
+      type: array
+      title: Cities
+      description: Названия городов по-английски. Координаты коннектор находит сам через geocoding API.
+      minItems: 1
+      items:
+        type: string
+      examples:
+        - ["Bishkek", "Almaty", "Oslo"]
+      order: 0
+    start_date:
+      type: string
+      title: Start date
+      description: С какой даты читать историю, YYYY-MM-DD.
+      format: date
+      pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
+      examples:
+        - "2026-01-01"
+      order: 1
+    end_date:
+      type: string
+      title: End date
+      description: По какую дату читать. Пусто — по вчерашний день UTC (сегодняшний день в архиве неполный).
+      format: date
+      pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
+      order: 2
+    lookback_days:
+      type: integer
+      title: Lookback window
+      description: Сколько последних дней перечитывать при каждом incremental sync. Свежие дни архив пересчитывает задним числом.
+      default: 5
+      minimum: 0
+      maximum: 30
+      order: 3
+    max_retry_wait_seconds:
+      type: integer
+      title: Max retry wait
+      description: Потолок паузы между повторами при 429 и 5xx.
+      default: 60
+      minimum: 1
+      order: 4
+    archive_base_url:
+      type: string
+      title: Archive API base URL
+      default: https://archive-api.open-meteo.com/v1/
+      airbyte_hidden: true
+    geocoding_base_url:
+      type: string
+      title: Geocoding API base URL
+      default: https://geocoding-api.open-meteo.com/v1/
+      airbyte_hidden: true

@@ -1,0 +1,3 @@
+scenario,sync_status,requests_to_slice,records,error
+429 x2 + Retry-After,succeeded,3,276,
+400,failed,1,0,[system_error] HTTP Status Code: 400. Error: Bad request. Please check your request parameters.

@@ -1,0 +1,32 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: Посадочные таблицы Airbyte. Пишет sync, dbt их только читает.
+    schema: bronze
+    # freshness и loaded_at_field — под config: так требует схема dbt Fusion,
+    # которую VS Code применяет к yml; dbt Core 1.11 понимает оба варианта.
+    config:
+      loaded_at_field: _airbyte_extracted_at
+      freshness:
+        warn_after: {count: 24, period: hour}
+        error_after: {count: 48, period: hour}
+    tables:
+      - name: daily_weather_raw
+        description: >
+          Append-only: одна строка на каждую прочитанную запись. Lookback
+          перечитывает последние дни, поэтому одна пара city + date
+          встречается несколько раз. Дедупликация — в Silver.
+        columns:
+          - name: _airbyte_raw_id
+            description: UUID строки, выдаёт destination.
+            data_tests: [unique, not_null]
+          - name: _airbyte_extracted_at
+            description: Когда запись прочитана из источника. По ней считается freshness.
+      - name: cities
+        description: "Full refresh + overwrite: таблица пересоздаётся каждым sync."
+        config:
+          freshness: null
+        columns:
+          - name: city
+            data_tests: [unique, not_null]

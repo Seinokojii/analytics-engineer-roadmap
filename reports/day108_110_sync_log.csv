@@ -1,0 +1,5 @@
+sync_id,label,started_at,seconds,status,records_weather,slices,committed_rows,error
+1,first sync,2026-10-07 08:38:14,5.4,succeeded,246,9,246,
+2,incremental,2026-10-07 08:38:20,5.48,succeeded,45,3,45,
+3,no new data,2026-10-07 08:38:26,5.49,succeeded,15,3,15,
+4,new city,2026-10-07 08:38:31,6.19,succeeded,107,6,107,
